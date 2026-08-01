@@ -32,7 +32,7 @@ def main():
     print(chunks[0].page_content[:300])
     print("\nMetadata:", chunks[0].metadata)
 
-    print(f"Created {len(chunks)} chunks from {len(documents)} document(s)")
+    # print(f"Created {len(chunks)} chunks from {len(documents)} document(s)")
 
 if __name__ == "__main__":
     main()
