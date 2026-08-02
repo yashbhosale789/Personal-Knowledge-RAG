@@ -17,7 +17,7 @@ def retrieve(query: str, top_k: int = TOP_K) -> List[Document]:
     vectorstore = get_vectorstore()
     results = vectorstore.similarity_search(query, k=top_k)
 
-    logger.info(f"Retrieved {len(results)} chubks for query: '{query[:60]}...'")
+    logger.info(f"Retrieved {len(results)} chunks for query: '{query[:60]}...'")
     return results
 
 """

@@ -22,4 +22,5 @@ CHROMA_COLLECTION = "personal_kb"
 
 # LLM
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_MODEL = "meta-llama/llama-3.1-8b-instruct:free"
+OPENROUTER_MODEL = "nvidia/nemotron-3-nano-30b-a3b:free"        # Use till it expires
+# OPENROUTER_MODEL = "inclusionai/ling-3.0-flash:free"            # second option
