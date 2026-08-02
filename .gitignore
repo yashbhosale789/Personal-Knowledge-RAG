@@ -2,3 +2,6 @@
 ./rag-project/.env
 git
 dataset/
+.vscode/
+.dvc/
+*__pycache__/
