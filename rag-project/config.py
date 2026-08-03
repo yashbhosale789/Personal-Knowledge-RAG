@@ -16,6 +16,7 @@ CHUNKS_PATH = BASE_DIR / "storage" / "chunks.json"  # Storage
 
 # Retrival
 TOP_K = 5  # number of chunks to retrieve
+RRF_K = 60
 
 # Chroma
 CHROMA_COLLECTION = "personal_kb"
