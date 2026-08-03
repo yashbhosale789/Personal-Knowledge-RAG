@@ -2,15 +2,16 @@ from typing import List
 from langchain_core.documents import Document
 from src.retrieval.retriever import retrieve
 from src.llm.client import call_llm
+from config import SYSTEM_PROMPT
 import logging
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are a precise question-answering assistant.
-You answer questions strictly based on the provided context.
-If the context does not contain enough information to answer the question, 
-say "I don't have enough information in my knowledge base to answer this."
-Do not use any knowledge outside the provided context."""
+# SYSTEM_PROMPT = """You are a precise question-answering assistant.
+# You answer questions strictly based on the provided context.
+# If the context does not contain enough information to answer the question, 
+# say "I don't have enough information in my knowledge base to answer this."
+# Do not use any knowledge outside the provided context."""
 
 
 def build_promt(query: str, chunks: List[Document]) -> str:

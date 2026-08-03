@@ -41,11 +41,6 @@ def reciprocal_rank_fusion(ranked_lists: list[list[dict]], top_k: int = 50, text
         entry["rrf_rank"] = rrf_rank
         results.append(entry)
 
-    logger.info(
-        "RRD fusion: %d lists -> %d unique docs -> top %d returned",
-        len(ranked_list),
-        len(docs),
-        len(results)
-    )
+    logger.info(f"RRD fusion: {len(ranked_list)} lists -> {len(docs)} unique docs -> top {len(results)} returned")
 
     return results

@@ -20,7 +20,7 @@ class BM25Retriever:
         self._corpus = [c["text"] for c in self._chunks]
         self._tokenized = [doc.lower().split() for doc in self._corpus]
         self._index = BM25Okapi(self._tokenized)
-        logger.info("BM25 index built over %d chunks", len(self._chunks))
+        logger.info(f"BM25 index built over {len(self._chunks)} chunks")
 
     def _load_chunks(self, path: Path) -> list[dict]:
         if not path.exists():
