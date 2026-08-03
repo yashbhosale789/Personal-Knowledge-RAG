@@ -12,7 +12,7 @@ EMBEDDING_DIAMENSION = 384  # bge small output size
 # Chunking
 CHUNK_SIZE = 512  # tokens (approximate — we use character count)
 CHUNK_OVERLAP = 64  # overlap between adjacent chunks
-
+CHUNKS_PATH = BASE_DIR / "storage" / "chunks.json"  # Storage
 
 # Retrival
 TOP_K = 5  # how many chunks to retrieve
