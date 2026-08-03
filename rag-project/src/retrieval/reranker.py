@@ -37,7 +37,7 @@ class CrossEncoderReranker:
 
         scored = [
             {**doc, "ce_score": float(score)}
-            for doc, score in zip(candidates, score)
+            for doc, score in zip(candidates, scores)
         ]
 
         ranked = sorted(scored, key=lambda x: x["ce_score"], reverse=True)
