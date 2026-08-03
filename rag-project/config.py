@@ -15,7 +15,7 @@ CHUNK_OVERLAP = 64  # overlap between adjacent chunks
 CHUNKS_PATH = BASE_DIR / "storage" / "chunks.json"  # Storage
 
 # Retrival
-TOP_K = 5  # how many chunks to retrieve
+TOP_K = 5  # number of chunks to retrieve
 
 # Chroma
 CHROMA_COLLECTION = "personal_kb"
