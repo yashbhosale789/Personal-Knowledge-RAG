@@ -53,7 +53,10 @@ QUESTION:
 ANSWER:"""
 
 
-def run_advanced_rag_pipeline(query: str, top_k: int = TOP_K) -> dict:
+# def run_advanced_rag_pipeline(query: str, top_k: int = TOP_K) -> dict:
+def run_advanced_rag_pipeline(
+    query: str, top_k: int = TOP_K, return_contexts: bool = False
+) -> dict:
     """
     Advanced RAG pipeline:
     query → rewrite → dense + BM25 → RRF fusion → rerank → prompt → LLM
@@ -65,14 +68,13 @@ def run_advanced_rag_pipeline(query: str, top_k: int = TOP_K) -> dict:
     rewritten = rewrite_query(query)
 
     # Stage 2: Parallel retrieval
-    dense_docs = retrieve(rewritten, top_k = top_k * 4)
+    dense_docs = retrieve(rewritten, top_k=top_k * 4)
     dense_results = _dense_to_dicts(dense_docs, top_k * 4)
     bm25_results = _bm25.retrieve(rewritten, top_k=top_k * 4)
 
     # Stage 3: RRF fusion
     fused = reciprocal_rank_fusion(
-        ranked_lists=[dense_results, bm25_results],
-        top_k= top_k * 2
+        ranked_lists=[dense_results, bm25_results], top_k=top_k * 2
     )
 
     # Stage 4: Rerank
@@ -88,15 +90,20 @@ def run_advanced_rag_pipeline(query: str, top_k: int = TOP_K) -> dict:
         }
 
     # Stage 5: Prompt + LLM
-    prompt = _build_prompt(rewritten,reranked)
+    prompt = _build_prompt(rewritten, reranked)
     answer = call_llm(prompt, system=SYSTEM_PROMPT)
 
     logger.info("Advanced RAG pipeline complete.")
 
-    return {
-        "answer" : answer,
-        "sources" : [c["metadata"].get("filename", "unknown") for c in reranked],
-        "chunks_used" : len(reranked),
-        "query" : query,
-        "rewritten_query" : rewritten
+    result = {
+        "answer": answer,
+        "sources": [c["metadata"].get("filename", "unknown") for c in reranked],
+        "chunks_used": len(reranked),
+        "query": query,
+        "rewritten_query": rewritten,
     }
+
+    if return_contexts:
+        result["contexts"] = [c["text"] for c in reranked]
+
+    return result
