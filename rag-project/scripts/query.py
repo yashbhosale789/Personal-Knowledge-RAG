@@ -17,6 +17,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+os.environ["HF_HUB_OFFLINE"] = "1"  # use local cache only, no network calls
 # print("API KEY LOADED:", os.getenv("OPENROUTER_API_KEY"))
 
 def main():

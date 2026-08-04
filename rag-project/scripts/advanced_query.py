@@ -10,6 +10,9 @@ from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
 load_dotenv()
 
+import os
+os.environ["HF_HUB_OFFLINE"] = "1"  # use local cache only, no network calls
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s - %(message)s"
 )
