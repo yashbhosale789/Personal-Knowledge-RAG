@@ -1,0 +1,194 @@
+[
+  {
+    "id": "Q01",
+    "difficulty": "easy",
+    "question": "Where is the spare tyre located in an Aventro Sedan?",
+    "answer": "The spare tyre in an Aventro\u202fSedan is stored **under the boot floor in the trunk**.",
+    "contexts": [
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.",
+      "A ventro Motors: How to Change a Tyre\nChanging a flat tyre is a basic and essential automotive skill for every A ventro\nMotor car owner. This guide will walk you through:\n\u2022 Steps to change a tyre\n\u2022 Where the spare tyre and toolkit is found in all A ventro models\n\u2022 General tips and safety instructions\nWhere to Find the Spare Tyre & Toolkit in A ventro Models\nModel Type Common Location of Spare Tyre & Toolkit\nHatchback Under the boot floor in the rear compartment\nSedan Under the boot floor in the trunk",
+      "\u2022 Some spare tyres are \u201cspace savers\u201d and are not intended for long distances\nor high speeds.\nNeed Help?\nA ventro offersRoadside Assistance across India. If you are unable to change\nthe tyre, please contact your nearest:\n\u2022 A ventro Service Center\n\u2022 Or call A ventro Roadside Assistance (see main service manual/contact\ncard in your glove box)\nFind Service Centers\n\u2022 Mumbai: Andheri East\n\u2022 Delhi: Okhla Industrial Area, Phase II\n\u2022 Bengaluru: Electronic City\n\u2022 Chennai: Guindy Industrial Estate",
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2"
+    ],
+    "ground_truth": "In an Aventro Sedan, the spare tyre is located under the boot floor in the trunk.",
+    "rewritten_query": "spare tyre location in Aventro Sedan",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q02",
+    "difficulty": "easy",
+    "question": "Where is the toolkit stored in Aventro vehicles?",
+    "answer": "The toolkit in an Aventro vehicle is typically secured **next to the spare tyre or inside a side panel of the boot/trunk**. This applies to all models (sedan, SUV, hatchback, etc.).",
+    "contexts": [
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.",
+      "A ventro Motors: How to Change a Tyre\nChanging a flat tyre is a basic and essential automotive skill for every A ventro\nMotor car owner. This guide will walk you through:\n\u2022 Steps to change a tyre\n\u2022 Where the spare tyre and toolkit is found in all A ventro models\n\u2022 General tips and safety instructions\nWhere to Find the Spare Tyre & Toolkit in A ventro Models\nModel Type Common Location of Spare Tyre & Toolkit\nHatchback Under the boot floor in the rear compartment\nSedan Under the boot floor in the trunk",
+      "\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.\n\u2022 Place wheel wedges/blocks (if available) to prevent vehicle movement.\n2. Gather T ools\nYou will need: - Spare tyre (found as per table above) - Jack (usually in toolkit)\n- Lug wrench (in toolkit) - Wheel wedges/blocks (optional) - Vehicle owner\u2019s\nmanual (for reference)\n3. Remove the Wheel Cover/Hubcap\n\u2022 If your wheel has a cover, use the flat end of the wrench or the provided\nlever to gently pry it off.\n1",
+      "\u2022 Chennai: Guindy Industrial Estate\n\u2022 Hyderabad: Banjara Hills\n\u2022 Pune: Wakad\n\u2022 Kolkata: Salt Lake, Sector V\n\u2022 Ahmedabad: Vastrapur\n\u2022 Jaipur: Mansarovar\n\u2022 \u2026 and many more across India!\nFor full list and directions, visit A ventro Motors Website.\nDrive safe with A ventro Motors!\n3",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2"
+    ],
+    "ground_truth": "In all Aventro models, the toolkit is usually secured next to the spare tyre or inside a side panel of the boot or trunk.",
+    "rewritten_query": "Aventro vehicle toolkit storage location",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q03",
+    "difficulty": "easy",
+    "question": "Where is the spare tyre located in an Aventro SUV?",
+    "answer": "The spare tyre on an Aventro SUV is stored **under the boot floor or mounted underneath the rear of the car**.",
+    "contexts": [
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.",
+      "A ventro Motors: How to Change a Tyre\nChanging a flat tyre is a basic and essential automotive skill for every A ventro\nMotor car owner. This guide will walk you through:\n\u2022 Steps to change a tyre\n\u2022 Where the spare tyre and toolkit is found in all A ventro models\n\u2022 General tips and safety instructions\nWhere to Find the Spare Tyre & Toolkit in A ventro Models\nModel Type Common Location of Spare Tyre & Toolkit\nHatchback Under the boot floor in the rear compartment\nSedan Under the boot floor in the trunk",
+      "\u2022 Some spare tyres are \u201cspace savers\u201d and are not intended for long distances\nor high speeds.\nNeed Help?\nA ventro offersRoadside Assistance across India. If you are unable to change\nthe tyre, please contact your nearest:\n\u2022 A ventro Service Center\n\u2022 Or call A ventro Roadside Assistance (see main service manual/contact\ncard in your glove box)\nFind Service Centers\n\u2022 Mumbai: Andheri East\n\u2022 Delhi: Okhla Industrial Area, Phase II\n\u2022 Bengaluru: Electronic City\n\u2022 Chennai: Guindy Industrial Estate",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment"
+    ],
+    "ground_truth": "In an Aventro SUV, the spare tyre is located under the boot floor or mounted underneath the rear of the car.",
+    "rewritten_query": "spare tyre location Aventro SUV",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q04",
+    "difficulty": "medium",
+    "question": "What steps should I take to safely park before changing a tyre?",
+    "answer": "**Procedure for safely parking before changing a tyre**\n\n1. **Pull over to a safe, flat location** \u2013 choose a spot away from traffic.  \n2. **Turn on your hazard lights** to alert other drivers.  \n3. **Apply the hand\u2011brake** (parking brake) to prevent the vehicle from moving.  \n4. (If available) **Place wheel wedges or blocks** to further prevent movement.  \n\nThese steps ensure the vehicle is secured and the area is safe for changing the tyre.",
+    "contexts": [
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.\n\u2022 Place wheel wedges/blocks (if available) to prevent vehicle movement.\n2. Gather T ools\nYou will need: - Spare tyre (found as per table above) - Jack (usually in toolkit)\n- Lug wrench (in toolkit) - Wheel wedges/blocks (optional) - Vehicle owner\u2019s\nmanual (for reference)\n3. Remove the Wheel Cover/Hubcap\n\u2022 If your wheel has a cover, use the flat end of the wrench or the provided\nlever to gently pry it off.\n1",
+      "\u2022 Some spare tyres are \u201cspace savers\u201d and are not intended for long distances\nor high speeds.\nNeed Help?\nA ventro offersRoadside Assistance across India. If you are unable to change\nthe tyre, please contact your nearest:\n\u2022 A ventro Service Center\n\u2022 Or call A ventro Roadside Assistance (see main service manual/contact\ncard in your glove box)\nFind Service Centers\n\u2022 Mumbai: Andheri East\n\u2022 Delhi: Okhla Industrial Area, Phase II\n\u2022 Bengaluru: Electronic City\n\u2022 Chennai: Guindy Industrial Estate",
+      "A ventro Motors: How to Change a Tyre\nChanging a flat tyre is a basic and essential automotive skill for every A ventro\nMotor car owner. This guide will walk you through:\n\u2022 Steps to change a tyre\n\u2022 Where the spare tyre and toolkit is found in all A ventro models\n\u2022 General tips and safety instructions\nWhere to Find the Spare Tyre & Toolkit in A ventro Models\nModel Type Common Location of Spare Tyre & Toolkit\nHatchback Under the boot floor in the rear compartment\nSedan Under the boot floor in the trunk"
+    ],
+    "ground_truth": "You should pull over to a safe, flat location away from traffic, turn on your hazard lights, apply the handbrake, and place wheel wedges or blocks if available to prevent vehicle movement.",
+    "rewritten_query": "procedure for safely parking before changing a tire",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q05",
+    "difficulty": "medium",
+    "question": "Why should lug nuts be loosened before using the jack?",
+    "answer": "According to the instructions, you\u202f**loosen the lug nuts slightly (turn them counter\u2011clockwise) before you lift the vehicle with the jack**\u202f\u2013 but you do not remove them completely at this stage.",
+    "contexts": [
+      "4. Loosen the Lug Nuts\n\u2022 Use the lug wrench to turn the lug nuts counter-clockwise.\n\u2022 Loosen them slightly \u2013 do not remove fully at this stage.\n5. Lift the V ehicle with the Jack\n\u2022 Position the jack under the jacking point nearest to the flat tyre. Refer to\nyour owner\u2019s manual for the exact point.\n\u2022 Raise the vehicle until the flat tyre is about 6 inches above the ground.\n6. Remove the Lug Nuts and Tyre\n\u2022 Unscrew the lug nuts completely.\n\u2022 Remove the flat tyre and set it aside.\n7. Mount the Spare Tyre",
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment",
+      "\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.\n\u2022 Place wheel wedges/blocks (if available) to prevent vehicle movement.\n2. Gather T ools\nYou will need: - Spare tyre (found as per table above) - Jack (usually in toolkit)\n- Lug wrench (in toolkit) - Wheel wedges/blocks (optional) - Vehicle owner\u2019s\nmanual (for reference)\n3. Remove the Wheel Cover/Hubcap\n\u2022 If your wheel has a cover, use the flat end of the wrench or the provided\nlever to gently pry it off.\n1",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake."
+    ],
+    "ground_truth": "The lug nuts should be loosened while the tyre is still on the ground so that the vehicle's weight provides resistance, preventing the wheel from spinning when force is applied.",
+    "rewritten_query": "lug nuts loosening before jack usage",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q06",
+    "difficulty": "medium",
+    "question": "What is the correct way to tighten lug nuts after fitting the spare tyre?",
+    "answer": "To tighten the lug nuts after installing the spare tire, use the lug wrench to tighten them in a star pattern so the pressure is evenly distributed.",
+    "contexts": [
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment",
+      "4. Loosen the Lug Nuts\n\u2022 Use the lug wrench to turn the lug nuts counter-clockwise.\n\u2022 Loosen them slightly \u2013 do not remove fully at this stage.\n5. Lift the V ehicle with the Jack\n\u2022 Position the jack under the jacking point nearest to the flat tyre. Refer to\nyour owner\u2019s manual for the exact point.\n\u2022 Raise the vehicle until the flat tyre is about 6 inches above the ground.\n6. Remove the Lug Nuts and Tyre\n\u2022 Unscrew the lug nuts completely.\n\u2022 Remove the flat tyre and set it aside.\n7. Mount the Spare Tyre",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.\n\u2022 Place wheel wedges/blocks (if available) to prevent vehicle movement.\n2. Gather T ools\nYou will need: - Spare tyre (found as per table above) - Jack (usually in toolkit)\n- Lug wrench (in toolkit) - Wheel wedges/blocks (optional) - Vehicle owner\u2019s\nmanual (for reference)\n3. Remove the Wheel Cover/Hubcap\n\u2022 If your wheel has a cover, use the flat end of the wrench or the provided\nlever to gently pry it off.\n1",
+      "\u2022 Some spare tyres are \u201cspace savers\u201d and are not intended for long distances\nor high speeds.\nNeed Help?\nA ventro offersRoadside Assistance across India. If you are unable to change\nthe tyre, please contact your nearest:\n\u2022 A ventro Service Center\n\u2022 Or call A ventro Roadside Assistance (see main service manual/contact\ncard in your glove box)\nFind Service Centers\n\u2022 Mumbai: Andheri East\n\u2022 Delhi: Okhla Industrial Area, Phase II\n\u2022 Bengaluru: Electronic City\n\u2022 Chennai: Guindy Industrial Estate"
+    ],
+    "ground_truth": "After fitting the spare tyre, the lug nuts should be tightened using a star pattern to ensure even pressure across the wheel.",
+    "rewritten_query": "tightening lug nuts after installing spare tire",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q07",
+    "difficulty": "medium",
+    "question": "How high should the vehicle be raised when using the jack?",
+    "answer": "I don't have enough information in my knowledge base to answer this.",
+    "contexts": [
+      "4. Loosen the Lug Nuts\n\u2022 Use the lug wrench to turn the lug nuts counter-clockwise.\n\u2022 Loosen them slightly \u2013 do not remove fully at this stage.\n5. Lift the V ehicle with the Jack\n\u2022 Position the jack under the jacking point nearest to the flat tyre. Refer to\nyour owner\u2019s manual for the exact point.\n\u2022 Raise the vehicle until the flat tyre is about 6 inches above the ground.\n6. Remove the Lug Nuts and Tyre\n\u2022 Unscrew the lug nuts completely.\n\u2022 Remove the flat tyre and set it aside.\n7. Mount the Spare Tyre",
+      "\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.\n\u2022 Place wheel wedges/blocks (if available) to prevent vehicle movement.\n2. Gather T ools\nYou will need: - Spare tyre (found as per table above) - Jack (usually in toolkit)\n- Lug wrench (in toolkit) - Wheel wedges/blocks (optional) - Vehicle owner\u2019s\nmanual (for reference)\n3. Remove the Wheel Cover/Hubcap\n\u2022 If your wheel has a cover, use the flat end of the wrench or the provided\nlever to gently pry it off.\n1",
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake."
+    ],
+    "ground_truth": "The vehicle should be raised until the flat tyre is about 6 inches above the ground.",
+    "rewritten_query": "maximum jack lift height for vehicle",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q08",
+    "difficulty": "medium",
+    "question": "What should I do after fitting the spare tyre before resuming normal driving?",
+    "answer": "After the spare tire has been installed you should:\n\n1. **Drive slowly** \u2013 continue at reduced speed until you reach a service location.  \n2. **Have the spare\u2011tire pressure checked** \u2013 go to the nearest A\u202fVenturo Service Center to verify the pressure is correct.  \n3. **Double\u2011check",
+    "contexts": [
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment",
+      "\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.\n\u2022 Place wheel wedges/blocks (if available) to prevent vehicle movement.\n2. Gather T ools\nYou will need: - Spare tyre (found as per table above) - Jack (usually in toolkit)\n- Lug wrench (in toolkit) - Wheel wedges/blocks (optional) - Vehicle owner\u2019s\nmanual (for reference)\n3. Remove the Wheel Cover/Hubcap\n\u2022 If your wheel has a cover, use the flat end of the wrench or the provided\nlever to gently pry it off.\n1",
+      "4. Loosen the Lug Nuts\n\u2022 Use the lug wrench to turn the lug nuts counter-clockwise.\n\u2022 Loosen them slightly \u2013 do not remove fully at this stage.\n5. Lift the V ehicle with the Jack\n\u2022 Position the jack under the jacking point nearest to the flat tyre. Refer to\nyour owner\u2019s manual for the exact point.\n\u2022 Raise the vehicle until the flat tyre is about 6 inches above the ground.\n6. Remove the Lug Nuts and Tyre\n\u2022 Unscrew the lug nuts completely.\n\u2022 Remove the flat tyre and set it aside.\n7. Mount the Spare Tyre",
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake."
+    ],
+    "ground_truth": "After fitting the spare tyre, you should drive slowly and get the spare tyre pressure checked at the nearest Aventro Service Center.",
+    "rewritten_query": "steps to take after installing spare tire before resuming normal driving",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q09",
+    "difficulty": "hard",
+    "question": "Is it safe to drive at highway speeds for a long distance using the spare tyre?",
+    "answer": "The spare tyre that comes with an A\u202fVentro vehicle is a \u201cspace\u2011saver\u201d type, and the documentation explicitly states that such tyres **are not intended for long distances or high speeds**.  \n\nWhen you do use a spare tyre, you should:\n\n- Drive **slowly** and avoid sustained highway speeds.  \n- Have the spare tyre\u2019s pressure checked and the tyre inspected at the nearest A\u202fVentro Service Center as soon as possible.  \n\nIn short, using a spare tyre for extended highway driving or high\u2011speed travel is not safe and should be avoided. If you need to travel long distances, arrange for a proper replacement tyre or professional assistance.",
+    "contexts": [
+      "\u2022 Some spare tyres are \u201cspace savers\u201d and are not intended for long distances\nor high speeds.\nNeed Help?\nA ventro offersRoadside Assistance across India. If you are unable to change\nthe tyre, please contact your nearest:\n\u2022 A ventro Service Center\n\u2022 Or call A ventro Roadside Assistance (see main service manual/contact\ncard in your glove box)\nFind Service Centers\n\u2022 Mumbai: Andheri East\n\u2022 Delhi: Okhla Industrial Area, Phase II\n\u2022 Bengaluru: Electronic City\n\u2022 Chennai: Guindy Industrial Estate",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment",
+      "\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.\n\u2022 Place wheel wedges/blocks (if available) to prevent vehicle movement.\n2. Gather T ools\nYou will need: - Spare tyre (found as per table above) - Jack (usually in toolkit)\n- Lug wrench (in toolkit) - Wheel wedges/blocks (optional) - Vehicle owner\u2019s\nmanual (for reference)\n3. Remove the Wheel Cover/Hubcap\n\u2022 If your wheel has a cover, use the flat end of the wrench or the provided\nlever to gently pry it off.\n1",
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake."
+    ],
+    "ground_truth": "No. Some spare tyres are space savers and are not intended for long distances or high speeds. You should drive slowly and visit an Aventro Service Center as soon as possible.",
+    "rewritten_query": "driving highway speeds long distance spare tyre safety",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q10",
+    "difficulty": "hard",
+    "question": "Does the spare tyre location differ between petrol and electric variants of the same Aventro model?",
+    "answer": "Yes.\u202fAccording to the Aventro Motors \u201cHow to Change a Tyre\u201d guide, **all variants\u2014including petrol, diesel, electric and hybrid\u2014use the same compartment arrangement for the spare tyre**.\u202fTherefore, for any given Aventro model, the spare tyre (and toolkit) are found in the identical location regardless of whether the vehicle is a petrol or an electric version (e.g., under the boot floor in the trunk for sedans, under the boot floor in the rear compartment for hatchbacks, etc.).",
+    "contexts": [
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.",
+      "A ventro Motors: How to Change a Tyre\nChanging a flat tyre is a basic and essential automotive skill for every A ventro\nMotor car owner. This guide will walk you through:\n\u2022 Steps to change a tyre\n\u2022 Where the spare tyre and toolkit is found in all A ventro models\n\u2022 General tips and safety instructions\nWhere to Find the Spare Tyre & Toolkit in A ventro Models\nModel Type Common Location of Spare Tyre & Toolkit\nHatchback Under the boot floor in the rear compartment\nSedan Under the boot floor in the trunk",
+      "\u2022 Some spare tyres are \u201cspace savers\u201d and are not intended for long distances\nor high speeds.\nNeed Help?\nA ventro offersRoadside Assistance across India. If you are unable to change\nthe tyre, please contact your nearest:\n\u2022 A ventro Service Center\n\u2022 Or call A ventro Roadside Assistance (see main service manual/contact\ncard in your glove box)\nFind Service Centers\n\u2022 Mumbai: Andheri East\n\u2022 Delhi: Okhla Industrial Area, Phase II\n\u2022 Bengaluru: Electronic City\n\u2022 Chennai: Guindy Industrial Estate",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment"
+    ],
+    "ground_truth": "No. All variants including Petrol, Diesel, Electric, and Hybrid follow the same compartment arrangement for the spare tyre and toolkit.",
+    "rewritten_query": "spare tyre location petrol electric variants same Aventro model",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q11",
+    "difficulty": "hard",
+    "question": "Which Aventro service center should I visit if I am in Hyderabad?",
+    "answer": "The Aventro service center in Hyderabad is located at **Banjara Hills**. For a complete list of locations and directions, you can visit the Aventro Motors website.",
+    "contexts": [
+      "\u2022 Chennai: Guindy Industrial Estate\n\u2022 Hyderabad: Banjara Hills\n\u2022 Pune: Wakad\n\u2022 Kolkata: Salt Lake, Sector V\n\u2022 Ahmedabad: Vastrapur\n\u2022 Jaipur: Mansarovar\n\u2022 \u2026 and many more across India!\nFor full list and directions, visit A ventro Motors Website.\nDrive safe with A ventro Motors!\n3",
+      "\u2022 Some spare tyres are \u201cspace savers\u201d and are not intended for long distances\nor high speeds.\nNeed Help?\nA ventro offersRoadside Assistance across India. If you are unable to change\nthe tyre, please contact your nearest:\n\u2022 A ventro Service Center\n\u2022 Or call A ventro Roadside Assistance (see main service manual/contact\ncard in your glove box)\nFind Service Centers\n\u2022 Mumbai: Andheri East\n\u2022 Delhi: Okhla Industrial Area, Phase II\n\u2022 Bengaluru: Electronic City\n\u2022 Chennai: Guindy Industrial Estate",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment",
+      "4. Loosen the Lug Nuts\n\u2022 Use the lug wrench to turn the lug nuts counter-clockwise.\n\u2022 Loosen them slightly \u2013 do not remove fully at this stage.\n5. Lift the V ehicle with the Jack\n\u2022 Position the jack under the jacking point nearest to the flat tyre. Refer to\nyour owner\u2019s manual for the exact point.\n\u2022 Raise the vehicle until the flat tyre is about 6 inches above the ground.\n6. Remove the Lug Nuts and Tyre\n\u2022 Unscrew the lug nuts completely.\n\u2022 Remove the flat tyre and set it aside.\n7. Mount the Spare Tyre"
+    ],
+    "ground_truth": "The Aventro Service Center in Hyderabad is located in Banjara Hills.",
+    "rewritten_query": "Aventro service center locations Hyderabad",
+    "chunks_used": 5
+  },
+  {
+    "id": "Q12",
+    "difficulty": "trap",
+    "question": "What is the recommended tyre pressure for an Aventro Hatchback spare tyre?",
+    "answer": "I don't have enough information in my knowledge base to answer this.",
+    "contexts": [
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment",
+      "A ventro Motors: How to Change a Tyre\nChanging a flat tyre is a basic and essential automotive skill for every A ventro\nMotor car owner. This guide will walk you through:\n\u2022 Steps to change a tyre\n\u2022 Where the spare tyre and toolkit is found in all A ventro models\n\u2022 General tips and safety instructions\nWhere to Find the Spare Tyre & Toolkit in A ventro Models\nModel Type Common Location of Spare Tyre & Toolkit\nHatchback Under the boot floor in the rear compartment\nSedan Under the boot floor in the trunk",
+      "\u2022 Some spare tyres are \u201cspace savers\u201d and are not intended for long distances\nor high speeds.\nNeed Help?\nA ventro offersRoadside Assistance across India. If you are unable to change\nthe tyre, please contact your nearest:\n\u2022 A ventro Service Center\n\u2022 Or call A ventro Roadside Assistance (see main service manual/contact\ncard in your glove box)\nFind Service Centers\n\u2022 Mumbai: Andheri East\n\u2022 Delhi: Okhla Industrial Area, Phase II\n\u2022 Bengaluru: Electronic City\n\u2022 Chennai: Guindy Industrial Estate",
+      "4. Loosen the Lug Nuts\n\u2022 Use the lug wrench to turn the lug nuts counter-clockwise.\n\u2022 Loosen them slightly \u2013 do not remove fully at this stage.\n5. Lift the V ehicle with the Jack\n\u2022 Position the jack under the jacking point nearest to the flat tyre. Refer to\nyour owner\u2019s manual for the exact point.\n\u2022 Raise the vehicle until the flat tyre is about 6 inches above the ground.\n6. Remove the Lug Nuts and Tyre\n\u2022 Unscrew the lug nuts completely.\n\u2022 Remove the flat tyre and set it aside.\n7. Mount the Spare Tyre"
+    ],
+    "ground_truth": "The document does not specify the recommended tyre pressure for any Aventro model. This information is not available in the tyre-changing guide.",
+    "rewritten_query": "recommended tyre pressure for Aventro Hatchback spare tyre",
+    "chunks_used": 5
+  }
+]
