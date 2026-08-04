@@ -53,13 +53,13 @@ QUESTION:
 ANSWER:"""
 
 
-def run_advanced_rag(query: str, top_k: int = TOP_K) -> dict:
+def run_advanced_rag_pipeline(query: str, top_k: int = TOP_K) -> dict:
     """
     Advanced RAG pipeline:
     query → rewrite → dense + BM25 → RRF fusion → rerank → prompt → LLM
     """
 
-    logger.infor(f"Advanced RAG pipeline started for : {query[:60]}")
+    logger.info(f"Advanced RAG pipeline started for : {query[:60]}")
 
     # Stage 1: Query rewriting
     rewritten = rewrite_query(query)
@@ -76,14 +76,15 @@ def run_advanced_rag(query: str, top_k: int = TOP_K) -> dict:
     )
 
     # Stage 4: Rerank
-    reranked = _reranker.rerank(rewritten, candidates=fused, top_k=top_k)
+    reranked = _reranker.rerank(rewritten, candidates=fused)
 
     if not reranked:
         return {
-            "answer":"No relevant documents found in the knoweldge base.",
+            "answer": "No relevant documents found in the knoweldge base.",
             "sources": [],
-            "query" : query,
-            "rewritten_query" : rewritten
+            "chunks_used": 0,
+            "query": query,
+            "rewritten_query": rewritten,
         }
 
     # Stage 5: Prompt + LLM
@@ -95,7 +96,7 @@ def run_advanced_rag(query: str, top_k: int = TOP_K) -> dict:
     return {
         "answer" : answer,
         "sources" : [c["metadata"].get("filename", "unknown") for c in reranked],
-        "chunnks_used" : len(reranked),
+        "chunks_used" : len(reranked),
         "query" : query,
         "rewritten_query" : rewritten
     }

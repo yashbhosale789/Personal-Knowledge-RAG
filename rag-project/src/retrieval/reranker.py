@@ -17,6 +17,7 @@ class CrossEncoderReranker:
         self._top_k = top_k
         logger.info(f"CrossEncoder Reranker loaded: {model_name}")
 
+
     def rerank(self, query: str, candidates: list[dict], text_key: str = "text") -> list[dict]:
         """
         Args:
