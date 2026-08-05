@@ -9,13 +9,53 @@ load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import requests
+from config import (
+    EVAL_PROVIDER,
+    OPENROUTER_EVALUATOR_MODEL,
+    OPENROUTER_EVALUATOR_URL,
+    OPENROUTER_EVALUATOR_KEY,
+    OPENROUTER_REQUEST_DELAY,
+    GROQ_EVALUATOR_MODEL,
+    GROQ_API_URL,
+    GROQ_EVALUATOR_KEY,
+    GROQ_REQUEST_DELAY,
+    GEMINI_EVALUATOR_MODEL,
+    GEMINI_API_URL,
+    GEMINI_EVALUATOR_KEY,
+    GEMINI_REQUEST_DELAY,
+)
 
 RESULTS_PATH = Path(__file__).parent / "eval_results.json"
 SCORES_PATH = Path(__file__).parent / "ragas_scores.json"
 
-EVALUATOR_MODEL = "nvidia/nemotron-3-nano-30b-a3b:free"
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
-REQUEST_DELAY = 8  # seconds between LLM calls
+# Resolve active provider config at startup
+_PROVIDERS = {
+    "openrouter": (
+        OPENROUTER_EVALUATOR_MODEL,
+        OPENROUTER_EVALUATOR_URL,
+        OPENROUTER_EVALUATOR_KEY,
+        OPENROUTER_REQUEST_DELAY,
+    ),
+    "groq": (
+        GROQ_EVALUATOR_MODEL,
+        GROQ_API_URL,
+        GROQ_EVALUATOR_KEY,
+        GROQ_REQUEST_DELAY,
+    ),
+    "gemini": (
+        GEMINI_EVALUATOR_MODEL,
+        GEMINI_API_URL,
+        GEMINI_EVALUATOR_KEY,
+        GEMINI_REQUEST_DELAY,
+    ),
+}
+
+if EVAL_PROVIDER not in _PROVIDERS:
+    raise ValueError(
+        f"Unknown EVAL_PROVIDER '{EVAL_PROVIDER}'. Choose: openrouter | groq | gemini"
+    )
+
+ACTIVE_MODEL, ACTIVE_URL, ACTIVE_KEY_ENV, ACTIVE_DELAY = _PROVIDERS[EVAL_PROVIDER]
 
 
 # ---------------------------------------------------------------------------
@@ -25,49 +65,50 @@ REQUEST_DELAY = 8  # seconds between LLM calls
 
 def call_evaluator(prompt: str) -> str:
     headers = {
-        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+        "Authorization": f"Bearer {os.getenv(ACTIVE_KEY_ENV)}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/personal-kb-rag",
     }
     payload = {
-        "model": EVALUATOR_MODEL,
+        "model": ACTIVE_MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.0,
         "max_tokens": 1024,
     }
-    response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
+    response = requests.post(ACTIVE_URL, headers=headers, json=payload, timeout=60)
     data = response.json()
 
     if "choices" not in data:
-        raise RuntimeError(f"Unexpected response: {data}")
+        raise RuntimeError(f"Unexpected response from {EVAL_PROVIDER}: {data}")
 
     return data["choices"][0]["message"]["content"].strip()
 
 
 # ---------------------------------------------------------------------------
-# Metric: Faithfulness
-# Decompose answer into claims, verify each against contexts.
-# Score = supported_claims / total_claims
+# Metrics
 # ---------------------------------------------------------------------------
 
 
 def score_faithfulness(question: str, answer: str, contexts: list[str]) -> float:
     context_block = "\n\n".join(f"[C{i+1}] {c}" for i, c in enumerate(contexts))
 
-    # Step 1: extract atomic claims from answer
-    claim_prompt = f"""Break the following answer into individual atomic claims.
-Each claim must be a single verifiable statement.
-Return ONLY a JSON array of strings. No explanation. No markdown.
+    prompt = f"""You are evaluating whether an answer is faithful to the given context.
+
+Context:
+{context_block}
 
 Answer: {answer}
 
-Example output: ["The sky is blue.", "Water boils at 100 degrees."]"""
+Instructions:
+1. Break the answer into individual atomic claims.
+2. For each claim, judge whether it is supported by the context.
+3. Return ONLY a JSON object in this format:
+{{"total": <int>, "supported": <int>}}
+No explanation. No markdown."""
 
-    raw = call_evaluator(claim_prompt)
-    time.sleep(REQUEST_DELAY)
+    raw = call_evaluator(prompt)
+    time.sleep(ACTIVE_DELAY)
 
     try:
-        # Strip markdown fences if model adds them
         clean = (
             raw.strip()
             .removeprefix("```json")
@@ -75,38 +116,10 @@ Example output: ["The sky is blue.", "Water boils at 100 degrees."]"""
             .removesuffix("```")
             .strip()
         )
-        claims = json.loads(clean)
+        data = json.loads(clean)
+        return round(data["supported"] / data["total"], 4) if data["total"] > 0 else 1.0
     except Exception:
-        # If parsing fails, treat as single claim
-        claims = [answer]
-
-    if not claims:
-        return 1.0
-
-    # Step 2: verify each claim against context
-    supported = 0
-    for claim in claims:
-        verify_prompt = f"""Given the following context, is the claim supported?
-Answer ONLY with YES or NO.
-
-Context:
-{context_block}
-
-Claim: {claim}"""
-
-        verdict = call_evaluator(verify_prompt).strip().upper()
-        time.sleep(REQUEST_DELAY)
-        if verdict.startswith("YES"):
-            supported += 1
-
-    return round(supported / len(claims), 4)
-
-
-# ---------------------------------------------------------------------------
-# Metric: Context Precision
-# For each retrieved chunk, is it relevant to the ground truth?
-# Score = relevant_chunks / total_chunks
-# ---------------------------------------------------------------------------
+        return 0.0
 
 
 def score_context_precision(
@@ -115,57 +128,71 @@ def score_context_precision(
     if not contexts:
         return 0.0
 
-    relevant = 0
-    for i, ctx in enumerate(contexts):
-        prompt = f"""Given the question and the expected answer, is the following context chunk useful for producing that answer?
-Answer ONLY with YES or NO.
+    chunks_block = "\n\n".join(f"[C{i+1}] {c}" for i, c in enumerate(contexts))
+
+    prompt = f"""You are evaluating whether retrieved context chunks are relevant.
 
 Question: {question}
 Expected answer: {ground_truth}
-Context chunk: {ctx}"""
 
-        verdict = call_evaluator(prompt).strip().upper()
-        time.sleep(REQUEST_DELAY)
-        if verdict.startswith("YES"):
-            relevant += 1
+Retrieved chunks:
+{chunks_block}
 
-    return round(relevant / len(contexts), 4)
+Instructions:
+For each chunk, judge whether it is useful for producing the expected answer.
+Return ONLY a JSON object in this format:
+{{"total": <int>, "relevant": <int>}}
+No explanation. No markdown."""
 
+    raw = call_evaluator(prompt)
+    time.sleep(ACTIVE_DELAY)
 
-# ---------------------------------------------------------------------------
-# Metric: Context Recall
-# For each sentence in ground truth, is it covered by the retrieved contexts?
-# Score = covered_sentences / total_sentences
-# ---------------------------------------------------------------------------
+    try:
+        clean = (
+            raw.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+            .strip()
+        )
+        data = json.loads(clean)
+        return round(data["relevant"] / data["total"], 4) if data["total"] > 0 else 0.0
+    except Exception:
+        return 0.0
 
 
 def score_context_recall(ground_truth: str, contexts: list[str]) -> float:
     context_block = "\n\n".join(f"[C{i+1}] {c}" for i, c in enumerate(contexts))
 
-    # Split ground truth into sentences
-    sentences = [
-        s.strip() for s in ground_truth.replace("?", ".").split(".") if s.strip()
-    ]
+    prompt = f"""You are evaluating whether retrieved contexts cover the expected answer.
 
-    if not sentences:
-        return 1.0
+Expected answer: {ground_truth}
 
-    covered = 0
-    for sentence in sentences:
-        prompt = f"""Can the following statement be inferred or found in the context below?
-Answer ONLY with YES or NO.
+Retrieved contexts:
+{context_block}
 
-Statement: {sentence}
+Instructions:
+1. Split the expected answer into individual sentences.
+2. For each sentence, judge whether it can be inferred from the retrieved contexts.
+3. Return ONLY a JSON object in this format:
+{{"total": <int>, "covered": <int>}}
+No explanation. No markdown."""
 
-Context:
-{context_block}"""
+    raw = call_evaluator(prompt)
+    time.sleep(ACTIVE_DELAY)
 
-        verdict = call_evaluator(prompt).strip().upper()
-        time.sleep(REQUEST_DELAY)
-        if verdict.startswith("YES"):
-            covered += 1
-
-    return round(covered / len(sentences), 4)
+    try:
+        clean = (
+            raw.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+            .strip()
+        )
+        data = json.loads(clean)
+        return round(data["covered"] / data["total"], 4) if data["total"] > 0 else 1.0
+    except Exception:
+        return 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -176,7 +203,7 @@ Context:
 def main():
     print("=" * 60)
     print("Phase 3 — RAG Evaluation (LLM-as-Judge)")
-    print(f"Evaluator model: {EVALUATOR_MODEL}")
+    print(f"Provider: {EVAL_PROVIDER} — model: {ACTIVE_MODEL}")
     print("=" * 60)
 
     if not RESULTS_PATH.exists():
@@ -189,9 +216,24 @@ def main():
     valid = [r for r in records if not r["answer"].startswith("ERROR")]
     print(f"\nEvaluating {len(valid)} records...\n")
 
+    # Resume support
+    if SCORES_PATH.exists():
+        with open(SCORES_PATH) as f:
+            existing = json.load(f)
+        already_scored = {r["id"] for r in existing}
+        print(f"Resuming — {len(already_scored)} already scored: {already_scored}\n")
+    else:
+        existing = []
+        already_scored = set()
+
     scored = []
     for i, r in enumerate(valid):
         qid = r["id"]
+
+        if qid in already_scored:
+            print(f"[{i+1}/{len(valid)}] {qid} — skipping (already scored)")
+            continue
+
         print(f"[{i+1}/{len(valid)}] {qid} — {r['question'][:55]}...")
 
         faith = score_faithfulness(r["question"], r["answer"], r["contexts"])
@@ -212,13 +254,23 @@ def main():
             }
         )
 
-    # Aggregate
-    avg_faith = round(sum(s["faithfulness"] for s in scored) / len(scored), 4)
-    avg_prec = round(sum(s["context_precision"] for s in scored) / len(scored), 4)
-    avg_rec = round(sum(s["context_recall"] for s in scored) / len(scored), 4)
+    all_scored = existing + scored
+
+    with open(SCORES_PATH, "w") as f:
+        json.dump(all_scored, f, indent=2)
+
+    if not all_scored:
+        print("No scores yet.")
+        return
+
+    avg_faith = round(sum(s["faithfulness"] for s in all_scored) / len(all_scored), 4)
+    avg_prec = round(
+        sum(s["context_precision"] for s in all_scored) / len(all_scored), 4
+    )
+    avg_rec = round(sum(s["context_recall"] for s in all_scored) / len(all_scored), 4)
 
     print("\n" + "=" * 60)
-    print("FINAL SCORES")
+    print(f"SCORES SO FAR ({len(all_scored)}/{len(valid)} questions)")
     print("=" * 60)
     print(f"  Faithfulness:      {avg_faith}")
     print(f"  Context Precision: {avg_prec}")
@@ -226,7 +278,7 @@ def main():
 
     print("\nPer-question:")
     print("-" * 60)
-    for s in scored:
+    for s in all_scored:
         print(
             f"  {s['id']} ({s['difficulty']:<6}) "
             f"F={s['faithfulness']:.2f}  "
@@ -234,9 +286,6 @@ def main():
             f"R={s['context_recall']:.2f}  "
             f"— {s['question'][:45]}"
         )
-
-    with open(SCORES_PATH, "w") as f:
-        json.dump(scored, f, indent=2)
 
     print(f"\nFull results saved to: {SCORES_PATH}")
 

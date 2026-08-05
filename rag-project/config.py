@@ -5,30 +5,78 @@ BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data" / "documents"
 STORAGE_DIR = BASE_DIR / "storage" / "chroma"
 
-# Enbeddings
+# Embeddings
 EMBEDDINGS_MODEL_NAME = "BAAI/bge-small-en-v1.5"
-EMBEDDING_DIAMENSION = 384  # bge small output size
+EMBEDDING_DIAMENSION = 384
 
 # Chunking
-CHUNK_SIZE = 512  # tokens (approximate — we use character count)
-CHUNK_OVERLAP = 64  # overlap between adjacent chunks
-CHUNKS_PATH = BASE_DIR / "storage" / "chunks.json"  # Storage
+CHUNK_SIZE = 512
+CHUNK_OVERLAP = 64
+CHUNKS_PATH = BASE_DIR / "storage" / "chunks.json"
 
-# Retrival
-TOP_K = 5  # number of chunks to retrieve
-RRF_K = 60  # Number of Reciprocal Rank Fusion to retrieve
-RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2" 
+# Retrieval
+TOP_K = 5
+RRF_K = 60
+RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 # Chroma
 CHROMA_COLLECTION = "personal_kb"
 
-# LLM
+# -----------------------------------------------------------------------
+# Pipeline LLM — switch PIPELINE_PROVIDER to change model
+# -----------------------------------------------------------------------
+PIPELINE_PROVIDER = "groq"  # "openrouter" | "groq" | "gemini"
+
+# OpenRouter — 50 req/day free
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_MODEL = "nvidia/nemotron-3-nano-30b-a3b:free"        # Use till it expires
-# OPENROUTER_MODEL = "inclusionai/ling-3.0-flash:free"            # second option
+OPENROUTER_API_KEY = "OPENROUTER_API_KEY"
+OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
+# Other free options:
+# "inclusionai/ling-3.0-flash:free"
+# "nvidia/nemotron-3-nano-30b-a3b:free"
+# "poolside/laguna-s-2.1:free"
 
-# PROMPTS
+# Groq — 14,400 req/day free, fastest inference
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_API_KEY = "GROQ_API_KEY"
+GROQ_PIPELINE_MODEL = "llama-3.3-70b-versatile"
+# Other free options:
+# "llama-3.1-8b-instant"     — fastest, weaker
+# "openai/gpt-oss-20b"       — fast, OpenAI open-weight
+# "openai/gpt-oss-120b"      — strongest on Groq
 
+# Gemini — 1,500 req/day free via AI Studio
+GEMINI_API_URL = (
+    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+)
+GEMINI_API_KEY = "GEMINI_API_KEY"
+GEMINI_PIPELINE_MODEL = "gemini-2.5-flash"
+# Other free options:
+# "gemini-2.5-flash-lite"    — faster, cheaper, slightly weaker
+
+# -----------------------------------------------------------------------
+# Evaluator LLM — switch EVAL_PROVIDER to change evaluator
+# -----------------------------------------------------------------------
+EVAL_PROVIDER = "groq"  # "openrouter" | "groq" | "gemini"
+
+OPENROUTER_EVALUATOR_MODEL = "poolside/laguna-s-2.1:free"
+OPENROUTER_EVALUATOR_URL = OPENROUTER_API_URL
+OPENROUTER_EVALUATOR_KEY = "OPENROUTER_API_KEY"
+OPENROUTER_REQUEST_DELAY = 5
+
+GROQ_EVALUATOR_MODEL = "llama-3.3-70b-versatile"
+GROQ_EVALUATOR_URL = GROQ_API_URL
+GROQ_EVALUATOR_KEY = "GROQ_API_KEY"
+GROQ_REQUEST_DELAY = 10
+
+GEMINI_EVALUATOR_MODEL = "gemini-2.5-flash"
+GEMINI_EVALUATOR_URL = GEMINI_API_URL
+GEMINI_EVALUATOR_KEY = "GEMINI_API_KEY"
+GEMINI_REQUEST_DELAY = 1
+
+# -----------------------------------------------------------------------
+# Prompts
+# -----------------------------------------------------------------------
 REWRITE_SYSTEM = """You are a search query optimizer.
 Your job is to rewrite a user's conversational question into a precise, self-contained search query.
 
