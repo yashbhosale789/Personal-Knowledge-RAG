@@ -10,58 +10,71 @@ from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s — %(message)s")
 
-DATASET_PATH = Path(__file__).parent / "test_dataset.json"
-OUTPUT_PATH = Path(__file__).parent / "eval_results.json"
-REQUEST_DELAY = 3  # seconds between calls — free tier rate limit
+DATASET_PATH  = Path(__file__).parent / "test_dataset.json"
+OUTPUT_PATH   = Path(__file__).parent / "eval_results.json"
+REQUEST_DELAY = 3
 
 
 def collect_results(dataset: list[dict]) -> list[dict]:
+
+    # Resume support — skip already-completed questions
+    if OUTPUT_PATH.exists():
+        with open(OUTPUT_PATH) as f:
+            existing = json.load(f)
+        already_done = {r["id"] for r in existing if not r["answer"].startswith("ERROR")}
+        print(f"Resuming — {len(already_done)} already completed: {already_done}\n")
+    else:
+        existing = []
+        already_done = set()
+
     results = []
 
     for i, item in enumerate(dataset):
-        qid = item["id"]
-        question = item["question"]
+        qid          = item["id"]
+        question     = item["question"]
         ground_truth = item["ground_truth"]
-        difficulty = item["difficulty"]
+        difficulty   = item["difficulty"]
+
+        if qid in already_done:
+            print(f"[{i+1}/{len(dataset)}] {qid} — skipping (already done)")
+            continue
 
         print(f"[{i+1}/{len(dataset)}] {qid} ({difficulty}): {question[:70]}...")
 
-        try:
-            output = run_advanced_rag_pipeline(question, return_contexts=True)
+        # Retry up to 3 times with backoff on rate limit errors
+        output = None
+        for attempt in range(3):
+            try:
+                output = run_advanced_rag_pipeline(question, return_contexts=True)
+                break
+            except Exception as e:
+                if "429" in str(e) and attempt < 2:
+                    wait = 60 * (attempt + 1)
+                    print(f"    Rate limited — waiting {wait}s before retry {attempt+2}/3...")
+                    time.sleep(wait)
+                else:
+                    raise
 
+        if output is not None:
             record = {
-                "id": qid,
-                "difficulty": difficulty,
-                "question": question,
-                "answer": output["answer"],
-                "contexts": output["contexts"],  # list[str] of chunk texts
-                "ground_truth": ground_truth,
+                "id":              qid,
+                "difficulty":      difficulty,
+                "question":        question,
+                "answer":          output["answer"],
+                "contexts":        output["contexts"],
+                "ground_truth":    ground_truth,
                 "rewritten_query": output.get("rewritten_query", ""),
-                "chunks_used": output.get("chunks_used", 0),
+                "chunks_used":     output.get("chunks_used", 0),
             }
-
             results.append(record)
             print(f"[SUCCESS] {output['answer'][:80]}...")
-
-        except Exception as e:
-            print(f"[ERROR] FAILED: {e}")
-            results.append(
-                {
-                    "id": qid,
-                    "difficulty": difficulty,
-                    "question": question,
-                    "answer": f"ERROR: {e}",
-                    "contexts": [],
-                    "ground_truth": ground_truth,
-                    "rewritten_query": "",
-                    "chunks_used": 0,
-                }
-            )
-
+        
         if i < len(dataset) - 1:
             time.sleep(REQUEST_DELAY)
 
-    return results
+    # Merge new results with already-completed ones
+    completed = [r for r in existing if not r["answer"].startswith("ERROR")]
+    return completed + results
 
 
 def main():
