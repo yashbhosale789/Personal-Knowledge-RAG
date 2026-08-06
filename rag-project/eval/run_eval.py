@@ -41,10 +41,10 @@ def collect_results(dataset: list[dict]) -> list[dict]:
             }
 
             results.append(record)
-            print(f"    ✓ {output['answer'][:80]}...")
+            print(f"[SUCCESS] {output['answer'][:80]}...")
 
         except Exception as e:
-            print(f"    ✗ FAILED: {e}")
+            print(f"[ERROR] FAILED: {e}")
             results.append(
                 {
                     "id": qid,

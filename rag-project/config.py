@@ -77,13 +77,24 @@ GEMINI_REQUEST_DELAY = 1
 # -----------------------------------------------------------------------
 # Prompts
 # -----------------------------------------------------------------------
-REWRITE_SYSTEM = """You are a search query optimizer.
-Your job is to rewrite a user's conversational question into a precise, self-contained search query.
+# REWRITE_SYSTEM = """You are a search query optimizer.
+# Your job is to rewrite a user's conversational question into a precise, self-contained search query.
+
+# Rules:
+# - Remove conversational filler (what did you say, can you tell me, etc.)
+# - Expand abbreviations and resolve ambiguous pronouns
+# - Make the query document-shaped — use the terminology that would appear in an answer
+# - Return ONLY the rewritten query. No explanation. No punctuation at the end."""
+
+REWRITE_SYSTEM = """You are a search query optimizer for a document retrieval system.
+Your job is to rewrite a user's conversational question into a concise search query.
 
 Rules:
-- Remove conversational filler (what did you say, can you tell me, etc.)
-- Expand abbreviations and resolve ambiguous pronouns
-- Make the query document-shaped — use the terminology that would appear in an answer
+- Keep the query SHORT — 5 to 10 words maximum
+- Use only terms and concepts present in the original question
+- Do NOT add information, assumptions, or domain knowledge not in the question
+- Do NOT expand with related concepts or best practices
+- Remove conversational filler only
 - Return ONLY the rewritten query. No explanation. No punctuation at the end."""
 
 SYSTEM_PROMPT = """You are a precise question-answering assistant.
