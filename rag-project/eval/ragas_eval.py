@@ -1,3 +1,7 @@
+import numpy as np
+from sentence_transformers import SentenceTransformer
+from config import EMBEDDINGS_MODEL_NAME
+
 import json
 import os
 import sys
@@ -57,6 +61,7 @@ if EVAL_PROVIDER not in _PROVIDERS:
 
 ACTIVE_MODEL, ACTIVE_URL, ACTIVE_KEY_ENV, ACTIVE_DELAY = _PROVIDERS[EVAL_PROVIDER]
 
+_embedder = SentenceTransformer(EMBEDDINGS_MODEL_NAME)
 
 # ---------------------------------------------------------------------------
 # LLM call
@@ -195,6 +200,54 @@ No explanation. No markdown."""
         return 0.0
 
 
+def score_answer_relevancy(question: str, answer: str, n: int = 3) -> float:
+    """
+    Generates N synthetic questions from the answer, embeds them,
+    and computes mean cosine similarity to the original question.
+    Score = mean cosine similarity across N synthetic questions.
+    """
+
+    # Skip if answer is a refusal — no claims to generate questions from
+    if "don't have enough information" in answer.lower():
+        return float("nan")  # excluded from aggregate, not penalised
+
+    prompt = f"""Given the following answer, generate {n} different questions that this answer could be responding to.
+Return ONLY a JSON array of {n} question strings. No explanation. No markdown.
+
+Answer: {answer}
+
+Example output: ["What color is the sky?", "Why is the sky blue?", "What does the sky look like?"]"""
+
+    raw = call_evaluator(prompt)
+    time.sleep(ACTIVE_DELAY)
+
+    try:
+        clean = (
+            raw.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+            .strip()
+        )
+        synthetic_question = json.load(clean)
+        if not isinstance(synthetic_question, list) or len(synthetic_question) == 0:
+            return 0.0
+
+    except Exception:
+        return 0.0
+
+    # Embed original question and all synthetic questions
+    all_texts = [question] + synthetic_question
+    embeddings = _embedder.encode(all_texts, normalize_embeddings=True)
+
+    original_emb = embeddings[0]
+    synthetic_emb = embeddings[1:]
+
+    # Cosine similarity = dot product when embeddings are normalised
+    similarities = [float(np.dot(original_emb, syn_emb)) for syn_emb in synthetic_emb]
+    return round(float(np.mean(similarities)), 4)
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -245,6 +298,9 @@ def main():
         rec = score_context_recall(r["ground_truth"], r["contexts"])
         print(f"  context_recall:    {rec}")
 
+        ar = score_answer_relevancy(r["question"], r["answer"])
+        print(f"  answer_relevancy:  {ar}")
+
         scored.append(
             {
                 **r,
@@ -263,11 +319,20 @@ def main():
         print("No scores yet.")
         return
 
+    ar_scores = [
+        s["answer_relevancy"]
+        for s in all_scored
+        if not (
+            isinstance(s["answer_relevancy"], float) and np.isnan(s["answer_relevancy"])
+        )
+    ]
+
     avg_faith = round(sum(s["faithfulness"] for s in all_scored) / len(all_scored), 4)
     avg_prec = round(
         sum(s["context_precision"] for s in all_scored) / len(all_scored), 4
     )
     avg_rec = round(sum(s["context_recall"] for s in all_scored) / len(all_scored), 4)
+    avg_ar = round(sum(ar_scores) / len(ar_scores), 4) if ar_scores else float("nan")
 
     print("\n" + "=" * 60)
     print(f"SCORES SO FAR ({len(all_scored)}/{len(valid)} questions)")
@@ -275,6 +340,7 @@ def main():
     print(f"  Faithfulness:      {avg_faith}")
     print(f"  Context Precision: {avg_prec}")
     print(f"  Context Recall:    {avg_rec}")
+    print(f"  Answer Relevancy:  {avg_ar} (excludes refusal answers)")
 
     print("\nPer-question:")
     print("-" * 60)
