@@ -16,7 +16,8 @@
     "chunks_used": 5,
     "faithfulness": 1.0,
     "context_precision": 0.4,
-    "context_recall": 1.0
+    "context_recall": 1.0,
+    "answer_relevancy": 0.0
   },
   {
     "id": "Q02",
@@ -35,7 +36,8 @@
     "chunks_used": 5,
     "faithfulness": 1.0,
     "context_precision": 0.6,
-    "context_recall": 1.0
+    "context_recall": 1.0,
+    "answer_relevancy": 0.0
   },
   {
     "id": "Q03",
@@ -54,7 +56,8 @@
     "chunks_used": 5,
     "faithfulness": 1.0,
     "context_precision": 0.4,
-    "context_recall": 1.0
+    "context_recall": 1.0,
+    "answer_relevancy": 0.0
   },
   {
     "id": "Q04",
@@ -73,7 +76,8 @@
     "chunks_used": 5,
     "faithfulness": 1.0,
     "context_precision": 0.2,
-    "context_recall": 1.0
+    "context_recall": 1.0,
+    "answer_relevancy": 0.0
   },
   {
     "id": "Q05",
@@ -92,7 +96,8 @@
     "chunks_used": 5,
     "faithfulness": 1.0,
     "context_precision": 0.2,
-    "context_recall": 1.0
+    "context_recall": 1.0,
+    "answer_relevancy": 0.0
   },
   {
     "id": "Q06",
@@ -111,7 +116,8 @@
     "chunks_used": 5,
     "faithfulness": 1.0,
     "context_precision": 0.2,
-    "context_recall": 1.0
+    "context_recall": 1.0,
+    "answer_relevancy": 0.0
   },
   {
     "id": "Q07",
@@ -130,7 +136,8 @@
     "chunks_used": 5,
     "faithfulness": 1.0,
     "context_precision": 0.2,
-    "context_recall": 1.0
+    "context_recall": 1.0,
+    "answer_relevancy": 0.0
   },
   {
     "id": "Q08",
@@ -149,7 +156,8 @@
     "chunks_used": 5,
     "faithfulness": 0.0,
     "context_precision": 0.2,
-    "context_recall": 1.0
+    "context_recall": 1.0,
+    "answer_relevancy": NaN
   },
   {
     "id": "Q09",
@@ -167,8 +175,9 @@
     "rewritten_query": "driving with spare tyre at highway speeds",
     "chunks_used": 5,
     "faithfulness": 1.0,
-    "context_precision": 0.6,
-    "context_recall": 0.5
+    "context_precision": 0.4,
+    "context_recall": 0.5,
+    "answer_relevancy": 0.0
   },
   {
     "id": "Q10",
@@ -187,7 +196,8 @@
     "chunks_used": 5,
     "faithfulness": 1.0,
     "context_precision": 0.6,
-    "context_recall": 1.0
+    "context_recall": 1.0,
+    "answer_relevancy": 0.0
   },
   {
     "id": "Q11",
@@ -206,7 +216,8 @@
     "chunks_used": 5,
     "faithfulness": 0.5,
     "context_precision": 0.2,
-    "context_recall": 1.0
+    "context_recall": 1.0,
+    "answer_relevancy": NaN
   },
   {
     "id": "Q12",
@@ -225,6 +236,7 @@
     "chunks_used": 5,
     "faithfulness": 0.0,
     "context_precision": 0.0,
-    "context_recall": 0.0
+    "context_recall": 0.0,
+    "answer_relevancy": NaN
   }
 ]

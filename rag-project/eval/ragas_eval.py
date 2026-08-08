@@ -1,7 +1,3 @@
-import numpy as np
-from sentence_transformers import SentenceTransformer
-from config import EMBEDDINGS_MODEL_NAME
-
 import json
 import os
 import sys
@@ -12,6 +8,8 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import numpy as np
+from sentence_transformers import SentenceTransformer
 import requests
 from config import (
     EVAL_PROVIDER,
@@ -27,7 +25,9 @@ from config import (
     GEMINI_API_URL,
     GEMINI_EVALUATOR_KEY,
     GEMINI_REQUEST_DELAY,
+    EMBEDDINGS_MODEL_NAME
 )
+_embedder = SentenceTransformer(EMBEDDINGS_MODEL_NAME)
 
 RESULTS_PATH = Path(__file__).parent / "eval_results.json"
 SCORES_PATH = Path(__file__).parent / "ragas_scores.json"
@@ -61,7 +61,6 @@ if EVAL_PROVIDER not in _PROVIDERS:
 
 ACTIVE_MODEL, ACTIVE_URL, ACTIVE_KEY_ENV, ACTIVE_DELAY = _PROVIDERS[EVAL_PROVIDER]
 
-_embedder = SentenceTransformer(EMBEDDINGS_MODEL_NAME)
 
 # ---------------------------------------------------------------------------
 # LLM call
@@ -307,6 +306,7 @@ def main():
                 "faithfulness": faith,
                 "context_precision": prec,
                 "context_recall": rec,
+                "answer_relevancy" : ar
             }
         )
 
