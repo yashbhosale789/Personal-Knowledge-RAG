@@ -33,7 +33,6 @@ Answer: <answer>
 {tool_descriptions}
 """
 
-
 def format_tool_descriptions(tools: list[dict[str, Any]]) -> str:
     lines = []
     for tool in tools:
