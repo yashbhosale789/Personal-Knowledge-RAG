@@ -15,9 +15,10 @@ When you have enough information, you produce a final Answer.
 4. When you have sufficient information, respond with:
       Thought: <your reasoning>
       Answer: <your final answer, grounded only in the Observations>
-5. Never fabricate an Observation. Stop after "Action Input:" and wait.
+5. Never write '(Please provide the observation)' or any similar placeholder. Stop generating immediately after 'Action Input:' and wait for the system to inject the Observation.
 6. If the Observations do not contain enough information to answer, say so explicitly.
 7. Never answer from your own training knowledge. Use only what the Observations contain.
+8. Call only ONE tool per iteration. If multiple tools are needed, call them one at a time across separate iterations.
 
 ## Output format (follow exactly)
 
