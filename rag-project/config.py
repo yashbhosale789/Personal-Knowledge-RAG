@@ -75,6 +75,16 @@ GEMINI_EVALUATOR_KEY = "GEMINI_API_KEY"
 GEMINI_REQUEST_DELAY = 1
 
 # -----------------------------------------------------------------------
+# Agent LLM — switch AGENT_PROVIDER to change agent model
+# -----------------------------------------------------------------------
+AGENT_PROVIDER = "groq"  # "openrouter" | "groq" | "gemini"
+
+GROQ_AGENT_MODEL = "llama-3.3-70b-versatile"
+OPENROUTER_AGENT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
+GEMINI_AGENT_MODEL = "gemini-2.5-flash"
+
+
+# -----------------------------------------------------------------------
 # Prompts
 # -----------------------------------------------------------------------
 # REWRITE_SYSTEM = """You are a search query optimizer.
