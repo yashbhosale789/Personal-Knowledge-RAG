@@ -3,6 +3,7 @@ from sentence_transformers import SentenceTransformer as SE
 from langchain_core.documents import Document
 from config import EMBEDDINGS_MODEL_NAME, EMBEDDING_DIAMENSION
 import logging
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,9 @@ _model = None
 def get_embedding_model() -> SE:
     global _model
     if _model is None:
-        logger.info(f"Loading Embedding Model : {EMBEDDINGS_MODEL_NAME}")
-        _model = SE(EMBEDDINGS_MODEL_NAME)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        logger.info(f"Loading Embedding Model : {EMBEDDINGS_MODEL_NAME} on {device}")
+        _model = SE(EMBEDDINGS_MODEL_NAME, device=device)
         logger.info(f"Embedding Model loaded. Output dimension : {EMBEDDING_DIAMENSION}")
     return _model
 
