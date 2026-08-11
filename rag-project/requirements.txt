@@ -5,6 +5,11 @@ langchain-chroma
 langchain-core
 chromadb
 
+--extra-index-url https://download.pytorch.org/whl/cu124
+torch==2.6.0+cu124
+torchvision
+torchaudio
+
 # Embeddings & Reranking (local)
 sentence-transformers
 
