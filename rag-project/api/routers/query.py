@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-def run_pipeline(query: str, provider : str, return_contexts : bool) -> dict :
+def _run_pipeline(query: str, provider : str, return_contexts : bool) -> dict :
     # Thin Synchronous wrapper around the pipeline.
     # sets the provider in config before calling, resets after.
 
@@ -37,6 +37,8 @@ def run_pipeline(query: str, provider : str, return_contexts : bool) -> dict :
     status_code=200
 )
 async def query_endpoint(request: Request, body: QueryRequest):
+    import config
+    
     if not _pipeline_ready:
         raise PipelineNotReadyError()
 
