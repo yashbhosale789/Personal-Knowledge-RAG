@@ -13,7 +13,33 @@ router = APIRouter()
 
 def _run_ingest(file_path : str, force_reingest: bool) -> IngestResponse:
     # Complete this function
-    return None     # Remove this
+    import os
+    from src.ingestion.loader import load_documents
+    from src.ingestion.chunker import chunk_documents
+    from src.embedding.embedder import get_embedding_model
+    from src.vectorstore.store import get_vectorstore
+
+    if not os.path.exists(file_path):
+        raise IngestError(f"File not found: {file_path}", file_path=file_path)
+
+    try:
+        docs = load_documents(file_path)
+        chunks = chunk_documents(docs)
+        embedder = get_embedding_model()
+        store = get_vectorstore()
+        store.add_documents(chunks, embedder)
+
+        return IngestResponse(
+            status="success",
+            file_path=file_path,
+            chunks_created=len(chunks),
+            message=f"Successfully ingested {len(chunks)} chunks."
+        )
+
+    except Exception as e:
+        raise IngestError(str(e), file_path=file_path)
+
+
 
 @router.post(
     "/ingest",
