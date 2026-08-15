@@ -1,14 +1,19 @@
-# Core
-langchain
-langchain-community
-langchain-chroma
-langchain-core
-chromadb
-
+# PyTorch with CUDA 12.4 (NVIDIA GTX 1650)
 --extra-index-url https://download.pytorch.org/whl/cu124
 torch==2.6.0+cu124
-torchvision
-torchaudio
+torchvision==0.21.0+cu124
+torchaudio==2.6.0+cu124
+
+# Core LangChain
+langchain
+langchain-core
+langchain-chroma
+langchain-openai
+langchain-groq
+langchain-google-genai
+
+# Vector Store
+chromadb
 
 # Embeddings & Reranking (local)
 sentence-transformers
@@ -20,12 +25,19 @@ rank-bm25
 pypdf
 unstructured
 
-# LLM
+# LLM & API
+groq
 requests
 python-dotenv
 
 # Evaluation (Phase 3)
 ragas
+numpy
 
 # Agentic RAG (Phase 4)
 langgraph
+
+# FastAPI (Phase 5)
+fastapi
+uvicorn[standard]
+pydantic
