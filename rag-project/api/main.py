@@ -10,23 +10,22 @@ from api.middleware.logging import StructuredLoggingMiddleware
 from api.core.exceptions import RAGException
 
 LOGGING_CONFIG = {
-    "version":1,
-    "disable_existing_loggers":False,
-    "formatters":{
-        "json":{
-            "format":"%{message}s"
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "()": "logging.Formatter",
+            "fmt": "%(message)s",
         }
     },
-
-    "handlers":{
-        "console":{
-            "class":"logging.StreamHandler",
-            "formatter":"json"
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
         }
     },
-
-    "root":{
-        "level":"INFO",
+    "root": {
+        "level": "INFO",
         "handlers": ["console"]
     }
 }
