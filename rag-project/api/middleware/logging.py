@@ -25,7 +25,7 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
             "latency_ms": round(latency_ms, 2)
         }
 
-        logging.getLogger("api.access").info(json.dump(log_record))
+        logging.getLogger("api.access").info(json.dumps(log_record))
 
         response.headers["X-Request-ID"] = request_id
         return response
