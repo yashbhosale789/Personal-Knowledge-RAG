@@ -68,6 +68,7 @@ async def query_endpoint(request: Request, body: QueryRequest):
     return QueryResponse(
         query_id=request_id,
         query=body.query,
+        rewritten_query=result.get("rewritten_query"),
         answer=result.get("answer", ""),
         sources=result.get("contexts", []),
         chunks_used=result.get("chunks_used", 0),
