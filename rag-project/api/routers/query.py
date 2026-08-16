@@ -7,7 +7,7 @@ from api.models.requests import QueryRequest
 from api.models.responses import QueryResponse
 from api.core.exceptions import ProviderError, PipelineNotReadyError
 from api.core.retry import call_with_fallback
-from api.routers.health import _pipeline_ready
+from api.routers.health import is_pipeline_ready
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def _run_pipeline(query: str, provider : str, return_contexts : bool) -> dict :
 async def query_endpoint(request: Request, body: QueryRequest):
     import config
     
-    if not _pipeline_ready:
+    if not is_pipeline_ready:
         raise PipelineNotReadyError()
 
     request_id = getattr(request.state, "request_id", "unknown")
