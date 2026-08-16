@@ -40,15 +40,22 @@ def _run_pipeline(query: str, provider: str, return_contexts: bool) -> dict:
 async def query_endpoint(request: Request, body: QueryRequest):
     import config
 
-    if not is_pipeline_ready:
+    if not is_pipeline_ready():
         raise PipelineNotReadyError()
+
+    query = body.query.strip()
+    if not query:
+        raise HTTPException(
+            status_code=400, detail="Query must not be empty or whitespace only."
+        )
 
     request_id = getattr(request.state, "request_id", "unknown")
     start_time = __import__("time").monotonic()
 
     try:
+
         def make_pipeline_call(provider: str):
-            return _run_pipeline(body.query, provider, body.return_contexts)
+            return _run_pipeline(query, provider, body.return_contexts)
 
         result, provider_used = await call_with_fallback(
             make_pipeline_call,
