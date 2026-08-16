@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
         # Warm up: run a dummy query to force model loading
         await run_in_threadpool(run_advanced_rag_pipeline, "warmup", return_contexts=False)
         health.set_pipeline_ready(True)
-        logger.infor("Pipeline initialized and ready.")
+        logger.info("Pipeline initialized and ready.")
 
     except Exception as e:
         logger.error("Pipeline initialization failed: %s", e)
