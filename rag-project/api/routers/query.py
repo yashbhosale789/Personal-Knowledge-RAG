@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-def _run_pipeline(query: str, provider : str, return_contexts : bool) -> dict :
+
+def _run_pipeline(query: str, provider: str, return_contexts: bool) -> dict:
     # Thin Synchronous wrapper around the pipeline.
     # sets the provider in config before calling, resets after.
 
@@ -32,13 +33,13 @@ def _run_pipeline(query: str, provider : str, return_contexts : bool) -> dict :
 
 @router.post(
     "/query",
-    response_model= QueryResponse,
+    response_model=QueryResponse,
     summary="Query the RAG Pipeline.",
-    status_code=200
+    status_code=200,
 )
 async def query_endpoint(request: Request, body: QueryRequest):
     import config
-    
+
     if not is_pipeline_ready:
         raise PipelineNotReadyError()
 
@@ -46,17 +47,19 @@ async def query_endpoint(request: Request, body: QueryRequest):
     start_time = __import__("time").monotonic()
 
     try:
-        result , provider_used = await call_with_fallback(
-            _run_pipeline,
-            body.query,
+        def make_pipeline_call(provider: str):
+            return _run_pipeline(body.query, provider, body.return_contexts)
+
+        result, provider_used = await call_with_fallback(
+            make_pipeline_call,
             preferred_provider=body.provider or config.PIPELINE_PROVIDER,
-            return_contexts= body.return_contexts
+            max_retries=3,
         )
 
     except ProviderError as e:
         logger.error(
             "All providers failed.",
-            extra = {"request_id": request_id, "details" : e.details}
+            extra={"request_id": request_id, "details": e.details},
         )
         raise HTTPException(status_code=502, detail=e.message)
 
@@ -65,10 +68,10 @@ async def query_endpoint(request: Request, body: QueryRequest):
     return QueryResponse(
         query_id=request_id,
         query=body.query,
-        answer=result.get("answer",""),
-        sources=result.get("contexts",[]),
-        chunks_used=result.get("chunks_used",0),
+        answer=result.get("answer", ""),
+        sources=result.get("contexts", []),
+        chunks_used=result.get("chunks_used", 0),
         provider=provider_used,
         latency_ms=round(latency_ms, 2),
-        timestamp=datetime.datetime.utcnow().isoformat() + "Z"
+        timestamp=datetime.datetime.utcnow().isoformat() + "Z",
     )
