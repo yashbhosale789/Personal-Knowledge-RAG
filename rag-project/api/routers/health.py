@@ -24,3 +24,7 @@ async def health_check():
         pipeline_ready=_pipeline_ready,
         timestamp=datetime.datetime.utcnow().isoformat() + "Z"
     )
+
+
+def is_pipeline_ready() -> bool:
+    return _pipeline_ready
