@@ -58,7 +58,7 @@ GEMINI_PIPELINE_MODEL = "gemini-2.5-flash"
 # Only for local testing
 OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_API_URL = f"{OLLAMA_BASE_URL}/v1/chat/completions"
-OLLAMA_MODEL = "llama3.2"  # must match what you've pulled locally
+OLLAMA_MODEL = "llama3.2:3b-instruct-q4_K_M"  # must match what you've pulled locally
 
 # -----------------------------------------------------------------------
 # Evaluator LLM — switch EVAL_PROVIDER to change evaluator
