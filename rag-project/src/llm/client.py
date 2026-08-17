@@ -17,6 +17,9 @@ from config import (
     GEMINI_API_URL,
     GEMINI_PIPELINE_MODEL,
     GEMINI_API_KEY,
+    OLLAMA_BASE_URL,
+    OLLAMA_MODEL,
+    OLLAMA_API_URL,
 )
 
 logger = logging.getLogger(__name__)
@@ -25,12 +28,13 @@ _PROVIDERS = {
     "openrouter": (OPENROUTER_MODEL, OPENROUTER_API_URL, OPENROUTER_API_KEY),
     "groq": (GROQ_PIPELINE_MODEL, GROQ_API_URL, GROQ_API_KEY),
     "gemini": (GEMINI_PIPELINE_MODEL, GEMINI_API_URL, GEMINI_API_KEY),
+    "ollama": (OLLAMA_MODEL, OLLAMA_API_URL, None),  # no API key needed
 }
 
 if PIPELINE_PROVIDER not in _PROVIDERS:
     raise ValueError(
         f"Unknown PIPELINE_PROVIDER '{PIPELINE_PROVIDER}'. "
-        "Choose: openrouter | groq | gemini"
+        "Choose: openrouter | groq | gemini | ollama"
     )
 
 ACTIVE_MODEL, ACTIVE_URL, ACTIVE_KEY_ENV = _PROVIDERS[PIPELINE_PROVIDER]
@@ -53,14 +57,20 @@ def call_llm(prompt: str, system: str = "") -> str:
         "temperature": 0.2,
         "max_tokens": 512,
     }
-    headers = {
-        "Authorization": f"Bearer {os.getenv(ACTIVE_KEY_ENV)}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/personal-kb-rag",
-    }
+
+    headers = {"Content-Type": "application/json"}
+    if ACTIVE_KEY_ENV:
+        headers["Authorization"] = f"Bearer {os.getenv(ACTIVE_KEY_ENV)}"
+        headers["HTTP-Referer"] = "https://github.com/personal-kb-rag"
+
+    # Local inference (Ollama) is slower than hosted APIs, especially on
+    # cold start when the model has to load into memory — give it more room.
+    timeout = 120 if PIPELINE_PROVIDER == "ollama" else 30
 
     try:
-        response = requests.post(ACTIVE_URL, headers=headers, json=payload, timeout=30)
+        response = requests.post(
+            ACTIVE_URL, headers=headers, json=payload, timeout=timeout
+        )
         response.raise_for_status()
         data = response.json()
         return data["choices"][0]["message"]["content"].strip()
