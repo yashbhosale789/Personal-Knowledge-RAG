@@ -25,7 +25,7 @@ CHROMA_COLLECTION = "personal_kb"
 # -----------------------------------------------------------------------
 # Pipeline LLM — switch PIPELINE_PROVIDER to change model
 # -----------------------------------------------------------------------
-PIPELINE_PROVIDER = "groq"  # "openrouter" | "groq" | "gemini"
+PIPELINE_PROVIDER = "groq"  # "openrouter" | "groq" | "gemini" | "ollama" for local testing
 
 # OpenRouter — 50 req/day free
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -39,8 +39,9 @@ OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
 # Groq — 14,400 req/day free, fastest inference
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_API_KEY = "GROQ_API_KEY"
-GROQ_PIPELINE_MODEL = "llama-3.3-70b-versatile"
+GROQ_PIPELINE_MODEL = "openai/gpt-oss-120b"
 # Other free options:
+# "llama-3.3-70b-versatile"  — default
 # "llama-3.1-8b-instant"     — fastest, weaker
 # "openai/gpt-oss-20b"       — fast, OpenAI open-weight
 # "openai/gpt-oss-120b"      — strongest on Groq
@@ -53,6 +54,11 @@ GEMINI_API_KEY = "GEMINI_API_KEY"
 GEMINI_PIPELINE_MODEL = "gemini-2.5-flash"
 # Other free options:
 # "gemini-2.5-flash-lite"    — faster, cheaper, slightly weaker
+
+# Only for local testing
+OLLAMA_BASE_URL = "http://localhost:11434"
+OLLAMA_API_URL = f"{OLLAMA_BASE_URL}/v1/chat/completions"
+OLLAMA_MODEL = "llama3.2"  # must match what you've pulled locally
 
 # -----------------------------------------------------------------------
 # Evaluator LLM — switch EVAL_PROVIDER to change evaluator
