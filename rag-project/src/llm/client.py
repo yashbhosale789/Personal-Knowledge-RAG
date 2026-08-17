@@ -58,14 +58,16 @@ def call_llm(prompt: str, system: str = "") -> str:
         "max_tokens": 512,
     }
 
+    if PIPELINE_PROVIDER == "ollama":
+        payload["options"] = {"num_ctx": 2048}
+        payload["stream"] = False  # native /api/chat streams by default
+
     headers = {"Content-Type": "application/json"}
     if ACTIVE_KEY_ENV:
         headers["Authorization"] = f"Bearer {os.getenv(ACTIVE_KEY_ENV)}"
         headers["HTTP-Referer"] = "https://github.com/personal-kb-rag"
 
-    # Local inference (Ollama) is slower than hosted APIs, especially on
-    # cold start when the model has to load into memory — give it more room.
-    timeout = 120 if PIPELINE_PROVIDER == "ollama" else 30
+    timeout = 300 if PIPELINE_PROVIDER == "ollama" else 30
 
     try:
         response = requests.post(
@@ -73,6 +75,9 @@ def call_llm(prompt: str, system: str = "") -> str:
         )
         response.raise_for_status()
         data = response.json()
+
+        if PIPELINE_PROVIDER == "ollama":
+            return data["message"]["content"].strip()
         return data["choices"][0]["message"]["content"].strip()
 
     except requests.exceptions.Timeout:
