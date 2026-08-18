@@ -8,6 +8,7 @@ from api.core.exceptions import ProviderError
 logger = logging.getLogger(__name__)
 
 PROVIDER_FALLBACK_ORDER = ["groq", "openrouter", "gemini"]
+ALL_KNOWN_PROVIDERS = PROVIDER_FALLBACK_ORDER + ["ollama"]
 
 
 async def call_with_retry(
@@ -55,8 +56,12 @@ async def call_with_fallback(
     preferred_provider: Optional[str] = None,
     max_retries: int = 3,
 ) -> tuple[Any, str]:
-    providers_to_try: List[str] = []
+    if preferred_provider == "ollama":
+        # Explicit-only: never auto-selected, never falls back to it.
+        result = await call_with_retry(fn, "ollama", max_retries=max_retries)
+        return result, "ollama"
 
+    providers_to_try: List[str] = []
     if preferred_provider and preferred_provider in PROVIDER_FALLBACK_ORDER:
         providers_to_try.append(preferred_provider)
         providers_to_try.extend(
@@ -76,7 +81,7 @@ async def call_with_fallback(
             continue
 
     raise ProviderError(
-        message=f"All provieders failed. Last error: {last_error}",
+        message=f"All providers failed. Last error: {last_error}",
         provider="all",
         retries_exhausted=True,
     )
