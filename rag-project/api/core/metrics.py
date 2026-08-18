@@ -3,7 +3,7 @@ from prometheus_client import Counter, Histogram
 PROVIDER_LATENCY_BUCKETS = (0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 30)
 
 http_requests_total = Counter(
-    "http_request_total",
+    "http_requests_total",
     "Total HTTP Requests",
     ["method","path","status_code"]
 )
@@ -22,7 +22,7 @@ provider_call_duration_seconds = Histogram(
 )
 
 provider_call_errors_total = Counter(
-    "provider_call_erros_total",
+    "provider_call_errors_total",
     "Total failed provider call attempt.",
     ["provider"]
 )
