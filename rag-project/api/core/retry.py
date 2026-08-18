@@ -4,6 +4,12 @@ import random
 import time
 from typing import Callable, List, Optional, Any
 from api.core.exceptions import ProviderError
+from api.core.metrics import (
+    provider_call_duration_seconds,
+    provider_call_errors_total,
+    provider_requests_total,
+    provider_retries_total,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +27,22 @@ async def call_with_retry(
     last_exception = None
 
     for attempt in range(max_retries + 1):
+        attempt_start = time.monotonic()
         try:
-            return await asyncio.get_event_loop().run_in_executor(
+            result = await asyncio.get_event_loop().run_in_executor(
                 None, lambda: fn(provider)
             )
+
+            provider_call_duration_seconds.labels(provider=provider).observe(
+                time.monotonic() - attempt_start
+            )
+
+            return result
+
         except Exception as e:
+
+            provider_call_errors_total.labels(provider=provider).inc()
+
             last_exception = e
             if attempt == max_retries:
                 break
@@ -34,6 +51,7 @@ async def call_with_retry(
             jitter = delay * random.uniform(-0.2, 0.2)
             sleep_time = max(0, delay + jitter)
 
+            provider_retries_total.labels(provider=provider).inc()
             logger.warning(
                 "Attempt %d/%d failed for provider %s: %s. Retrying in %.2fs.",
                 attempt + 1,
@@ -59,6 +77,7 @@ async def call_with_fallback(
     if preferred_provider == "ollama":
         # Explicit-only: never auto-selected, never falls back to it.
         result = await call_with_retry(fn, "ollama", max_retries=max_retries)
+        provider_requests_total.labels(provider="ollama", outcome="success").inc()
         return result, "ollama"
 
     providers_to_try: List[str] = []
@@ -74,8 +93,10 @@ async def call_with_fallback(
     for provider in providers_to_try:
         try:
             result = await call_with_retry(fn, provider, max_retries=max_retries)
+            provider_requests_total.labels(provider=provider, outcome="success").inc()
             return result, provider
         except ProviderError as e:
+            provider_requests_total.labels(provider=provider, outcome="exhausted").inc()
             logger.error("Provider %s exhausted retries: %s", provider, e.message)
             last_error = e
             continue
