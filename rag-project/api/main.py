@@ -5,9 +5,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from api.routers import health, query, ingest
+from api.routers import health, query, ingest, metrics
 from api.middleware.logging import StructuredLoggingMiddleware
 from api.core.exceptions import RAGException
+# from api.routers.metrics import router as metrics_router
 
 LOGGING_CONFIG = {
     "version": 1,
@@ -63,11 +64,10 @@ app = FastAPI(
 )
 
 app.add_middleware(StructuredLoggingMiddleware)
-
 app.include_router(health.router, tags=["Health"])
 app.include_router(query.router, tags=["Query"])
 app.include_router(ingest.router, tags=["Ingest"])
-
+app.include_router(metrics.router, tags=["Metrics"])
 
 @app.exception_handler(RAGException)
 async def rag_exception_handler(request: Request, exc: RAGException):
