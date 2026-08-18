@@ -31,6 +31,7 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
         http_request_duration_seconds.labels(
             method=request.method,
             path=metrics_path
+            
         ).observe(latency_ms / 1000)
 
         log_record = {
