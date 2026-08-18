@@ -19,15 +19,18 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         latency_ms = (time.monotonic() - start_time) * 1000
 
+        route = request.scope.get("route")
+        metrics_path = route.path if route else "unmatched"
+
         http_requests_total.labels(
             method=request.method,
-            path=request.url.path,
+            path=metrics_path,
             status_code=response.status_code
         ).inc()
 
         http_request_duration_seconds.labels(
             method=request.method,
-            path=request.url.path
+            path=metrics_path
         ).observe(latency_ms / 1000)
 
         log_record = {
