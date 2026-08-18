@@ -64,6 +64,7 @@ app = FastAPI(
 )
 
 app.add_middleware(StructuredLoggingMiddleware)
+
 app.include_router(health.router, tags=["Health"])
 app.include_router(query.router, tags=["Query"])
 app.include_router(ingest.router, tags=["Ingest"])
