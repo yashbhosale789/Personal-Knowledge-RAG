@@ -6,7 +6,8 @@ from src.retrieval.fusion import reciprocal_rank_fusion
 from src.retrieval.reranker import CrossEncoderReranker
 from src.pipeline.query_rewriter import rewrite_query
 from src.llm.client import call_llm
-from config import SYSTEM_PROMPT, TOP_K
+from src.pipeline.context_sufficiency import check_sufficiency
+from config import SYSTEM_PROMPT, TOP_K, ABSTAIN_MESSAGE
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,24 @@ def run_advanced_rag_pipeline(
             "query": query,
             "rewritten_query": rewritten,
         }
+
+    # Stage 4.5: Context sufficiency gate
+    sufficiency = check_sufficiency(rewrite_query, reranked)
+    if not sufficiency["sufficient"]:
+        logger.info(f"Sufficiency gate blocked generation (tier={sufficiency["tier"]}, reason={sufficiency["reason"]})")
+
+        result = {
+            "answer": ABSTAIN_MESSAGE,
+            "sources_used": [c["metadata"].get("filename","unknown") for c in reranked],
+            "chunks_used": len(reranked),
+            "query": query,
+            "rewritten_query": rewritten,
+            "sufficiency": sufficiency
+        }
+
+        if return_contexts:
+            result["contexts"] = [c["text"] for c in reranked]
+        return result
 
     # Stage 5: Prompt + LLM
     prompt = _build_prompt(rewritten, reranked)
