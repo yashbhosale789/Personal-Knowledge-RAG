@@ -2,6 +2,17 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 import datetime
 
+
+class SufficiencyInfo(BaseModel):
+    sufficient: bool = Field(
+        description="Whether retrieved context was judged sufficient to answer the query."
+    )
+    reason: str = Field(description="Short explanation of the sufficiency verdict.")
+    tier: str = Field(
+        description="Which gate produced the verdict: 'score_floor', 'llm_judge', or 'empty'."
+    )
+
+
 class QueryResponse(BaseModel):
     query_id : str = Field(
         description="Unique identifier for this request. Use for tracing and debugging."
