@@ -77,9 +77,10 @@ async def query_endpoint(request: Request, body: QueryRequest):
         query=body.query,
         rewritten_query=result.get("rewritten_query"),
         answer=result.get("answer", ""),
-        sources=result.get("contexts", []),
+        sources=result.get("sources", []),
         chunks_used=result.get("chunks_used", 0),
         provider=provider_used,
         latency_ms=round(latency_ms, 2),
         timestamp=datetime.datetime.utcnow().isoformat() + "Z",
+        sufficiency=result.get("sufficiency")
     )
