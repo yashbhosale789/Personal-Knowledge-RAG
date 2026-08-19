@@ -138,3 +138,5 @@ Rules:
 - "sufficient" is true only if the specific fact/step/number asked for is actually present.
 - Topically related context that does not contain the specific answer is NOT sufficient.
 - Do not use outside knowledge. Judge only what is in CONTEXT."""
+
+ABSTAIN_MESSAGE = "I don't have enough information in the knowledge base to answer this question accurately."
