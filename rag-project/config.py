@@ -120,3 +120,21 @@ You answer questions strictly based on the provided context.
 If the context does not contain enough information to answer the question, 
 say "I don't have enough information in my knowledge base to answer this."
 Do not use any knowledge outside the provided context."""
+
+
+# -----------------------------------------------------------------------
+# Context Sufficiency
+# -----------------------------------------------------------------------
+
+SUFFICIENCY_CE_FLOOR = -5.0 # TODO: calibrate against golden set. Below this, skip LLM judge entirely.
+
+SUFFICIENCY_JUDGE_SYSTEM = """You are a strict evaluator. Given a QUESTION and CONTEXT, \
+decide if the CONTEXT contains enough information to answer the QUESTION accurately.
+
+Respond with ONLY a JSON object, no other text:
+{"sufficient": true or false, "reason": "one short sentence"}
+
+Rules:
+- "sufficient" is true only if the specific fact/step/number asked for is actually present.
+- Topically related context that does not contain the specific answer is NOT sufficient.
+- Do not use outside knowledge. Judge only what is in CONTEXT."""
