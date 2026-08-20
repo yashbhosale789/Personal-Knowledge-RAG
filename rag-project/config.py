@@ -22,9 +22,8 @@ RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 # Chroma
 CHROMA_COLLECTION = "personal_kb"
 
-# -----------------------------------------------------------------------
+
 # Pipeline LLM — switch PIPELINE_PROVIDER to change model
-# -----------------------------------------------------------------------
 PIPELINE_PROVIDER = (
     "groq"  # "openrouter" | "groq" | "gemini" | "ollama" for local testing
 )
@@ -62,9 +61,9 @@ OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_API_URL = f"{OLLAMA_BASE_URL}/api/chat"
 OLLAMA_MODEL = "llama3.2:3b-instruct-q4_K_M"  # must match what you've pulled locally
 
-# -----------------------------------------------------------------------
+
 # Evaluator LLM — switch EVAL_PROVIDER to change evaluator
-# -----------------------------------------------------------------------
+
 EVAL_PROVIDER = "groq"  # "openrouter" | "groq" | "gemini"
 
 OPENROUTER_EVALUATOR_MODEL = "poolside/laguna-s-2.1:free"
@@ -82,9 +81,9 @@ GEMINI_EVALUATOR_URL = GEMINI_API_URL
 GEMINI_EVALUATOR_KEY = "GEMINI_API_KEY"
 GEMINI_REQUEST_DELAY = 1
 
-# -----------------------------------------------------------------------
+
 # Agent LLM — switch AGENT_PROVIDER to change agent model
-# -----------------------------------------------------------------------
+
 AGENT_PROVIDER = "groq"  # "openrouter" | "groq" | "gemini"
 
 GROQ_AGENT_MODEL = "llama-3.3-70b-versatile"
@@ -92,9 +91,8 @@ OPENROUTER_AGENT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
 GEMINI_AGENT_MODEL = "gemini-2.5-flash"
 
 
-# -----------------------------------------------------------------------
 # Prompts
-# -----------------------------------------------------------------------
+
 # REWRITE_SYSTEM = """You are a search query optimizer.
 # Your job is to rewrite a user's conversational question into a precise, self-contained search query.
 
@@ -119,12 +117,30 @@ SYSTEM_PROMPT = """You are a precise question-answering assistant.
 You answer questions strictly based on the provided context.
 If the context does not contain enough information to answer the question, 
 say "I don't have enough information in my knowledge base to answer this."
-Do not use any knowledge outside the provided context."""
+Do not use any knowledge outside the provided context.
+After each claim in your answer, cite the source it came from using the format [SOURCE N],
+where N matches the source number in the context. If a claim draws on multiple sources,
+cites all of them, e.g. [SOURCE 1][SOURCE 3]."""
 
 
-# -----------------------------------------------------------------------
+# Citation Verification
+
+CITATION_VERIFIER_SYSTEM = """You are a strict fact-checker. You will be given an ANSWER \
+and the CITED SOURCES it claims to be based on.
+
+Check whether every claim in the ANSWER is actually supported by the CITED SOURCES.
+
+Respond with ONLY a JSON object, no other text:
+{"grounded": true or false, "unsupported_claims": ["claim text", ...], "reason": "one short sentence"}
+
+Rules:
+- "grounded" is true only if ALL claims in the ANSWER are supported by the CITED SOURCES.
+- "unsupported_claims" lists any specific statements not backed by the sources (empty list if none).
+- Do not judge writing quality or style — only factual grounding.
+- If the ANSWER contains no citations at all, treat this as ungrounded."""
+
+
 # Context Sufficiency
-# -----------------------------------------------------------------------
 
 SUFFICIENCY_CE_FLOOR = -5.0 # TODO: calibrate against golden set. Below this, skip LLM judge entirely.
 
