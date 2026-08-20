@@ -8,12 +8,12 @@ logger = logging.getLogger(__name__)
 
 def _build_judge_prompt(query: str, chunks: list[dict]) -> str:
     context = "\n\n".join(c["text"] for c in chunks)
-    return f"Question:\n{query}\n\nContext:\b{context}"
+    return f"Question:\n{query}\n\nContext:\n{context}"
 
 
 def check_sufficiency(query: str, reranked_chunks: list[dict]) -> dict:
     if not reranked_chunks:
-        return {"Sufficient": False, "reason": "No chunks retrieved.", "tier": "empty"}
+        return {"sufficient": False, "reason": "No chunks retrieved.", "tier": "empty"}
 
     top_score = reranked_chunks[0]["ce_score"]
 
@@ -46,4 +46,4 @@ def check_sufficiency(query: str, reranked_chunks: list[dict]) -> dict:
         }
 
     logger.info(f"Sufficiency: tier2 verdict = {sufficient} reason = {reason}")
-    return {"sufficient": sufficient, "reason": reason, "tier": "llm_judge "}
+    return {"sufficient": sufficient, "reason": reason, "tier": "llm_judge"}
