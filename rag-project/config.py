@@ -112,7 +112,7 @@ Rules:
 - Do NOT expand with related concepts or best practices
 - Remove conversational filler only
 - Return ONLY the rewritten query. No explanation. No punctuation at the end."""
-
+  
 SYSTEM_PROMPT = """You are a precise question-answering assistant.
 You answer questions strictly based on the provided context.
 If the context does not contain enough information to answer the question, 
