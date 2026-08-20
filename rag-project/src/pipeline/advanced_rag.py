@@ -91,17 +91,21 @@ def run_advanced_rag_pipeline(
         }
 
     # Stage 4.5: Context sufficiency gate
-    sufficiency = check_sufficiency(rewrite_query, reranked)
+    sufficiency = check_sufficiency(rewritten, reranked)
     if not sufficiency["sufficient"]:
-        logger.info(f"Sufficiency gate blocked generation (tier={sufficiency["tier"]}, reason={sufficiency["reason"]})")
+        logger.info(
+            f"Sufficiency gate blocked generation (tier={sufficiency['tier']}, reason={sufficiency['reason']})"
+        )
 
         result = {
             "answer": ABSTAIN_MESSAGE,
-            "sources_used": [c["metadata"].get("filename","unknown") for c in reranked],
+            "sources_used": [
+                c["metadata"].get("filename", "unknown") for c in reranked
+            ],
             "chunks_used": len(reranked),
             "query": query,
             "rewritten_query": rewritten,
-            "sufficiency": sufficiency
+            "sufficiency": sufficiency,
         }
 
         if return_contexts:
@@ -120,6 +124,7 @@ def run_advanced_rag_pipeline(
         "chunks_used": len(reranked),
         "query": query,
         "rewritten_query": rewritten,
+        "sufficiency": sufficiency,
     }
 
     if return_contexts:
