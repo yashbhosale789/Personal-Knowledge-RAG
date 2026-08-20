@@ -41,6 +41,11 @@ class QueryResponse(BaseModel):
 
     timestamp: str = Field(description="UTC timestamt of the response.")
 
+    sufficiency: Optional[SufficiencyInfo] = Field(
+        default=None,
+        description="Context sufficiency gate result. None if the gate did not run.",
+    )
+
 
 class IngestResponse(BaseModel):
     status: str = Field(description="'success' or 'already_exists'.")
