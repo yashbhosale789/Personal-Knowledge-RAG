@@ -102,10 +102,12 @@ def run_advanced_rag_pipeline(
 
         result = {
             "answer": ABSTAIN_MESSAGE,
-            "sources_used": [
-                os.path.basename(c["metadata"].get("filename", "unknown"))
-                for c in reranked
-            ],
+            "sources_used": list(
+                dict.fromkeys(
+                    os.path.basename(c["metadata"].get("filename", "unknown"))
+                    for c in reranked
+                )
+            ),
             "chunks_used": len(reranked),
             "query": query,
             "rewritten_query": rewritten,
@@ -127,9 +129,12 @@ def run_advanced_rag_pipeline(
 
     result = {
         "answer": answer,
-        "sources": [
-            os.path.basename(c["metadata"].get("filename", "unknown")) for c in reranked
-        ],
+        "sources": list(
+            dict.fromkeys(
+                os.path.basename(c["metadata"].get("filename", "unknown"))
+                for c in reranked
+            )
+        ),
         "chunks_used": len(reranked),
         "query": query,
         "rewritten_query": rewritten,
