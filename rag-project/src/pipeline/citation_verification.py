@@ -7,7 +7,7 @@ from config import CITATION_VERIFIER_SYSTEM, EVAL_PROVIDER
 
 logger = logging.getLogger(__name__)
 
-_CITATION_PATTERN = re.compile(r"\[SOURCE\s*\d+\]")
+_CITATION_PATTERN = re.compile(r"[\[【]SOURCE\s*\d+[\]】]")
 
 
 def _has_citation(answer: str) -> bool:
