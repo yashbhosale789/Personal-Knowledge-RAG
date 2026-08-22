@@ -15,6 +15,23 @@ class SufficiencyInfo(BaseModel):
     )
 
 
+class CitationVerificationInfo(BaseModel):
+    grounded: bool = Field(
+        description="Whether all claims in the answer are supported by cited sources."
+    )
+
+    unsupported_claims: List[str] = Field(
+        default_factory=list,
+        description="Claims not backed by cites sources. Empty if grounded, or if tier = 'no_citations' (not evaluated).",
+    )
+
+    reason: str = Field(description="Short explaination of the verification verdict.")
+
+    tier: str = Field(
+        description="Which gate produced the verdict: 'no_citation' or 'llm_judge'."
+    )
+
+
 class QueryResponse(BaseModel):
     query_id: str = Field(
         description="Unique identifier for this request. Use for tracing and debugging."
@@ -44,6 +61,11 @@ class QueryResponse(BaseModel):
     sufficiency: Optional[SufficiencyInfo] = Field(
         default=None,
         description="Context sufficiency gate result. None if the gate did not run.",
+    )
+
+    citation_check: Optional[CitationVerificationInfo] = Field(
+        default=None,
+        description="Citation Verification gate result. None if generation was skipped (e.g. abstain or insufficient context).",
     )
 
 
