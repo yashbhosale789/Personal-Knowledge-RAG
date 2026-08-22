@@ -1,4 +1,6 @@
 import logging
+import os
+
 from langchain_core.documents import Document
 from src.retrieval.retriever import retrieve
 from src.retrieval.bm25_retriever import BM25Retriever
@@ -101,7 +103,8 @@ def run_advanced_rag_pipeline(
         result = {
             "answer": ABSTAIN_MESSAGE,
             "sources_used": [
-                c["metadata"].get("filename", "unknown") for c in reranked
+                os.path.basename(c["metadata"].get("filename", "unknown"))
+                for c in reranked
             ],
             "chunks_used": len(reranked),
             "query": query,
@@ -124,12 +127,14 @@ def run_advanced_rag_pipeline(
 
     result = {
         "answer": answer,
-        "sources": [c["metadata"].get("filename", "unknown") for c in reranked],
+        "sources": [
+            os.path.basename(c["metadata"].get("filename", "unknown")) for c in reranked
+        ],
         "chunks_used": len(reranked),
         "query": query,
         "rewritten_query": rewritten,
         "sufficiency": sufficiency,
-        "citation_check": citation_check
+        "citation_check": citation_check,
     }
 
     if return_contexts:
