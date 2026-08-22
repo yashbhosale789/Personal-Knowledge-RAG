@@ -31,6 +31,14 @@ _PROVIDERS = {
     "ollama": (OLLAMA_MODEL, OLLAMA_API_URL, None),  # no API key needed
 }
 
+if PIPELINE_PROVIDER not in _PROVIDERS:
+    raise ValueError(
+        f"Unknown PIPELINE_PROVIDER '{PIPELINE_PROVIDER}'. "
+        "Choose: openrouter | groq | gemini | ollama"
+    )
+
+logger.info(f"Pipeline LLM configured: {PIPELINE_PROVIDER}")
+
 
 def _resolve_provider(provider: str | None) -> tuple[str, str, str, str | None]:
     """
