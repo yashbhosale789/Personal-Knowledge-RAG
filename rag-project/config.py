@@ -112,10 +112,10 @@ Rules:
 - Do NOT expand with related concepts or best practices
 - Remove conversational filler only
 - Return ONLY the rewritten query. No explanation. No punctuation at the end."""
-  
+
 # SYSTEM_PROMPT = """You are a precise question-answering assistant.
 # You answer questions strictly based on the provided context.
-# If the context does not contain enough information to answer the question, 
+# If the context does not contain enough information to answer the question,
 # say "I don't have enough information in my knowledge base to answer this."
 # Do not use any knowledge outside the provided context.
 # After each claim in your answer, cite the source it came from using the format [SOURCE N],
