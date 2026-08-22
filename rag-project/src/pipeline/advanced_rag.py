@@ -121,6 +121,7 @@ def run_advanced_rag_pipeline(
     # Stage 5: Prompt + LLM
     prompt = _build_prompt(rewritten, reranked)
     answer = call_llm(prompt, system=SYSTEM_PROMPT)
+    answer = answer.replace("【", "[").replace("】", "]")
 
     # Stage 5.5: Citaiton Verification
     citation_check = verify_citation(answer, reranked)
