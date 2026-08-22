@@ -82,5 +82,6 @@ async def query_endpoint(request: Request, body: QueryRequest):
         provider=provider_used,
         latency_ms=round(latency_ms, 2),
         timestamp=datetime.datetime.utcnow().isoformat() + "Z",
-        sufficiency=result.get("sufficiency")
+        sufficiency=result.get("sufficiency"),
+        citation_check=result.get("citation_check")
     )
