@@ -7,6 +7,7 @@ from src.retrieval.reranker import CrossEncoderReranker
 from src.pipeline.query_rewriter import rewrite_query
 from src.llm.client import call_llm
 from src.pipeline.context_sufficiency import check_sufficiency
+from src.pipeline.citation_verification import verify_citation
 from config import SYSTEM_PROMPT, TOP_K, ABSTAIN_MESSAGE
 
 logger = logging.getLogger(__name__)
@@ -116,6 +117,9 @@ def run_advanced_rag_pipeline(
     prompt = _build_prompt(rewritten, reranked)
     answer = call_llm(prompt, system=SYSTEM_PROMPT)
 
+    # Stage 5.5: Citaiton Verification
+    citation_check = verify_citation(answer, reranked)
+
     logger.info("Advanced RAG pipeline complete.")
 
     result = {
@@ -125,6 +129,7 @@ def run_advanced_rag_pipeline(
         "query": query,
         "rewritten_query": rewritten,
         "sufficiency": sufficiency,
+        "citation_check": citation_check
     }
 
     if return_contexts:
