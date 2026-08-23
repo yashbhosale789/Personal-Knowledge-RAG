@@ -13,7 +13,7 @@ Phases 1–7 complete. Starting Phase 8.
 ## Phases 6–16 (Planned)
 6. Ollama — Local LLM as fourth provider via config switch  [DONE]
 7. Observability — Prometheus metrics, request/provider tracing  [DONE]
-8. RAG Quality — Context sufficiency, citation verification, confidence scoring, adversarial eval cases
+8. RAG Quality — Context sufficiency, citation verification, confidence scoring, adversarial eval cases [DONE]
 9. Security + Reliability — Auth, Redis (rate limiting + semantic caching), prompt injection defense, input/output validation
 10. Containerization + CI/CD — Dockerfile, docker-compose (app + Redis + Prometheus/Grafana), GitHub Actions with eval regression gate
 11. Deployment — Cloud VM, public URL, auto-deploy on merge
