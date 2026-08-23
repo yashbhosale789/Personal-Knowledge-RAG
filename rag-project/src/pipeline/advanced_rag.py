@@ -103,7 +103,7 @@ def run_advanced_rag_pipeline(
 
         result = {
             "answer": ABSTAIN_MESSAGE,
-            "sources_used": list(
+            "sources": list(
                 dict.fromkeys(
                     os.path.basename(c["metadata"].get("filename", "unknown"))
                     for c in reranked
@@ -113,6 +113,7 @@ def run_advanced_rag_pipeline(
             "query": query,
             "rewritten_query": rewritten,
             "sufficiency": sufficiency,
+            "outcome": "abstain",
         }
 
         if return_contexts:
@@ -132,6 +133,11 @@ def run_advanced_rag_pipeline(
     if confidence["caveat"]:
         answer = answer + confidence["caveat"]
 
+    if confidence["confidence"] == "low":
+        outcome = "answer_low_confidence"
+    else:
+        outcome = "answer"
+
     logger.info("Advanced RAG pipeline complete.")
 
     result = {
@@ -147,7 +153,8 @@ def run_advanced_rag_pipeline(
         "rewritten_query": rewritten,
         "sufficiency": sufficiency,
         "citation_check": citation_check,
-        "confidence": confidence["confidence"]
+        "confidence": confidence["confidence"],
+        "outcome": outcome
     }
 
     if return_contexts:
