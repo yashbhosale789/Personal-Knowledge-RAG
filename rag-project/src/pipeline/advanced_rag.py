@@ -10,6 +10,7 @@ from src.pipeline.query_rewriter import rewrite_query
 from src.llm.client import call_llm
 from src.pipeline.context_sufficiency import check_sufficiency
 from src.pipeline.citation_verification import verify_citation
+from src.pipeline.confidence import score_confidence
 from config import SYSTEM_PROMPT, TOP_K, ABSTAIN_MESSAGE
 
 logger = logging.getLogger(__name__)
@@ -126,6 +127,11 @@ def run_advanced_rag_pipeline(
     # Stage 5.5: Citaiton Verification
     citation_check = verify_citation(answer, reranked)
 
+    # Stage 5.75: Confidence
+    confidence = score_confidence(sufficiency, citation_check)
+    if confidence["caveat"]:
+        answer = answer + confidence["caveat"]
+
     logger.info("Advanced RAG pipeline complete.")
 
     result = {
@@ -141,6 +147,7 @@ def run_advanced_rag_pipeline(
         "rewritten_query": rewritten,
         "sufficiency": sufficiency,
         "citation_check": citation_check,
+        "confidence": confidence["confidence"]
     }
 
     if return_contexts:
