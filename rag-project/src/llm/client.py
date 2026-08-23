@@ -76,7 +76,7 @@ def _call_openai_compatible(messages: list, model: str, url:str, key_env: str | 
     return response.json()["choices"][0]["message"]["content"].strip()
 
 
-def _call_ollama(messages: list, model, url, key_env) -> str:
+def _call_ollama(messages: list, model, url) -> str:
     """
     Ollama native /api/chat — NOT /v1/chat/completions.
     The OpenAI-compatible route silently ignores options.num_ctx and defaults
