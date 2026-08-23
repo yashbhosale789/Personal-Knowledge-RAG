@@ -84,5 +84,6 @@ async def query_endpoint(request: Request, body: QueryRequest):
         timestamp=datetime.datetime.utcnow().isoformat() + "Z",
         sufficiency=result.get("sufficiency"),
         citation_check=result.get("citation_check"),
-        confidence=result.get("confidence")
+        confidence=result.get("confidence"),
+        outcome=result.get("outcome")
     )
