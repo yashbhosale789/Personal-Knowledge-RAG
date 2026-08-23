@@ -68,6 +68,11 @@ class QueryResponse(BaseModel):
         description="Citation Verification gate result. None if generation was skipped (e.g. abstain or insufficient context).",
     )
 
+    confidence: Optional[str] = Field(
+        default=None,
+        description="'high' if citation verified, 'low' if not. None if generation was skipped."
+    )
+
 
 class IngestResponse(BaseModel):
     status: str = Field(description="'success' or 'already_exists'.")
