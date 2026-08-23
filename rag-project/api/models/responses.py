@@ -70,7 +70,12 @@ class QueryResponse(BaseModel):
 
     confidence: Optional[str] = Field(
         default=None,
-        description="'high' if citation verified, 'low' if not. None if generation was skipped."
+        description="'high' if citation verified, 'low' if not. None if generation was skipped.",
+    )
+
+    outcome: Optional[str] = Field(
+        default=None,
+        description="'abstain' | 'answer_low_confidence' | 'answer' — derived from sufficiency/citation_check/confidence.",
     )
 
 
