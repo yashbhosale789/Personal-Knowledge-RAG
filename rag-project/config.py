@@ -152,7 +152,10 @@ Rules:
 
 # Context Sufficiency
 
-SUFFICIENCY_CE_FLOOR = -5.0 # TODO: calibrate against golden set. Below this, skip LLM judge entirely.
+SUFFICIENCY_CE_FLOOR = -7.0
+# Calibrated Phase 8: rejects confirmed off-topic (-10.95 to -7.31),
+# lets borderline-topical queries (e.g. -5.02 torque spec) reach tier 2 judge.
+# TODO: Revisit with a larger/multi-doc corpus.
 
 SUFFICIENCY_JUDGE_SYSTEM = """You are a strict evaluator. Given a QUESTION and CONTEXT, \
 decide if the CONTEXT contains enough information to answer the QUESTION accurately.
