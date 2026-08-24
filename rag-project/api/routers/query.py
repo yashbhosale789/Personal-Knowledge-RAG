@@ -1,6 +1,6 @@
 import datetime
 import logging
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Depends
 from starlette.concurrency import run_in_threadpool
 
 from api.models.requests import QueryRequest
@@ -8,6 +8,7 @@ from api.models.responses import QueryResponse
 from api.core.exceptions import ProviderError, PipelineNotReadyError
 from api.core.retry import call_with_fallback
 from api.routers.health import is_pipeline_ready
+from api.core.auth import verify_api_key
 
 logger = logging.getLogger(__name__)
 
