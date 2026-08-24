@@ -58,7 +58,10 @@ def _resolve_provider(provider: str | None) -> tuple[str, str, str, str | None]:
     model, url, key_env = _PROVIDERS[active]
     return active, model, url, key_env
 
-def _call_openai_compatible(messages: list, model: str, url:str, key_env: str | None) -> str:
+
+def _call_openai_compatible(
+    messages: list, model: str, url: str, key_env: str | None
+) -> str:
     """OpenRouter, Groq, Gemini — all speak the same OpenAI-compatible shape."""
     payload = {
         "model": model,
@@ -73,7 +76,13 @@ def _call_openai_compatible(messages: list, model: str, url:str, key_env: str | 
 
     response = requests.post(url, headers=headers, json=payload, timeout=30)
     response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"].strip()
+
+    response_json = response.json()
+    try:
+        return response_json["choices"][0]["message"]["content"].strip()
+    except KeyError:
+        logger.error(f"{url} returned unexpected shape: {response_json}")
+        raise
 
 
 def _call_ollama(messages: list, model, url) -> str:
