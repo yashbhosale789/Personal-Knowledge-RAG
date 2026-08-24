@@ -31,6 +31,23 @@ LOGGING_CONFIG = {
     }
 }
 
+def _warmup_retrieval_component() -> None:
+    """
+    Loads retrieval-side components only — embedder, vectorstore, reranker.
+    Deliberately excludes the LLM: provider health is transient and already
+    handled per-request by call_with_fallback. Gating app readiness on one
+    provider's health at one instant during boot caused permanent degraded
+    state on transient failures (Phase 9 bug).
+    """
+
+    from src.embedding.embedder import get_embedding_model
+    from src.vectorstore.store import get_vectorstore
+    from src.retrieval.reranker import CrossEncoderReranker
+
+    get_embedding_model()
+    get_vectorstore()
+    CrossEncoderReranker()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logging.config.dictConfig(LOGGING_CONFIG)
@@ -39,15 +56,16 @@ async def lifespan(app: FastAPI):
 
     try:
         from starlette.concurrency import run_in_threadpool
-        from src.pipeline.advanced_rag import run_advanced_rag_pipeline
+        # from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
         # Warm up: run a dummy query to force model loading
-        await run_in_threadpool(run_advanced_rag_pipeline, "warmup", return_contexts=False)
+        # await run_in_threadpool(run_advanced_rag_pipeline, "warmup", return_contexts=False)
+        await run_in_threadpool(_warmup_retrieval_component)
         health.set_pipeline_ready(True)
-        logger.info("Pipeline initialized and ready.")
+        logger.info("Retrieval Components initialized and ready.")
 
     except Exception as e:
-        logger.error("Pipeline initialization failed: %s", e)
+        logger.error("Retrieval Components initialization failed: %s", e)
         # Server starts but in degraded state — health endpoint reports this
 
     yield  # Server runs here
