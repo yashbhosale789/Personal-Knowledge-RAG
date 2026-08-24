@@ -2,6 +2,8 @@ import asyncio
 import logging
 import random
 import time
+import requests
+
 from typing import Callable, List, Optional, Any
 from api.core.exceptions import ProviderError
 from api.core.metrics import (
@@ -44,6 +46,18 @@ async def call_with_retry(
             provider_call_errors_total.labels(provider=provider).inc()
 
             last_exception = e
+
+            is_rate_limited = (
+                isinstance(e, requests.exceptions.HTTPError)
+                and e.response is not None
+                and e.response.status_code == 429
+            )
+
+            if is_rate_limited:
+                logger.warning(
+                    f"Provider {provider} rate limited (429) - skipping retries, falling back."
+                )
+
             if attempt == max_retries:
                 break
 
