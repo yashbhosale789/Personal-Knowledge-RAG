@@ -38,7 +38,7 @@ def _run_pipeline(query: str, provider: str, return_contexts: bool) -> dict:
     summary="Query the RAG Pipeline.",
     status_code=200,
 )
-async def query_endpoint(request: Request, body: QueryRequest):
+async def query_endpoint(request: Request, body: QueryRequest, _: None = Depends(verify_api_key)):
     import config
 
     if not is_pipeline_ready():
