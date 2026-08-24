@@ -57,6 +57,7 @@ async def call_with_retry(
                 logger.warning(
                     f"Provider {provider} rate limited (429) - skipping retries, falling back."
                 )
+                break
 
             if attempt == max_retries:
                 break
