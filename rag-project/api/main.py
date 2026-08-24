@@ -48,6 +48,27 @@ def _warmup_retrieval_component() -> None:
     get_vectorstore()
     CrossEncoderReranker()
 
+
+async def _warmup_llm(logger: logging.Logger) -> None:
+    try:
+        from api.core.retry import call_with_fallback
+        from src.llm.client import call_llm
+        import config
+
+        def make_llm_call(provider:str):
+            return call_llm("Reply with OK.", provider=provider)
+        
+        await call_with_fallback(
+            make_llm_call,
+            preferred_provider=config.PIPELINE_PROVIDER,
+            max_retries=1
+        )
+        logger.info("LLM provider warmed up.")
+
+    except Exception as e:
+        logger.warning(f"LLM warmup failed (non-fatal, first request will retry): {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logging.config.dictConfig(LOGGING_CONFIG)
@@ -68,6 +89,8 @@ async def lifespan(app: FastAPI):
         logger.error("Retrieval Components initialization failed: %s", e)
         # Server starts but in degraded state — health endpoint reports this
 
+    await _warmup_llm(logger)
+    
     yield  # Server runs here
 
     logger.info("Shutting down RAG API.")
