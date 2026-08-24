@@ -1,10 +1,11 @@
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from starlette.concurrency import run_in_threadpool
 
 from api.models.responses import IngestResponse
 from api.models.requests import IngestRequest
 from api.core.exceptions import IngestError
+from api.core.auth import verify_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -40,13 +41,12 @@ def _run_ingest(file_path : str, force_reingest: bool) -> IngestResponse:
         raise IngestError(str(e), file_path=file_path)
 
 
-
 @router.post(
     "/ingest",
     response_model=IngestResponse,
     status_code=200
 )
-async def ingest_endpoint(body: IngestRequest):
+async def ingest_endpoint(body: IngestRequest, _: None = Depends(verify_api_key)):
     try:
         result = await run_in_threadpool(_run_ingest, body.file_path, body.force_reingest)
         return result
