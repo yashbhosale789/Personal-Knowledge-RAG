@@ -24,5 +24,5 @@ def rewrite_query(query: str) -> str:
         return rewritten
 
     except Exception as e:
-        logger.info(f"Query rewrite failed, using original. Rason: {e}")
+        logger.info(f"Query rewrite failed, using original. Reason: {e}")
         return query
