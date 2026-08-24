@@ -20,6 +20,12 @@ _bm25 = BM25Retriever()
 _reranker = CrossEncoderReranker()
 
 
+# in advanced_rag.py, near _bm25/_reranker
+def warmup() -> None:
+    """No-op — importing this module already builds _bm25 and _reranker."""
+    pass
+
+
 def _dense_to_dicts(documents: list[Document], top_k: int) -> list[dict]:
     """
     Converts LangChain Documents to the dict format used by RRF and reranker.
