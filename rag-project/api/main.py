@@ -31,22 +31,25 @@ LOGGING_CONFIG = {
     }
 }
 
+
 def _warmup_retrieval_component() -> None:
     """
-    Loads retrieval-side components only — embedder, vectorstore, reranker.
-    Deliberately excludes the LLM: provider health is transient and already
-    handled per-request by call_with_fallback. Gating app readiness on one
-    provider's health at one instant during boot caused permanent degraded
-    state on transient failures (Phase 9 bug).
-    """
+    Loads retrieval-side components only — embedder, vectorstore, and the
+    BM25/reranker singletons owned by advanced_rag.py. Deliberately excludes
+    the LLM: provider health is transient and already handled per-request by
+    call_with_fallback (see _warmup_llm).
 
+    Importing advanced_rag triggers its own module-level singleton creation
+    (_bm25, _reranker) — must import the module itself, not re-instantiate
+    BM25Retriever/CrossEncoderReranker separately, or warmup builds throwaway
+    copies while the real pipeline still cold-loads its own on first call.
+    """
     from src.embedding.embedder import get_embedding_model
     from src.vectorstore.store import get_vectorstore
-    from src.retrieval.reranker import CrossEncoderReranker
+    import src.pipeline.advanced_rag
 
     get_embedding_model()
     get_vectorstore()
-    CrossEncoderReranker()
 
 
 async def _warmup_llm(logger: logging.Logger) -> None:
@@ -90,7 +93,7 @@ async def lifespan(app: FastAPI):
         # Server starts but in degraded state — health endpoint reports this
 
     await _warmup_llm(logger)
-    
+
     yield  # Server runs here
 
     logger.info("Shutting down RAG API.")
