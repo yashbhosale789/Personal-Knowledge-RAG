@@ -169,3 +169,9 @@ Rules:
 - Do not use outside knowledge. Judge only what is in CONTEXT."""
 
 ABSTAIN_MESSAGE = "I don't have enough information in the knowledge base to answer this question accurately."
+
+
+# AUTHORIZATION
+
+
+API_KEY = "API_KEY"
