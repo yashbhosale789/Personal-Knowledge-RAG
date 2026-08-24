@@ -173,5 +173,7 @@ ABSTAIN_MESSAGE = "I don't have enough information in the knowledge base to answ
 
 # AUTHORIZATION
 
+# Run the following to generate API_KEY:
+# python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 API_KEY = "API_KEY"
