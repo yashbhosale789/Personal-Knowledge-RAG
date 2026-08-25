@@ -23,15 +23,11 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
         metrics_path = route.path if route else "unmatched"
 
         http_requests_total.labels(
-            method=request.method,
-            path=metrics_path,
-            status_code=response.status_code
+            method=request.method, path=metrics_path, status_code=response.status_code
         ).inc()
 
         http_request_duration_seconds.labels(
-            method=request.method,
-            path=metrics_path
-            
+            method=request.method, path=metrics_path
         ).observe(latency_ms / 1000)
 
         log_record = {
@@ -39,7 +35,7 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
             "method": request.method,
             "path": request.url.path,
             "status_code": response.status_code,
-            "latency_ms": round(latency_ms, 2)
+            "latency_ms": round(latency_ms, 2),
         }
 
         logging.getLogger("api.access").info(json.dumps(log_record))
