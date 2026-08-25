@@ -38,7 +38,9 @@ def _run_pipeline(query: str, provider: str, return_contexts: bool) -> dict:
     summary="Query the RAG Pipeline.",
     status_code=200,
 )
-async def query_endpoint(request: Request, body: QueryRequest, _: None = Depends(verify_api_key)):
+async def query_endpoint(
+    request: Request, body: QueryRequest, _: None = Depends(verify_api_key)
+):
     import config
 
     if not is_pipeline_ready():
@@ -86,5 +88,5 @@ async def query_endpoint(request: Request, body: QueryRequest, _: None = Depends
         sufficiency=result.get("sufficiency"),
         citation_check=result.get("citation_check"),
         confidence=result.get("confidence"),
-        outcome=result.get("outcome")
+        outcome=result.get("outcome"),
     )
