@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _run_ingest(file_path : str, force_reingest: bool) -> IngestResponse:
+def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
     # Complete this function
     import os
     from src.ingestion.loader import load_documents
@@ -34,21 +34,19 @@ def _run_ingest(file_path : str, force_reingest: bool) -> IngestResponse:
             status="success",
             file_path=file_path,
             chunks_created=len(chunks),
-            message=f"Successfully ingested {len(chunks)} chunks."
+            message=f"Successfully ingested {len(chunks)} chunks.",
         )
 
     except Exception as e:
         raise IngestError(str(e), file_path=file_path)
 
 
-@router.post(
-    "/ingest",
-    response_model=IngestResponse,
-    status_code=200
-)
+@router.post("/ingest", response_model=IngestResponse, status_code=200)
 async def ingest_endpoint(body: IngestRequest, _: None = Depends(verify_api_key)):
     try:
-        result = await run_in_threadpool(_run_ingest, body.file_path, body.force_reingest)
+        result = await run_in_threadpool(
+            _run_ingest, body.file_path, body.force_reingest
+        )
         return result
 
     except IngestError as e:
@@ -56,4 +54,6 @@ async def ingest_endpoint(body: IngestRequest, _: None = Depends(verify_api_key)
 
     except Exception as e:
         logger.exception(f"Unexpected ingest error for {body.file_path}.")
-        raise HTTPException(status_code=500, detail="Internal server error during ingestion.")
+        raise HTTPException(
+            status_code=500, detail="Internal server error during ingestion."
+        )
