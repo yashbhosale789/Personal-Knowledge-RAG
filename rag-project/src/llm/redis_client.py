@@ -5,6 +5,7 @@ logger = logging.getLogger(__name__)
 
 _client: redis.Redis | None = None
 
+
 def get_redis_client() -> redis.Redis:
     global _client
     if _client is None:
