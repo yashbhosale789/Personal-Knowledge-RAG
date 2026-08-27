@@ -6,6 +6,7 @@ import requests
 
 from typing import Callable, List, Optional, Any
 from api.core.exceptions import ProviderError
+from src.llm.rate_limiter import is_rate_limited
 from api.core.metrics import (
     provider_call_duration_seconds,
     provider_call_errors_total,
@@ -88,6 +89,7 @@ async def call_with_fallback(
     fn: Callable,
     preferred_provider: Optional[str] = None,
     max_retries: int = 3,
+    api_key_hash: Optional[str] = None
 ) -> tuple[Any, str]:
     if preferred_provider == "ollama":
         # Explicit-only: never auto-selected, never falls back to it.
@@ -106,6 +108,14 @@ async def call_with_fallback(
 
     last_error = None
     for provider in providers_to_try:
+        if api_key_hash and is_rate_limited(api_key_hash, provider):
+            provider_requests_total.labels(provider=provider, outcome="rate_limited").inc()
+            logger.warning("Provider %s rate-limited for this key, skipping", provider)
+            last_error = ProviderError(
+                message="rate limited", provider=provider, retries_exhausted=False
+            )
+            continue
+
         try:
             result = await call_with_retry(fn, provider, max_retries=max_retries)
             provider_requests_total.labels(provider=provider, outcome="success").inc()
