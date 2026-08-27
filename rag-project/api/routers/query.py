@@ -39,7 +39,7 @@ def _run_pipeline(query: str, provider: str, return_contexts: bool) -> dict:
     status_code=200,
 )
 async def query_endpoint(
-    request: Request, body: QueryRequest, _: None = Depends(verify_api_key)
+    request: Request, body: QueryRequest, api_key_hash : str = Depends(verify_api_key)
 ):
     import config
 
@@ -64,6 +64,7 @@ async def query_endpoint(
             make_pipeline_call,
             preferred_provider=body.provider or config.PIPELINE_PROVIDER,
             max_retries=3,
+            api_key_hash=api_key_hash
         )
 
     except ProviderError as e:
