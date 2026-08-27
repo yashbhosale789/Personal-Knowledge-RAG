@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
 from src.llm.redis_client import get_redis_client
 
-RATE_LIMIT_PER_MINUTE = 20
+RATE_LIMIT_PER_MINUTE = {
+    "groq": 100,
+    "gemini": 10,
+    "openrouter": 3,
+}
 RATE_LIMIT_TTL_SECONDS = 120
 
 
@@ -14,4 +18,8 @@ def is_rate_limited(api_key_hash: str, provider: str) -> bool:
     if count == 1:
         client.expire(key, RATE_LIMIT_TTL_SECONDS)
 
-    return count > RATE_LIMIT_PER_MINUTE
+    limit = RATE_LIMIT_PER_MINUTE.get(provider)
+    if limit is None:
+        return False  # unknown provider (e.g. ollama) — not rate-limited
+
+    return count > limit
