@@ -3,9 +3,10 @@ import secrets
 from fastapi import Header, HTTPException, status
 
 import config
+import hashlib
 
 
-def verify_api_key(authorization: str | None = Header(None)) -> None:
+def verify_api_key(authorization: str | None = Header(None)) -> str:
     if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -19,3 +20,5 @@ def verify_api_key(authorization: str | None = Header(None)) -> None:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key.",
         )
+
+    return hashlib.sha256(provided_key.encode()).hexdigest()
