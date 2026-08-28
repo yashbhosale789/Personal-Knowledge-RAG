@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from src.llm.redis_client import get_redis_client
 
 RATE_LIMIT_PER_MINUTE = {
-    "groq": 1,
+    "groq": 100,
     "gemini": 10,
     "openrouter": 3,
 }
