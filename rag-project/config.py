@@ -55,7 +55,7 @@ GEMINI_API_URL = (
     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 )
 GEMINI_API_KEY = "GEMINI_API_KEY"
-GEMINI_PIPELINE_MODEL = "gemini-2.5-flash"
+GEMINI_PIPELINE_MODEL = "gemini-3-flash"
 # Other free options:
 # "gemini-2.5-flash-lite"    — faster, cheaper, slightly weaker
 
