@@ -55,9 +55,11 @@ GEMINI_API_URL = (
     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 )
 GEMINI_API_KEY = "GEMINI_API_KEY"
-GEMINI_PIPELINE_MODEL = "gemini-3-flash"
+GEMINI_PIPELINE_MODEL = "gemini-3.5-flash-lite"
 # Other free options:
-# "gemini-2.5-flash-lite"    — faster, cheaper, slightly weaker
+# "gemini-3.5-flash-lite"   — faster, newer generation, great balance for high-volume
+# "gemini-3.7-flash"        — most capable flagship flash model (250 req/day limit)
+# "gemini-2.5-flash-lite"   — legacy 2.5 architecture, extremely low-latency
 
 # Only for local testing
 OLLAMA_BASE_URL = "http://localhost:11434"
