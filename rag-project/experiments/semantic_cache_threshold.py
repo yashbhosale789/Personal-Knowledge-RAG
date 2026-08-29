@@ -39,3 +39,20 @@ pairs = [
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return np.dot(a,b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+
+ENTITY_GROUPS = [{"sedan", "suv", "hatchback"}]
+
+
+def entity_mismatch(query_a: str, query_b: str) -> bool:
+    query_a_lower = query_a.lower()
+    query_b_lower = query_b.lower()
+
+    for group in ENTITY_GROUPS:
+        terms_in_a = {term for term in group if term in query_a_lower}
+        terms_in_b = {term for term in group if term in query_b_lower}
+
+        if terms_in_a and terms_in_b and terms_in_a != terms_in_b:
+            return True
+
+        return False
