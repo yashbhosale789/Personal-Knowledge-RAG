@@ -38,7 +38,7 @@ pairs = [
 
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
-    return np.dot(a,b) / (np.linalg.norm(a) * np.linalg.norm(b))
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 
 ENTITY_GROUPS = [{"sedan", "suv", "hatchback"}]
@@ -62,4 +62,8 @@ for query_a, query_b, label in pairs:
     embedding_a = model.encode(query_a)
     embedding_b = model.encode(query_b)
     similarity = cosine_similarity(embedding_a, embedding_b)
-    print(f"[{label}] {similarity:.4f} | \"{query_a}\" vs \"{query_b}\"")
+    blocked = entity_mismatch(query_a, query_b)
+    would_cache = similarity >= 0.90 and not blocked
+    print(
+        f'[{label}] sim={similarity:.4f}  blocked={blocked}  would_cache={would_cache}  |  "{query_a}"  vs  "{query_b}"'
+    )
