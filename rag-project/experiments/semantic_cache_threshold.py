@@ -56,3 +56,10 @@ def entity_mismatch(query_a: str, query_b: str) -> bool:
             return True
 
         return False
+
+
+for query_a, query_b, label in pairs:
+    embedding_a = model.encode(query_a)
+    embedding_b = model.encode(query_b)
+    similarity = cosine_similarity(embedding_a, embedding_b)
+    print(f"[{label}] {similarity:.4f} | \"{query_a}\" vs \"{query_b}\"")
