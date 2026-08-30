@@ -184,7 +184,14 @@ ABSTAIN_MESSAGE = "I don't have enough information in the knowledge base to answ
 API_KEY = "API_KEY"
 
 
-# Redis Semantic Cache
+# Redis
 
+RATE_LIMIT_PER_MINUTE = {
+    "groq": 100,
+    "gemini": 10,
+    "openrouter": 3,
+}
+RATE_LIMIT_TTL_SECONDS = 120
+ENTITY_GROUPS = [{"sedan", "suv", "hatchback"}]
 CACHE_INDEX_NAME = "semantic_cache_idx"
 CACHE_KEY_PREFIX = "cache:"
