@@ -33,9 +33,33 @@ def create_cache_index() -> None:
             ),
         )
 
+
+def strore_cache_entry(query: str, answer: str, provider: str) -> None:
+    client = get_redis_client()
+
+    model = get_embedding_model()
+    embedding = model.encode(query)
+
+    key_hash = hashlib.sha256(query.encode()).hexdigest()
+    key = f"{CACHE_KEY_PREFIX}{key_hash}"
+
+    client.hset(
+        key,
+        mapping={
+            "embedding": embedding.astype("float32").tobytes(),
+            "query": query,
+            "answer": answer,
+            "provider": provider,
+        }
+    )
+
+
 if __name__ == "__main__":
     create_cache_index()
     print("index created")
+
+    strore_cache_entry
+    print("Cache Entries Stored")
 
     
 # Run the follwing:
