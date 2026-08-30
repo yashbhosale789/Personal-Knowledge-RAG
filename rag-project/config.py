@@ -184,7 +184,7 @@ ABSTAIN_MESSAGE = "I don't have enough information in the knowledge base to answ
 API_KEY = "API_KEY"
 
 
-# Redis
+# Redis | Semantic Cache
 
 RATE_LIMIT_PER_MINUTE = {
     "groq": 100,
