@@ -2,10 +2,16 @@ from redis.commands.search.field import VectorField, TextField
 from redis.commands.search.index_definition import IndexDefinition, IndexType
 
 from src.llm.redis_client import get_redis_client
-from config import EMBEDDING_DIAMENSION, CACHE_INDEX_NAME, CACHE_KEY_PREFIX
+from config import (
+    EMBEDDING_DIAMENSION,
+    CACHE_INDEX_NAME,
+    CACHE_KEY_PREFIX,
+    CACHE_TTL_SECONDS,
+)
 
 import hashlib
 from src.embedding.embedder import get_embedding_model
+
 
 def create_cache_index() -> None:
     client = get_redis_client()
@@ -34,7 +40,7 @@ def create_cache_index() -> None:
         )
 
 
-def strore_cache_entry(query: str, answer: str, provider: str) -> None:
+def store_cache_entry(query: str, answer: str, provider: str) -> None:
     client = get_redis_client()
 
     model = get_embedding_model()
@@ -47,23 +53,38 @@ def strore_cache_entry(query: str, answer: str, provider: str) -> None:
         key,
         mapping={
             "embedding": embedding.astype("float32").tobytes(),
-            "query": query,
-            "answer": answer,
+            "query_text": query,
+            "answer_text": answer,
             "provider": provider,
-        }
+        },
     )
+
+    client.expire(key, CACHE_TTL_SECONDS)
 
 
 if __name__ == "__main__":
     create_cache_index()
     print("index created")
 
-    strore_cache_entry
-    print("Cache Entries Stored")
+    store_cache_entry(
+        "Where is the spare tyre in a Sedan?",
+        "Under the boot floor in the trunk.",
+        "groq",
+    )
+    print("cache entry stored")
 
-    
+
 # Run the follwing:
 
+# ----- create_cache_index() -----
 # python -c "from src.llm.semantic_cache import create_cache_index; create_cache_index(); print('index created')"
 # docker docker exec -it redis-stack redis-cli
 # FT._LIST
+
+
+# ----- store_cache_entry() -----
+# python -c "
+# from src.llm.semantic_cache import store_cache_entry
+# store_cache_entry('Where is the spare tyre in a Sedan?', 'Under the boot floor in the trunk.', 'groq')
+# print('stored')
+# "
