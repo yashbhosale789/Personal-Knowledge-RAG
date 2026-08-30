@@ -41,7 +41,7 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 
-ENTITY_GROUPS = [{"sedan", "suv", "hatchback"}]
+from config import ENTITY_GROUPS
 
 
 def entity_mismatch(query_a: str, query_b: str) -> bool:
