@@ -4,6 +4,8 @@ from redis.commands.search.index_definition import IndexDefinition, IndexType
 from src.llm.redis_client import get_redis_client
 from config import EMBEDDING_DIAMENSION, CACHE_INDEX_NAME, CACHE_KEY_PREFIX
 
+import hashlib
+from src.embedding.embedder import get_embedding_model
 
 def create_cache_index() -> None:
     client = get_redis_client()
