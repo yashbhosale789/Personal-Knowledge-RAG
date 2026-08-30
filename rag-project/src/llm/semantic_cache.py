@@ -30,3 +30,14 @@ def create_cache_index() -> None:
                 prefix=[CACHE_KEY_PREFIX], index_type=IndexType.HASH
             ),
         )
+
+if __name__ == "__main__":
+    create_cache_index()
+    print("index created")
+
+    
+# Run the follwing:
+
+# python -c "from src.llm.semantic_cache import create_cache_index; create_cache_index(); print('index created')"
+# docker docker exec -it redis-stack redis-cli
+# FT._LIST
