@@ -182,3 +182,9 @@ ABSTAIN_MESSAGE = "I don't have enough information in the knowledge base to answ
 # python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 API_KEY = "API_KEY"
+
+
+# Redis Semantic Cache
+
+CACHE_INDEX_NAME = "semantic_cache_idx"
+CACHE_KEY_PREFIX = "cache:"
