@@ -55,7 +55,7 @@ def entity_mismatch(query_a: str, query_b: str) -> bool:
         if terms_in_a and terms_in_b and terms_in_a != terms_in_b:
             return True
 
-        return False
+    return False
 
 
 for query_a, query_b, label in pairs:
