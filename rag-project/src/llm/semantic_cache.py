@@ -8,10 +8,18 @@ from config import (
     CACHE_INDEX_NAME,
     CACHE_KEY_PREFIX,
     CACHE_TTL_SECONDS,
+    CACHE_SIMILARITY_THRESHOLD,
 )
 
 import hashlib
 from src.embedding.embedder import get_embedding_model
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from experiments.semantic_cache_threshold import entity_mismatch
 
 
 def create_cache_index() -> None:
@@ -78,6 +86,26 @@ def find_cached_answer(query: str) -> dict | None:
     results = client.ft(CACHE_INDEX_NAME).search(
         knn_query, query_params={"vec": embedding.astype("float32").tobytes()}
     )
+
+    if results.total == 0:
+        return None
+
+    top_hit = results.docs[0]
+    distance = float(top_hit.score)
+    similarity = 1 - distance
+
+    if similarity < CACHE_SIMILARITY_THRESHOLD:
+        return None
+
+    if entity_mismatch(query, top_hit.query):
+        return None
+
+    return {
+        "query": top_hit.query,
+        "answer": top_hit.answer,
+        "provider": top_hit.provider,
+        "similarity": similarity,
+    }
 
 
 if __name__ == "__main__":
