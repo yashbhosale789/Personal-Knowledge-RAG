@@ -1,5 +1,6 @@
 from redis.commands.search.field import VectorField, TextField
 from redis.commands.search.index_definition import IndexDefinition, IndexType
+from redis.commands.search.query import Query
 
 from src.llm.redis_client import get_redis_client
 from config import (
@@ -60,6 +61,23 @@ def store_cache_entry(query: str, answer: str, provider: str) -> None:
     )
 
     client.expire(key, CACHE_TTL_SECONDS)
+
+
+def find_cached_answer(query: str) -> dict | None:
+    client = get_redis_client()
+    model = get_embedding_model()
+    embedding = model.encode(query)
+
+    knn_query = (
+        Query("*=>[KNN 1 @embedding $vec AS score]")
+        .sort_by("score")
+        .return_field("query", "answer", "provider", "score")
+        .dialect(2)
+    )
+
+    results = client.ft(CACHE_INDEX_NAME).search(
+        knn_query, query_params={"vec": embedding.astype("float32").tobytes()}
+    )
 
 
 if __name__ == "__main__":
