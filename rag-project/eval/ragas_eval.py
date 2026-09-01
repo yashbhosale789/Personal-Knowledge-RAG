@@ -41,7 +41,7 @@ from config import (
     GEMINI_API_URL,
     GEMINI_EVALUATOR_KEY,
     GEMINI_REQUEST_DELAY,
-    EMBEDDINGS_MODEL_NAME
+    EMBEDDINGS_MODEL_NAME,
 )
 
 # Initialize the sentence transformer model for embedding calculation.
@@ -129,6 +129,7 @@ def call_evaluator(prompt: str) -> str:
         raise RuntimeError(f"Unexpected response from {EVAL_PROVIDER}: {data}")
 
     return data["choices"][0]["message"]["content"].strip()
+
 
 # ---------------------------------------------------------------------------
 # Metrics
@@ -374,7 +375,7 @@ Example output: ["What color is the sky?", "Why is the sky blue?", "What does th
     similarities = [float(np.dot(original_emb, syn_emb)) for syn_emb in synthetic_emb]
 
     # print(f"    [AR DEBUG] synthetic_questions: {synthetic_question}")
-    # print(f"    [AR DEBUG] embedding norms: {[float(np.linalg.norm(e)) for e in synthetic_emb]}") 
+    # print(f"    [AR DEBUG] embedding norms: {[float(np.linalg.norm(e)) for e in synthetic_emb]}")
     # print(f"    [AR DEBUG] similarities: {similarities}")
 
     # The final score is the average of these similarities.
@@ -429,7 +430,9 @@ def main():
         # Create a set of IDs for quick lookup.
         already_scored = {r["id"] for r in existing}
         if already_scored:
-            print(f"Resuming — {len(already_scored)} already scored: {already_scored}\n")
+            print(
+                f"Resuming — {len(already_scored)} already scored: {already_scored}\n"
+            )
     else:
         existing = []
         already_scored = set()
@@ -466,7 +469,7 @@ def main():
                 "faithfulness": faith,
                 "context_precision": prec,
                 "context_recall": rec,
-                "answer_relevancy" : ar
+                "answer_relevancy": ar,
             }
         )
 

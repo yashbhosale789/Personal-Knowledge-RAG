@@ -10,8 +10,8 @@ from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s — %(message)s")
 
-DATASET_PATH  = Path(__file__).parent / "test_dataset.json"
-OUTPUT_PATH   = Path(__file__).parent / "eval_results.json"
+DATASET_PATH = Path(__file__).parent / "test_dataset.json"
+OUTPUT_PATH = Path(__file__).parent / "eval_results.json"
 REQUEST_DELAY = 3
 
 
@@ -21,7 +21,9 @@ def collect_results(dataset: list[dict]) -> list[dict]:
     if OUTPUT_PATH.exists():
         with open(OUTPUT_PATH) as f:
             existing = json.load(f)
-        already_done = {r["id"] for r in existing if not r["answer"].startswith("ERROR")}
+        already_done = {
+            r["id"] for r in existing if not r["answer"].startswith("ERROR")
+        }
         print(f"Resuming — {len(already_done)} already completed: {already_done}\n")
     else:
         existing = []
@@ -30,10 +32,10 @@ def collect_results(dataset: list[dict]) -> list[dict]:
     results = []
 
     for i, item in enumerate(dataset):
-        qid          = item["id"]
-        question     = item["question"]
+        qid = item["id"]
+        question = item["question"]
         ground_truth = item["ground_truth"]
-        difficulty   = item["difficulty"]
+        difficulty = item["difficulty"]
 
         if qid in already_done:
             print(f"[{i+1}/{len(dataset)}] {qid} — skipping (already done)")
@@ -50,25 +52,27 @@ def collect_results(dataset: list[dict]) -> list[dict]:
             except Exception as e:
                 if "429" in str(e) and attempt < 2:
                     wait = 60 * (attempt + 1)
-                    print(f"    Rate limited — waiting {wait}s before retry {attempt+2}/3...")
+                    print(
+                        f"    Rate limited — waiting {wait}s before retry {attempt+2}/3..."
+                    )
                     time.sleep(wait)
                 else:
                     raise
 
         if output is not None:
             record = {
-                "id":              qid,
-                "difficulty":      difficulty,
-                "question":        question,
-                "answer":          output["answer"],
-                "contexts":        output["contexts"],
-                "ground_truth":    ground_truth,
+                "id": qid,
+                "difficulty": difficulty,
+                "question": question,
+                "answer": output["answer"],
+                "contexts": output["contexts"],
+                "ground_truth": ground_truth,
                 "rewritten_query": output.get("rewritten_query", ""),
-                "chunks_used":     output.get("chunks_used", 0),
+                "chunks_used": output.get("chunks_used", 0),
             }
             results.append(record)
             print(f"[SUCCESS] {output['answer'][:80]}...")
-        
+
         if i < len(dataset) - 1:
             time.sleep(REQUEST_DELAY)
 
