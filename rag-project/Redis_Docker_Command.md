@@ -74,7 +74,7 @@ Deletes a specific cache entry by its full key.
 
 ### Rate limiter keys
 
-```
+```bash
 KEYS ratelimit:*
 GET ratelimit:<key>
 TTL ratelimit:<key>
@@ -82,7 +82,7 @@ TTL ratelimit:<key>
 
 ### Semantic cache keys
 
-```
+```bash
 KEYS cache:*
 HGETALL cache:<key>
 TTL cache:<key>
@@ -90,7 +90,7 @@ TTL cache:<key>
 
 ### RediSearch index inspection
 
-```
+```bash
 FT._LIST
 FT.INFO semantic_cache_idx
 FT.DROPINDEX semantic_cache_idx
