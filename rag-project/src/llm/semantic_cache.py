@@ -146,8 +146,28 @@ if __name__ == "__main__":
 
 
 # ----- store_cache_entry() -----
-# python -c "
-# from src.llm.semantic_cache import store_cache_entry
-# store_cache_entry('Where is the spare tyre in a Sedan?', 'Under the boot floor in the trunk.', 'groq')
-# print('stored')
-# "
+"""
+python -c "
+from src.llm.semantic_cache import store_cache_entry
+store_cache_entry('Where is the spare tyre in a Sedan?', 'Under the boot floor in the trunk.', 'groq')
+print('stored')
+"
+
+"""
+
+# End-to-End testing
+"""
+python -c "
+from src.llm.semantic_cache import find_cached_answer
+
+print('--- Exact match ---')
+print(find_cached_answer('Where is the spare tyre in a Sedan?'))
+
+print('--- Paraphrase ---')
+print(find_cached_answer('Where can I find the spare wheel in a Sedan?'))
+
+print('--- Dangerous SUV variant (should be blocked) ---')
+print(find_cached_answer('Where is the spare tyre in an SUV?'))
+"
+
+"""
