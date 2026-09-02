@@ -125,6 +125,16 @@ def find_cached_answer(query: str) -> dict | None:
     }
 
 
+def clear_cache() -> int:
+    client = get_redis_client()
+    count = 0
+    for key in client.scan_iter(match=f"{CACHE_KEY_PREFIX}*"):
+        client.delete(key)
+        count += 1
+        
+    return count
+
+
 if __name__ == "__main__":
     create_cache_index()
     print("index created")
