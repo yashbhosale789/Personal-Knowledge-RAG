@@ -14,12 +14,12 @@ from config import (
 import hashlib
 from src.embedding.embedder import get_embedding_model
 
-import sys
-from pathlib import Path
+# import sys
+# from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from experiments.semantic_cache_threshold import entity_mismatch
+# from experiments.semantic_cache_threshold import entity_mismatch
 
 
 def create_cache_index() -> None:
@@ -69,6 +69,23 @@ def store_cache_entry(query: str, answer: str, provider: str) -> None:
     )
 
     client.expire(key, CACHE_TTL_SECONDS)
+
+
+ENTITY_GROUPS = [{"sedan", "suv", "hatchback"}]
+
+
+def entity_mismatch(query_a: str, query_b: str) -> bool:
+    query_a_lower = query_a.lower()
+    query_b_lower = query_b.lower()
+
+    for group in ENTITY_GROUPS:
+        terms_in_a = {term for term in group if term in query_a_lower}
+        terms_in_b = {term for term in group if term in query_b_lower}
+
+        if terms_in_a and terms_in_b and terms_in_a != terms_in_b:
+            return True
+
+    return False
 
 
 def find_cached_answer(query: str) -> dict | None:
