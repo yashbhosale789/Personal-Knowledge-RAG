@@ -39,8 +39,8 @@ def create_cache_index() -> None:
                         "DISTANCE_METRIC": "COSINE",
                     },
                 ),
-                TextField("query_text"),
-                TextField("answer_text"),
+                TextField("query"),
+                TextField("answer"),
                 TextField("provider"),
             ],
             definition=IndexDefinition(
@@ -62,8 +62,8 @@ def store_cache_entry(query: str, answer: str, provider: str) -> None:
         key,
         mapping={
             "embedding": embedding.astype("float32").tobytes(),
-            "query_text": query,
-            "answer_text": answer,
+            "query": query,
+            "answer": answer,
             "provider": provider,
         },
     )
@@ -96,7 +96,7 @@ def find_cached_answer(query: str) -> dict | None:
     knn_query = (
         Query("*=>[KNN 1 @embedding $vec AS score]")
         .sort_by("score")
-        .return_field("query", "answer", "provider", "score")
+        .return_fields("query", "answer", "provider", "score")
         .dialect(2)
     )
 
