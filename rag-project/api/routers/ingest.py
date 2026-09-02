@@ -7,6 +7,8 @@ from api.models.requests import IngestRequest
 from api.core.exceptions import IngestError
 from api.core.auth import verify_api_key
 
+from src.llm.semantic_cache import clear_cache
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -29,6 +31,9 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
         embedder = get_embedding_model()
         store = get_vectorstore()
         store.add_documents(chunks, embedder)
+
+        cleared_count = clear_cache()
+        logger.info(f"Cleared {cleared_count} cache entries after ingest.")
 
         return IngestResponse(
             status="success",
