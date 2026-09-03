@@ -57,5 +57,6 @@ def main() -> None:
         print("=" * 60)
         print(result["answer"])
 
+
 if __name__ == "__main__":
     main()
