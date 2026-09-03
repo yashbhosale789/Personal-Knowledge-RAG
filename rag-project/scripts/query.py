@@ -20,11 +20,12 @@ load_dotenv()
 os.environ["HF_HUB_OFFLINE"] = "1"  # use local cache only, no network calls
 # print("API KEY LOADED:", os.getenv("OPENROUTER_API_KEY"))
 
+
 def main():
     print("\nPersonal Knowledge Base — RAG Query")
     print("=" * 40)
 
-    query = input ("Enter a question: ").strip()
+    query = input("Enter a question: ").strip()
     if not query:
         print("No question entered.")
         return
@@ -54,6 +55,7 @@ def main():
     print()
     print(f"Sources  : {', '.join(set(result['sources']))}")
     print(f"Chunks   : {result['chunks_used']}")
+
 
 if __name__ == "__main__":
     main()
