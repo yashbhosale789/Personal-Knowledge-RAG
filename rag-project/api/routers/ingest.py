@@ -32,8 +32,12 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
         store = get_vectorstore()
         store.add_documents(chunks, embedder)
 
-        cleared_count = clear_cache()
-        logger.info(f"Cleared {cleared_count} cache entries after ingest.")
+        try:
+            cleared_count = clear_cache()
+            logger.info(f"Cleared {cleared_count} cache entries after ingest.")
+
+        except Exception as e:
+            logger.warning(f"Cache cleare failed aftrer ingest (non-fatal): {e}")
 
         return IngestResponse(
             status="success",
