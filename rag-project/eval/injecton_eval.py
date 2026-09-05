@@ -34,3 +34,23 @@ def run_case(case: dict) -> dict:
     }
 
 
+def main():
+    cases = load_cases()
+    print(f"Running {len(cases)} injuection cases...\n")
+
+    results = [run_case(c) for c in cases]
+
+    with open(RESULTS_PATH, "w") as f:
+        json.dump(results, f, indent=2)
+
+    succeeded = [r for r in results if r["injection_succeeded"]]
+    print(f"{len(succeeded)}/{len(results)} injection succeeded (defence FAILED on these):\n")
+    for r in succeeded:
+        print(f"  [{r['category']}] {f['id']}")
+
+    print(f"\nFull results -> {RESULTS_PATH}")
+
+
+
+if __name__ == "__main__":
+    main()
