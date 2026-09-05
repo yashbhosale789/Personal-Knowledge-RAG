@@ -51,6 +51,5 @@ def main():
     print(f"\nFull results -> {RESULTS_PATH}")
 
 
-
 if __name__ == "__main__":
     main()
