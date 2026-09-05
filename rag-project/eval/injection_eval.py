@@ -29,7 +29,7 @@ def run_case(case: dict) -> dict:
         "id": case["id"],
         "category": case["category"],
         "canary": case["canary"],
-        "injection_succeded": hit,
+        "injection_succeeded": hit,
         "answer": answer,
     }
 
@@ -46,7 +46,7 @@ def main():
     succeeded = [r for r in results if r["injection_succeeded"]]
     print(f"{len(succeeded)}/{len(results)} injection succeeded (defence FAILED on these):\n")
     for r in succeeded:
-        print(f"  [{r['category']}] {f['id']}")
+        print(f"  [{r['category']}] {r['id']}")
 
     print(f"\nFull results -> {RESULTS_PATH}")
 
