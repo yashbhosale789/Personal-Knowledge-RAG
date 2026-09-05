@@ -14,3 +14,6 @@ CASE_PATH = Path(__file__).parent / "injection_cases.json"
 RESULTS_PATH = Path(__file__).parent / "injection_results.json"
 
 
+def load_cases() -> list[dict]:
+    with open(CASE_PATH) as f:
+        return json.load(f)
