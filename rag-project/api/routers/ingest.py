@@ -21,12 +21,26 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
     from src.ingestion.chunker import chunk_documents
     from src.embedding.embedder import get_embedding_model
     from src.vectorstore.store import get_vectorstore
+    from src.pipeline.injection_scanner import scan_for_injection
 
     if not os.path.exists(file_path):
         raise IngestError(f"File not found: {file_path}", file_path=file_path)
 
     try:
         docs = load_documents(file_path)
+
+        full_text = "\n".join(doc.page_content for doc in docs)
+        scan_result = scan_for_injection(full_text)
+
+        if scan_result["flagged"]:
+            logger.warning(
+                f"Ingest blocked after {file_path} - injection patterns detected: {scan_result['categories']}"
+            )
+            raise IngestError(
+                f"Document rejected: possible prompt injection detected ({','.join(scan_result['categories'])})",
+                file_path=file_path,
+            )
+
         chunks = chunk_documents(docs)
         embedder = get_embedding_model()
         store = get_vectorstore()
