@@ -5,7 +5,7 @@ from langchain_community.document_loaders import (
     PyPDFLoader,
     TextLoader,
     UnstructuredMarkdownLoader,
-    UnstructuredWordDocumentLoader
+    UnstructuredWordDocumentLoader,
 )
 
 import logging
@@ -16,13 +16,14 @@ LOADER_MAP = {
     ".pdf": PyPDFLoader,
     ".txt": TextLoader,
     ".md": UnstructuredMarkdownLoader,
-    ".docx": UnstructuredWordDocumentLoader
+    ".docx": UnstructuredWordDocumentLoader,
 }
+
 
 def load_documents(file_path: Path) -> List[Document]:
     """
     Load a single file into a list of Documents.
-    
+
     Each loader may return multiple documents - PDF's return one per page,
     text files typically return one for the whole file.
     """
@@ -49,13 +50,18 @@ def load_documents(file_path: Path) -> List[Document]:
         logger.error(f"Failed to load {file_path.name} : {e}")
         return []
 
+
 def load_directory(directory: Path) -> List[Document]:
     """
     Recursively load all supported files from a directory.
     """
     all_docs: List[Document] = []
 
-    files = [f for f in directory.rglob("*") if f.is_file() and f.suffix.lower() in LOADER_MAP]
+    files = [
+        f
+        for f in directory.rglob("*")
+        if f.is_file() and f.suffix.lower() in LOADER_MAP
+    ]
 
     if not files:
         logger.warning(f"No supported files found in directory: {directory}")
