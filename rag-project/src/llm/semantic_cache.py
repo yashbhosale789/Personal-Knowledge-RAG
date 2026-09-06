@@ -131,7 +131,7 @@ def clear_cache() -> int:
     for key in client.scan_iter(match=f"{CACHE_KEY_PREFIX}*"):
         client.delete(key)
         count += 1
-        
+
     return count
 
 
