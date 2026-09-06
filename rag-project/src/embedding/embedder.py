@@ -13,14 +13,18 @@ logger = logging.getLogger(__name__)
 
 _model = None
 
+
 def get_embedding_model() -> SE:
     global _model
     if _model is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         logger.info(f"Loading Embedding Model : {EMBEDDINGS_MODEL_NAME} on {device}")
         _model = SE(EMBEDDINGS_MODEL_NAME, device=device)
-        logger.info(f"Embedding Model loaded. Output dimension : {EMBEDDING_DIAMENSION}")
+        logger.info(
+            f"Embedding Model loaded. Output dimension : {EMBEDDING_DIAMENSION}"
+        )
     return _model
+
 
 def embed_texts(texts: List[str]) -> List[List[float]]:
     """
@@ -41,6 +45,7 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
         # device="gpu",  # use GPU if available, else CPU
     )
     return embeddings.tolist()
+
 
 def embed_query(query: str) -> List[float]:
     """
