@@ -69,6 +69,7 @@ def _build_langchain_tools() -> list[Any]:
             @lc_tool(n, description=d)
             def _tool(query: str) -> str:
                 return f(query)
+
             return _tool
 
         langchain_tools.append(make_tool(func, name, description))
@@ -91,7 +92,9 @@ Rules:
 4. If the tools do not return relevant information, say so explicitly.
 5. Never make up information."""
 
-    agent = create_agent(model=llm, tools=tools, system_prompt=AGENT_SYSTEM_PROMPT, debug=True)
+    agent = create_agent(
+        model=llm, tools=tools, system_prompt=AGENT_SYSTEM_PROMPT, debug=True
+    )
 
     # executor = AgentExecutor(
     #     agent=agent,
