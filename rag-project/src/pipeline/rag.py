@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 # SYSTEM_PROMPT = """You are a precise question-answering assistant.
 # You answer questions strictly based on the provided context.
-# If the context does not contain enough information to answer the question, 
+# If the context does not contain enough information to answer the question,
 # say "I don't have enough information in my knowledge base to answer this."
 # Do not use any knowledge outside the provided context."""
 
@@ -44,6 +44,7 @@ ANSWER:"""
 
     return prompt
 
+
 def run_rag_pipeline(query: str) -> dict:
     """
     Full RAG pipeline: query → retrieve → prompt → LLM → answer.
@@ -57,9 +58,9 @@ def run_rag_pipeline(query: str) -> dict:
     chunks = retrieve(query)
     if not chunks:
         return {
-            "answer":"No relevant documents found in the knoweldge base",
-            "sources":[],
-            "query": query
+            "answer": "No relevant documents found in the knoweldge base",
+            "sources": [],
+            "query": query,
         }
 
     # Step 2: Build grounded prompt
@@ -71,7 +72,7 @@ def run_rag_pipeline(query: str) -> dict:
 
     return {
         "answer": answer,
-        "sources": [c.metadata.get("filename","unknown") for c in chunks],
+        "sources": [c.metadata.get("filename", "unknown") for c in chunks],
         "chunks_used": len(chunks),
-        "query": query
+        "query": query,
     }
