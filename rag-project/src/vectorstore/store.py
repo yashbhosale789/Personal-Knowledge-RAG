@@ -3,10 +3,16 @@ from langchain_core.documents import Document
 from pathlib import Path
 from langchain_chroma import Chroma
 from langchain_core.embeddings import Embeddings
-from config import STORAGE_DIR, CHROMA_COLLECTION, EMBEDDINGS_MODEL_NAME, EMBEDDING_DIAMENSION
+from config import (
+    STORAGE_DIR,
+    CHROMA_COLLECTION,
+    EMBEDDINGS_MODEL_NAME,
+    EMBEDDING_DIAMENSION,
+)
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class BGEEmbeddingAdapter(Embeddings):
     """
@@ -17,13 +23,16 @@ class BGEEmbeddingAdapter(Embeddings):
     the vector store code — just swap the adapter.
     """
 
-    def embed_documents(self, texts:List[str]) -> List[List[float]]:
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
         from src.embedding.embedder import embed_texts
+
         return embed_texts(texts)
 
-    def embed_query(self,text:str) -> List[float]:
+    def embed_query(self, text: str) -> List[float]:
         from src.embedding.embedder import embed_query
+
         return embed_query(text)
+
 
 def get_vectorstore() -> Chroma:
     """
@@ -40,6 +49,7 @@ def get_vectorstore() -> Chroma:
         persist_directory=str(STORAGE_DIR),
     )
 
+
 def add_chunks(chunks: List[Document]) -> None:
     """
     Embed and store a list of chunks into Chroma.
@@ -52,6 +62,8 @@ def add_chunks(chunks: List[Document]) -> None:
 
     vectorstore = get_vectorstore()
 
-    logger.info(f"Embedding and storing {len(chunks)} chunks to vector store : {CHROMA_COLLECTION}")
+    logger.info(
+        f"Embedding and storing {len(chunks)} chunks to vector store : {CHROMA_COLLECTION}"
+    )
     vectorstore.add_documents(documents=chunks)
     logger.info(f"Stored {len(chunks)} chunks to vector store : {CHROMA_COLLECTION}")
