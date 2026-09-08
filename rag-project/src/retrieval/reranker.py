@@ -4,6 +4,7 @@ from config import TOP_K, RERANKER_MODEL
 
 logger = logging.getLogger(__name__)
 
+
 class CrossEncoderReranker:
     """
     Precision stage: re-scores RRF candidates with a cross-encoder.
@@ -17,8 +18,9 @@ class CrossEncoderReranker:
         self._top_k = top_k
         logger.info(f"CrossEncoder Reranker loaded: {model_name}")
 
-
-    def rerank(self, query: str, candidates: list[dict], text_key: str = "text") -> list[dict]:
+    def rerank(
+        self, query: str, candidates: list[dict], text_key: str = "text"
+    ) -> list[dict]:
         """
         Args:
             query:      The search query (rewritten or raw).
@@ -31,14 +33,13 @@ class CrossEncoderReranker:
         """
 
         if not candidates:
-            return[]
+            return []
 
         pairs = [(query, doc[text_key]) for doc in candidates]
         scores = self._model.predict(pairs)
 
         scored = [
-            {**doc, "ce_score": float(score)}
-            for doc, score in zip(candidates, scores)
+            {**doc, "ce_score": float(score)} for doc, score in zip(candidates, scores)
         ]
 
         ranked = sorted(scored, key=lambda x: x["ce_score"], reverse=True)
@@ -46,7 +47,7 @@ class CrossEncoderReranker:
         for rank, doc in enumerate(ranked):
             doc["ce_rank"] = rank
 
-        result = ranked[:self._top_k]
+        result = ranked[: self._top_k]
 
         logger.info(
             "Reranker: %d candidates → top %d returned (best score: %.4f)",
