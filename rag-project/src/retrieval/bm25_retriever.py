@@ -6,6 +6,7 @@ from config import CHUNKS_PATH, TOP_K
 
 logger = logging.getLogger(__name__)
 
+
 class BM25Retriever:
     """
     Keyword retriever backed by BM25Okapi.
@@ -39,16 +40,20 @@ class BM25Retriever:
         tokens = query.lower().split()
         scores = self._index.get_scores(tokens)
 
-        ranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
+        ranked_indices = sorted(
+            range(len(scores)), key=lambda i: scores[i], reverse=True
+        )
 
         results = []
 
         for rank, idx in enumerate(ranked_indices[:top_k]):
-            results.append({
-                "text": self._chunks[idx]["text"],
-                "metadata": self._chunks[idx]["metadata"],
-                "score": float(scores[idx]),
-                "rank": rank
-            })
+            results.append(
+                {
+                    "text": self._chunks[idx]["text"],
+                    "metadata": self._chunks[idx]["metadata"],
+                    "score": float(scores[idx]),
+                    "rank": rank,
+                }
+            )
 
         return results
