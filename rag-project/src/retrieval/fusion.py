@@ -4,7 +4,9 @@ from config import RRF_K
 logger = logging.getLogger(__name__)
 
 
-def reciprocal_rank_fusion(ranked_lists: list[list[dict]], top_k: int = 50, text_key: str = "text") -> list[dict]:
+def reciprocal_rank_fusion(
+    ranked_lists: list[list[dict]], top_k: int = 50, text_key: str = "text"
+) -> list[dict]:
     """
     Merges N ranked lists into one via Reciprocal Rank Fusion.
 
@@ -41,6 +43,8 @@ def reciprocal_rank_fusion(ranked_lists: list[list[dict]], top_k: int = 50, text
         entry["rrf_rank"] = rrf_rank
         results.append(entry)
 
-    logger.info(f"RRD fusion: {len(ranked_list)} lists -> {len(docs)} unique docs -> top {len(results)} returned")
+    logger.info(
+        f"RRD fusion: {len(ranked_list)} lists -> {len(docs)} unique docs -> top {len(results)} returned"
+    )
 
     return results
