@@ -89,7 +89,7 @@ async def call_with_fallback(
     fn: Callable,
     preferred_provider: Optional[str] = None,
     max_retries: int = 3,
-    api_key_hash: Optional[str] = None
+    api_key_hash: Optional[str] = None,
 ) -> tuple[Any, str]:
     if preferred_provider == "ollama":
         # Explicit-only: never auto-selected, never falls back to it.
@@ -98,7 +98,13 @@ async def call_with_fallback(
         return result, "ollama"
 
     providers_to_try: List[str] = []
-    if preferred_provider and preferred_provider in PROVIDER_FALLBACK_ORDER:
+    if preferred_provider:
+        if preferred_provider not in PROVIDER_FALLBACK_ORDER:
+            raise ProviderError(
+                message=f"Unknown provider '{preferred_provider}'. Choose: {', '.join(ALL_KNOWN_PROVIDERS)}",
+                provider=preferred_provider,
+                retries_exhausted=False,
+            )
         providers_to_try.append(preferred_provider)
         providers_to_try.extend(
             p for p in PROVIDER_FALLBACK_ORDER if p != preferred_provider
@@ -109,7 +115,9 @@ async def call_with_fallback(
     last_error = None
     for provider in providers_to_try:
         if api_key_hash and is_rate_limited(api_key_hash, provider):
-            provider_requests_total.labels(provider=provider, outcome="rate_limited").inc()
+            provider_requests_total.labels(
+                provider=provider, outcome="rate_limited"
+            ).inc()
             logger.warning("Provider %s rate-limited for this key, skipping", provider)
             last_error = ProviderError(
                 message="rate limited", provider=provider, retries_exhausted=False
