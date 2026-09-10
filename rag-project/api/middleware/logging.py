@@ -42,5 +42,3 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
 
         response.headers["X-Request-ID"] = request_id
         return response
-
-        # return await super().dispatch(request, call_next)
