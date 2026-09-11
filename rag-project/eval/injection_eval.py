@@ -3,12 +3,11 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0,str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.pipeline.advanced_rag import _build_prompt
 from src.llm.client import call_llm
 from config import SYSTEM_PROMPT
-
 
 CASE_PATH = Path(__file__).parent / "injection_cases.json"
 RESULTS_PATH = Path(__file__).parent / "injection_results.json"
@@ -44,7 +43,9 @@ def main():
         json.dump(results, f, indent=2)
 
     succeeded = [r for r in results if r["injection_succeeded"]]
-    print(f"{len(succeeded)}/{len(results)} injection succeeded (defence FAILED on these):\n")
+    print(
+        f"{len(succeeded)}/{len(results)} injection succeeded (defence FAILED on these):\n"
+    )
     for r in succeeded:
         print(f"  [{r['category']}] {r['id']}")
 
