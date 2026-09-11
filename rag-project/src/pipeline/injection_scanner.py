@@ -9,6 +9,7 @@ INJECTION_PATTERNS = [
     (r"you must (include|output|say|respond with)", "imperative_directive"),
 ]
 
+
 def scan_for_injection(text: str) -> dict:
     text_lower = text.lower()
     hits = []
@@ -17,10 +18,7 @@ def scan_for_injection(text: str) -> dict:
         if re.search(patterns, text_lower):
             hits.append(category)
 
-    return {
-        "flagged": len(hits) > 0,
-        "categories": hits
-    }
+    return {"flagged": len(hits) > 0, "categories": hits}
 
 
 if __name__ == "__main__":
