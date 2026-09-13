@@ -34,4 +34,3 @@ class IngestRequest(BaseModel):
         default=False,
         description="If true, re-ingest even if the document was previously processed.",
     )
-# Nothing to change
