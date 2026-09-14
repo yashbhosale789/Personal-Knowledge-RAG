@@ -50,6 +50,12 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
         # docs = load_documents(file_path)
         docs = load_documents(resolved_path)
 
+        if not docs:
+            raise IngestError(
+                "No content could be extracted from this document. It may be corrupted or empty.",
+                file_path=file_path,
+            )
+
         full_text = "\n".join(doc.page_content for doc in docs)
         scan_result = scan_for_injection(full_text)
 
@@ -88,8 +94,8 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
     #     raise IngestError(str(e), file_path=file_path)
 
     except IngestError:
-            raise
-    
+        raise
+
     except Exception:
         logger.exception(f"Ingest failed for {file_path}")
         raise IngestError("Failed to process document.", file_path=file_path)
