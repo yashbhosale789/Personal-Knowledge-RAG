@@ -17,14 +17,16 @@ router = APIRouter()
 def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
     # Complete this function
     import os
+    from pathlib import Path
+    import config
     from src.ingestion.loader import load_documents
     from src.ingestion.chunker import chunk_documents
     from src.embedding.embedder import get_embedding_model
     from src.vectorstore.store import get_vectorstore
     from src.pipeline.injection_scanner import scan_for_injection
 
-    if not os.path.exists(file_path):
-        raise IngestError(f"File not found: {file_path}", file_path=file_path)
+    # if not os.path.exists(file_path):
+    #     raise IngestError(f"File not found: {file_path}", file_path=file_path)
 
     try:
         docs = load_documents(file_path)
