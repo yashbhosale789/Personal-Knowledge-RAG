@@ -28,6 +28,14 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
     # if not os.path.exists(file_path):
     #     raise IngestError(f"File not found: {file_path}", file_path=file_path)
 
+    resolved_path = Path(file_path).resolve()
+    allowed_root = config.DATA_DIR.resolve()
+
+    if not resolved_path.is_relative_to(allowed_root):
+        raise IngestError(
+            "File path is outside the allowed ingest directory.", file_path=file_path
+        )
+
     try:
         docs = load_documents(file_path)
 
