@@ -36,6 +36,15 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
             "File path is outside the allowed ingest directory.", file_path=file_path
         )
 
+    if resolved_path.suffix.lower() != ".pdf":
+        raise IngestError(
+            f"Unsupportes file type '{resolved_path.suffix}'. Only .pdf is supported.",
+            file_path=file_path,
+        )
+
+    if not resolved_path.exists():
+        raise IngestError(f"File not found :{file_path}", file_path=file_path)
+
     try:
         docs = load_documents(file_path)
 
