@@ -79,8 +79,15 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
             message=f"Successfully ingested {len(chunks)} chunks.",
         )
 
-    except Exception as e:
-        raise IngestError(str(e), file_path=file_path)
+    # except Exception as e:
+    #     raise IngestError(str(e), file_path=file_path)
+
+    except IngestError:
+            raise
+    
+    except Exception:
+        logger.exception(f"Ingest failed for {file_path}")
+        raise IngestError("Failed to process document.", file_path=file_path)
 
 
 @router.post("/ingest", response_model=IngestResponse, status_code=200)
