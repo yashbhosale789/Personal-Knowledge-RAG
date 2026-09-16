@@ -1,0 +1,15 @@
+workspace:
+  id: ef2281a2-8dd9-471b-8b03-aff7806c4727
+cloudResources:
+  collections:
+    ../postman/collections/RAG- Personal KB: 27998446-6bbb93eb-5ec7-49d1-a348-259442c0d5bc
+    ../postman/collections/Local Dev: 27998446-aebc77e0-f936-4b21-8202-07ae2ec4de5b
+  environments:
+    ../postman/environments/env.environment.yaml: 27998446-081d38df-12aa-4530-9af0-ab714c740d83
+    ../postman/environments/Personal KB.environment.yaml: 27998446-1a793f58-0078-4581-a7ef-a65bd59473ee
+    ../postman/environments/env-1.environment.yaml: 27998446-598ea9bd-40c4-46df-8a61-67ceef030b7c
+    ../postman/environments/env-2.environment.yaml: 27998446-5af10f48-6587-4002-b6a2-741516db18f4
+    ../postman/environments/env-3.environment.yaml: 27998446-60478351-edec-4687-83d5-b9a290597e53
+    ../postman/environments/env-4.environment.yaml: 27998446-634bb21b-4614-4120-91e7-de87fbfdcbaa
+  globals:
+    ../postman/globals/workspace.globals.yaml: 52c38f93-9dad-49e4-876e-67ee8a316f17

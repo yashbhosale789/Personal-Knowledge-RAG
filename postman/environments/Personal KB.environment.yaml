@@ -1,0 +1,4 @@
+name: Personal KB
+values:
+  - key: API_KEY
+    secret: true

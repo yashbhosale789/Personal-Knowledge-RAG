@@ -1,0 +1,34 @@
+$kind: http-request
+url: http://localhost:11434/v1/chat/completions
+method: POST
+headers:
+  Cache-Control: no-cache
+  Postman-Token: <calculated when request is sent>
+  Content-Length: "0"
+  Host: <calculated when request is sent>
+  User-Agent: PostmanRuntime/7.39.1
+  Accept: "*/*"
+  Accept-Encoding: gzip, deflate, br
+  Connection: keep-alive
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \  \"model\": \"llama3.2:3b-instruct-q4_K_M\",\r
+
+    \  \"messages\": [\r
+
+    \      {\r
+
+    \        \"role\": \"user\", \r
+
+    \        \"content\": \"Say hi in 5 words\"\r
+
+    \      }\r
+
+    \    ]\r
+
+    }"
+settings: {}
+order: 1000

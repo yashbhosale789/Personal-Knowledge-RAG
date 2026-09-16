@@ -1,0 +1,4 @@
+name: env
+values:
+  - key: OPENROUTER_API_KEY
+    value: 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

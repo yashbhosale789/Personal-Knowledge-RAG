@@ -1,0 +1,31 @@
+$kind: http-request
+name: /ingest
+url: http://localhost:8000/ingest
+method: POST
+headers:
+  "": ""
+body:
+  type: json
+  content: "{\r
+
+    \  \"file_path\": \"data/documents/Adaptive Cruise Control (ACC).pdf\",\r
+
+    \  \"force_reingest\": false\r
+
+    }\r
+
+    \r
+
+    // {\r
+
+    //   \"file_path\": \"D:\\\\Development\\\\GenAI\\\\Personal Knowledge OS (RAG System)\\\\dataset\\\\RAG-Multi-Corpus-main\\\\datasets\\\\Aventro Motors\\\\pdf\\\\Adaptive Cruise Control (ACC).pdf\",\r
+
+    //   \"force_reingest\": false\r
+
+    // }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:API_KEY}}"
+settings: {}
+order: 3000
