@@ -21,8 +21,10 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
     import config
     from src.ingestion.loader import load_documents
     from src.ingestion.chunker import chunk_documents
+
     # from src.embedding.embedder import get_embedding_model
     # from src.vectorstore.store import get_vectorstore
+    
     from src.vectorstore.store import add_chunks
     from src.pipeline.injection_scanner import scan_for_injection
 
