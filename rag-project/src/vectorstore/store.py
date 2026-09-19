@@ -67,3 +67,18 @@ def add_chunks(chunks: List[Document]) -> None:
     )
     vectorstore.add_documents(documents=chunks)
     logger.info(f"Stored {len(chunks)} chunks to vector store : {CHROMA_COLLECTION}")
+
+
+def delete_by_source(file_path: str) -> int:
+    vectorstore = get_vectorstore()
+
+    existing = vectorstore.get(where={"source" : file_path})
+    count = len(existing["ids"])
+
+    if count == 0:
+        logger.warning(f"No chunks found for source: {file_path}")
+        return 0
+
+    vectorstore.delete(where={"source" : file_path})
+    logger.info(f"Deleted {count} chunks for source: {file_path}")
+    return count
