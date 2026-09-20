@@ -70,15 +70,19 @@ def add_chunks(chunks: List[Document]) -> None:
 
 
 def delete_by_source(file_path: str) -> int:
+    """
+    Remove all chunks whose 'source' metadata matches file_path exactly.
+    Returns the number of chunks deleted (0 if none matched).
+    """
     vectorstore = get_vectorstore()
 
-    existing = vectorstore.get(where={"source" : file_path})
+    existing = vectorstore.get(where={"source": file_path})
     count = len(existing["ids"])
 
     if count == 0:
         logger.warning(f"No chunks found for source: {file_path}")
         return 0
 
-    vectorstore.delete(where={"source" : file_path})
+    vectorstore.delete(where={"source": file_path})
     logger.info(f"Deleted {count} chunks for source: {file_path}")
     return count
