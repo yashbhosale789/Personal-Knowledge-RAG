@@ -21,7 +21,7 @@ def _resolve_and_validate_path(file_path: str) -> Path:
 
     # if not os.path.exists(file_path):
     #     raise IngestError(f"File not found: {file_path}", file_path=file_path)
-    
+
     resolved_path = Path(file_path).resolve()
     allowed_root = config.DATA_DIR.resolve()
 
@@ -38,10 +38,7 @@ def _resolve_and_validate_path(file_path: str) -> Path:
         )
 
     if not resolved_path.exists():
-        raise IngestError(
-            f"File not found: {file_path}",
-            file_path=file_path
-        )
+        raise IngestError(f"File not found: {file_path}", file_path=file_path)
 
     return resolved_path
 
