@@ -1,7 +1,10 @@
 import logging
+import os
+from pathlib import Path
 from fastapi import APIRouter, HTTPException, Depends
 from starlette.concurrency import run_in_threadpool
 
+import config
 from api.models.responses import IngestResponse
 from api.models.requests import IngestRequest
 from api.core.exceptions import IngestError
@@ -14,6 +17,31 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _resolve_and_validate(file_path: str) -> Path:
+    resolved_path = Path(file_path).resolve()
+    allowed_root = config.DATA_DIR.resolve()
+
+    if not resolved_path.is_relative_to(allowed_root):
+        raise IngestError(
+            "File path is outside the allowed ingest directory.",
+            file_path=file_path,
+        )
+
+    if resolved_path.suffix.lower != ".pdf":
+        raise IngestError(
+            f"Unsupported file type '{resolved_path.suffix}'. Only .pdf is supported.",
+            file_path=file_path,
+        )
+
+    if not resolved_path.exists():
+        raise IngestError(
+            f"File not found: {file_path}",
+            file_path=file_path
+        )
+    
+    return resolved_path
+
+
 def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
     # Complete this function
     import os
@@ -24,7 +52,7 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
 
     # from src.embedding.embedder import get_embedding_model
     # from src.vectorstore.store import get_vectorstore
-    
+
     from src.vectorstore.store import add_chunks
     from src.pipeline.injection_scanner import scan_for_injection
 
