@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _resolve_and_validate(file_path: str) -> Path:
+def _resolve_and_validate_path(file_path: str) -> Path:
     resolved_path = Path(file_path).resolve()
     allowed_root = config.DATA_DIR.resolve()
 
@@ -38,15 +38,16 @@ def _resolve_and_validate(file_path: str) -> Path:
             f"File not found: {file_path}",
             file_path=file_path
         )
-    
+
     return resolved_path
 
 
 def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
-    # Complete this function
-    import os
-    from pathlib import Path
-    import config
+
+    # import os
+    # from pathlib import Path
+    # import config
+
     from src.ingestion.loader import load_documents
     from src.ingestion.chunker import chunk_documents
 
@@ -56,25 +57,7 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
     from src.vectorstore.store import add_chunks
     from src.pipeline.injection_scanner import scan_for_injection
 
-    # if not os.path.exists(file_path):
-    #     raise IngestError(f"File not found: {file_path}", file_path=file_path)
-
-    resolved_path = Path(file_path).resolve()
-    allowed_root = config.DATA_DIR.resolve()
-
-    if not resolved_path.is_relative_to(allowed_root):
-        raise IngestError(
-            "File path is outside the allowed ingest directory.", file_path=file_path
-        )
-
-    if resolved_path.suffix.lower() != ".pdf":
-        raise IngestError(
-            f"Unsupportes file type '{resolved_path.suffix}'. Only .pdf is supported.",
-            file_path=file_path,
-        )
-
-    if not resolved_path.exists():
-        raise IngestError(f"File not found :{file_path}", file_path=file_path)
+    resolved_path = _resolve_and_validate_path(file_path)
 
     try:
         # docs = load_documents(file_path)
