@@ -5,8 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from starlette.concurrency import run_in_threadpool
 
 import config
-from api.models.responses import IngestResponse
-from api.models.responses import DeleteResponse
+from api.models.responses import IngestResponse, DeleteResponse
 from api.models.requests import IngestRequest
 from api.core.exceptions import IngestError
 from api.core.auth import verify_api_key
