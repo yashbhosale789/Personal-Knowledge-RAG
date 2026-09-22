@@ -31,7 +31,7 @@ def _resolve_and_validate_path(file_path: str) -> Path:
             file_path=file_path,
         )
 
-    if resolved_path.suffix.lower != ".pdf":
+    if resolved_path.suffix.lower() != ".pdf":
         raise IngestError(
             f"Unsupported file type '{resolved_path.suffix}'. Only .pdf is supported.",
             file_path=file_path,
