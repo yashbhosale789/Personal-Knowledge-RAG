@@ -6,6 +6,7 @@ from starlette.concurrency import run_in_threadpool
 
 import config
 from api.models.responses import IngestResponse
+from api.models.responses import DeleteResponse
 from api.models.requests import IngestRequest
 from api.core.exceptions import IngestError
 from api.core.auth import verify_api_key
@@ -130,4 +131,38 @@ async def ingest_endpoint(body: IngestRequest, _: None = Depends(verify_api_key)
         logger.exception(f"Unexpected ingest error for {body.file_path}.")
         raise HTTPException(
             status_code=500, detail="Internal server error during ingestion."
+        )
+
+
+def _run_delete(file_path: str) -> DeleteResponse:
+    from src.vectorstore.store import delete_by_source
+
+    resolved_path = _resolve_and_validate_path(file_path)
+
+    try:
+        chunks_deleted = delete_by_source(str(resolved_path))
+        os.remove(resolved_path)
+
+        try:
+            cleared_count = clear_cache()
+            logger.info(f"Cleared {cleared_count} cache entries after delete.")
+
+        except Exception as e:
+            logger.warning(f"Cache clear failed after delete (non-fatal): {e}")
+
+        return DeleteResponse(
+            status="success",
+            file_path=file_path,
+            chunks_deleted=chunks_deleted,
+            message=f"Deleted {chunks_deleted} chunks and removed files.",
+        )
+
+    except IngestError:
+        raise
+
+    except Exception:
+        logger.exception(f"Delete failed for {file_path}")
+        raise IngestError(
+            "Failed to delete document.",
+            file_path=file_path,
         )
