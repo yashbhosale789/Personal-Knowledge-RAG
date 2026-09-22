@@ -1,0 +1,15 @@
+$kind: http-request
+url: http://localhost:8000/ingest
+method: DELETE
+body:
+  type: json
+  content: "{\r
+
+    \    \"file_path\" : \"data/documents/something.pdf\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:API_KEY}}"
+order: 3104636414199002
