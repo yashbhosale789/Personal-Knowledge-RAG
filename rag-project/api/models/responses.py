@@ -93,5 +93,19 @@ class HealthResponse(BaseModel):
     status: str = Field(desription="'ok' or 'degraded'.")
 
     version: str
+
     pipeline_ready: bool
+
     timestamp: str
+
+
+class DeleteResponse(BaseModel):
+    status: str = Field(description="'success'.")
+
+    file_path: str
+
+    chunks_deleted: int = Field(
+        description="Number of chunks removed from the vector store."
+    )
+
+    message: str
