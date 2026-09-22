@@ -166,3 +166,20 @@ def _run_delete(file_path: str) -> DeleteResponse:
             "Failed to delete document.",
             file_path=file_path,
         )
+
+
+@router.delete("/ingest", response_model=DeleteResponse, status_code=200)
+async def delete_endpoint(file_path: str, _: None = Depends(verify_api_key)):
+    try:
+        result = await run_in_threadpool(_run_delete, file_path)
+        return result
+
+    except IngestError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+
+    except Exception:
+        logger.exception(f"Unexpected delete error for {file_path}.")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error during deletion.",
+        )
