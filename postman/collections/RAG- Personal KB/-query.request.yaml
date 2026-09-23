@@ -12,7 +12,7 @@ body:
 
     \r
 
-    \    \"query\": \"Where is the spare tyre located in an Aventro Sedan?\"  // Q01\r
+    \    // \"query\": \"Where is the spare tyre located in an Aventro Sedan?\"  // Q01\r
 
     \    // \"query\": \"Where is the toolkit stored in Aventro vehicles?\"  // Q02\r
 
@@ -114,9 +114,7 @@ body:
 
     \    // \"query\": \"Where is the spare tyre located in an Aventro Sedan?\"\r
 
-    \    // \"query\": \"Where can I find the spare wheel in an Aventro Sedan?\",\r
-
-    \    // \"provider\": \"llama\"\r
+    \    // \"query\": \"Where can I find the spare wheel in an Aventro Sedan?\"\r
 
     \r
 
