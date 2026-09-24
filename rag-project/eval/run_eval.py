@@ -2,6 +2,7 @@ import json
 import time
 import logging
 import sys
+import os
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -10,7 +11,10 @@ from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s — %(message)s")
 
-DATASET_PATH = Path(__file__).parent / "test_dataset.json"
+# DATASET_PATH = Path(__file__).parent / "test_dataset.json"
+DATASET_PATH = Path(
+    os.getenv("EVAL_DATASET_PATH", Path(__file__).parent / "test_dataset.json")
+)
 OUTPUT_PATH = Path(__file__).parent / "eval_results.json"
 REQUEST_DELAY = 3
 
