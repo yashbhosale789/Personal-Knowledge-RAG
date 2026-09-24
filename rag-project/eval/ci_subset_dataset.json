@@ -1,0 +1,20 @@
+[
+    {
+        "id": "Q01",
+        "difficulty": "easy",
+        "question": "Where is the spare tyre located in an Aventro Sedan?",
+        "ground_truth": "In an Aventro Sedan, the spare tyre is located under the boot floor in the trunk."
+    },
+    {
+        "id": "Q06",
+        "difficulty": "medium",
+        "question": "What is the correct way to tighten lug nuts after fitting the spare tyre?",
+        "ground_truth": "After fitting the spare tyre, the lug nuts should be tightened using a star pattern to ensure even pressure across the wheel."
+    },
+    {
+        "id": "Q09",
+        "difficulty": "hard",
+        "question": "Is it safe to drive at highway speeds for a long distance using the spare tyre?",
+        "ground_truth": "No. Some spare tyres are space savers and are not intended for long distances or high speeds. You should drive slowly and visit an Aventro Service Center as soon as possible."
+    }
+]
