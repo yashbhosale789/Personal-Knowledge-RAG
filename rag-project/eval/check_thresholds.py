@@ -9,7 +9,11 @@ ANSWER_RELEVANCY_FLOOR = 0.75
 scores = json.load(open(SCORES_PATH))
 
 faithfullness_avg = sum(s["faithfullness"] for s in scores) / len(scores)
-ar_values = [s["answer_relevancy"] for s in scores if s["answer_relevancy"] == s["answer_relevancy"]]
+ar_values = [
+    s["answer_relevancy"]
+    for s in scores
+    if s["answer_relevancy"] == s["answer_relevancy"]
+]
 ar_avg = sum(ar_values) / len(ar_values) if ar_values else 1.0
 
 print(f"Faithfulness={faithfullness_avg:.4f} (floor {FAITHFULLNESS_FLOOR})")
