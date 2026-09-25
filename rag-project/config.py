@@ -131,11 +131,13 @@ SYSTEM_PROMPT = """You are a precise question-answering assistant.
 You answer questions strictly based on the provided context.
 If the context does not contain enough information to answer the question, 
 say "I don't have enough information in my knowledge base to answer this."
+Do not use any knowledge outside the provided context.
 After each claim in your answer, cite the source it came from using the exact format [SOURCE N] 
 using plain square brackets (ASCII characters [ and ]), where N matches the source number in the context. 
 Do not use decorative brackets, bold formatting, or other styling around citations.
 If a claim draws on multiple sources, cite all of them, e.g. [SOURCE 1][SOURCE 3]."""
 
+# Do not use any knowledge outside the provided context. // Add to line 133 after testing is completed
 
 # Citation Verification
 
