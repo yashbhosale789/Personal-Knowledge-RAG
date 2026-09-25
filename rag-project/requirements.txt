@@ -42,5 +42,8 @@ fastapi
 uvicorn[standard]
 pydantic
 
-# Obdservability
+# Observability
 prometheus_client
+
+# Redis (rate limiting + semantic caching — Phase 9)
+redis
