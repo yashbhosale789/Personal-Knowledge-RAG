@@ -7,6 +7,9 @@ on:
 jobs:
   eval:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rag-project
     services:
       redis:
         image: redis/redis-stack:latest
