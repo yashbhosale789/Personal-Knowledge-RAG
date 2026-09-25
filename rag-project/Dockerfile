@@ -16,7 +16,7 @@ CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')"
 
 COPY . .
 
-RUN useradd --create-home --shell /bib/bash appuser \
+RUN useradd --create-home --shell /bin/bash appuser \
     && chown -R appuser:appuser /app
 USER appuser
 
