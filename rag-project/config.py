@@ -197,3 +197,5 @@ CACHE_INDEX_NAME = "semantic_cache_idx"
 CACHE_KEY_PREFIX = "cache:"
 CACHE_TTL_SECONDS = 86400  # 24 Hours
 CACHE_SIMILARITY_THRESHOLD = 0.87
+
+# This is for testing
