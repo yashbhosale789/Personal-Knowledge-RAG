@@ -11,9 +11,11 @@ def get_redis_client() -> redis.Redis:
     global _client
     if _client is None:
         _client = redis.Redis(
-            host=os.getenv("REDIS_HOST","localhost"),
+            host=os.getenv("REDIS_HOST", "localhost"),
             port=6379,
             decode_responses=True,
+            socket_connect_timeout=5,
+            socket_timeout=5,
         )
         logger.info("Redis client initialized")
 
