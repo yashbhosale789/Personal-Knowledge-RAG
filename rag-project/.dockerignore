@@ -6,3 +6,9 @@ __pycache__/
 .venv/
 venv/
 storage/
+tests/
+experiments/
+README.md
+generate_graph.py
+project_context.dot
+Redis_Docker_Command.md
