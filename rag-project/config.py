@@ -137,7 +137,7 @@ using plain square brackets (ASCII characters [ and ]), where N matches the sour
 Do not use decorative brackets, bold formatting, or other styling around citations.
 If a claim draws on multiple sources, cite all of them, e.g. [SOURCE 1][SOURCE 3]."""
 
-# Do not use any knowledge outside the provided context. // Add to line 133 after testing is completed
+# Do not use any knowledge outside the provided context. // Add to line 134 after testing is completed
 
 # Citation Verification
 
