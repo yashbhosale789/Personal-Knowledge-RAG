@@ -77,14 +77,19 @@ async def lifespan(app: FastAPI):
 
     try:
         from starlette.concurrency import run_in_threadpool
+        from src.llm.semantic_cache import create_cache_index
 
         # from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
         # Warm up: run a dummy query to force model loading
         # await run_in_threadpool(run_advanced_rag_pipeline, "warmup", return_contexts=False)
+        
         await run_in_threadpool(_warmup_retrieval_component)
         health.set_pipeline_ready(True)
         logger.info("Retrieval Components initialized and ready.")
+
+        await run_in_threadpool(create_cache_index)
+        logger.info("Semantic cache index ready.")
 
     except Exception as e:
         logger.error("Retrieval Components initialization failed: %s", e)
