@@ -1,3 +1,8 @@
+import redis
+import logging
+
+logger = logging.getLogger(__name__)
+
 from redis.commands.search.field import VectorField, TextField
 from redis.commands.search.index_definition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
@@ -27,7 +32,13 @@ def create_cache_index() -> None:
     try:
         client.ft(CACHE_INDEX_NAME).info()
         return
-    except Exception:
+    except redis.ResponseError:
+        pass  # index genuinely doesn't exist yet — fall through to create it
+    except redis.RedisError:
+        logger.warning("Redis unavailable — skipping cache index setup")
+        return
+
+    try:
         client.ft(CACHE_INDEX_NAME).create_index(
             fields=[
                 VectorField(
@@ -47,28 +58,31 @@ def create_cache_index() -> None:
                 prefix=[CACHE_KEY_PREFIX], index_type=IndexType.HASH
             ),
         )
+    except redis.RedisError:
+        logger.warning("Redis unavailable — cache index creation failed")
 
 
 def store_cache_entry(query: str, answer: str, provider: str) -> None:
     client = get_redis_client()
-
     model = get_embedding_model()
     embedding = model.encode(query)
 
     key_hash = hashlib.sha256(query.encode()).hexdigest()
     key = f"{CACHE_KEY_PREFIX}{key_hash}"
 
-    client.hset(
-        key,
-        mapping={
-            "embedding": embedding.astype("float32").tobytes(),
-            "query": query,
-            "answer": answer,
-            "provider": provider,
-        },
-    )
-
-    client.expire(key, CACHE_TTL_SECONDS)
+    try:
+        client.hset(
+            key,
+            mapping={
+                "embedding": embedding.astype("float32").tobytes(),
+                "query": query,
+                "answer": answer,
+                "provider": provider,
+            },
+        )
+        client.expire(key, CACHE_TTL_SECONDS)
+    except redis.RedisError:
+        logger.warning("Redis unavailable — skipping cache write")
 
 
 ENTITY_GROUPS = [{"sedan", "suv", "hatchback"}]
@@ -100,9 +114,13 @@ def find_cached_answer(query: str) -> dict | None:
         .dialect(2)
     )
 
-    results = client.ft(CACHE_INDEX_NAME).search(
-        knn_query, query_params={"vec": embedding.astype("float32").tobytes()}
-    )
+    try:
+        results = client.ft(CACHE_INDEX_NAME).search(
+            knn_query, query_params={"vec": embedding.astype("float32").tobytes()}
+        )
+    except redis.RedisError:
+        logger.warning("Redis unavailable — treating as cache miss")
+        return None
 
     if results.total == 0:
         return None
@@ -128,10 +146,12 @@ def find_cached_answer(query: str) -> dict | None:
 def clear_cache() -> int:
     client = get_redis_client()
     count = 0
-    for key in client.scan_iter(match=f"{CACHE_KEY_PREFIX}*"):
-        client.delete(key)
-        count += 1
-
+    try:
+        for key in client.scan_iter(match=f"{CACHE_KEY_PREFIX}*"):
+            client.delete(key)
+            count += 1
+    except redis.RedisError:
+        logger.warning("Redis unavailable — cache clear failed")
     return count
 
 
