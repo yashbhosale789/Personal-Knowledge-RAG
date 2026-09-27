@@ -1,3 +1,5 @@
+import hashlib
+
 from typing import List
 from langchain_core.documents import Document
 from pathlib import Path
@@ -34,6 +36,11 @@ class BGEEmbeddingAdapter(Embeddings):
         return embed_query(text)
 
 
+def _chunk_id(chunk: Document) -> str:
+    key = f"{chunk.metadata.get('source','unknown')}::{chunk.metadata.get('chunk_index',0)}"
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
 def get_vectorstore() -> Chroma:
     """
     Return a Chroma instance backed by local disk storage.
@@ -61,11 +68,12 @@ def add_chunks(chunks: List[Document]) -> None:
         return
 
     vectorstore = get_vectorstore()
+    ids = [_chunk_id(chunk) for chunk in chunks]
 
     logger.info(
         f"Embedding and storing {len(chunks)} chunks to vector store : {CHROMA_COLLECTION}"
     )
-    vectorstore.add_documents(documents=chunks)
+    vectorstore.add_documents(documents=chunks, ids=ids)
     logger.info(f"Stored {len(chunks)} chunks to vector store : {CHROMA_COLLECTION}")
 
 
