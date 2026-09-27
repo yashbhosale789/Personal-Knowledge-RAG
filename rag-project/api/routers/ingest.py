@@ -11,6 +11,7 @@ from api.core.exceptions import IngestError
 from api.core.auth import verify_api_key
 
 from src.llm.semantic_cache import clear_cache
+from src.vectorstore.store import delete_by_source
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,7 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
         # store = get_vectorstore()
         # store.add_documents(chunks, embedder)
 
+        delete_by_source(resolved_path) 
         chunks = chunk_documents(docs)
         add_chunks(chunks)
 
