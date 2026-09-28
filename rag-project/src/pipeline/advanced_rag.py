@@ -44,11 +44,11 @@ def _dense_to_dicts(documents: list[Document], top_k: int) -> list[dict]:
     ]
 
 
-def _build_prompt(query: str, chunk: list[dict]) -> str:
+def _build_prompt(query: str, chunks: list[dict]) -> str:
     boundary = secrets.token_hex(4)
 
     context_blocks = []
-    for i, chunk in enumerate(chunk, 1):
+    for i, chunk in enumerate(chunks, 1):
         source = chunk["metadata"].get("filename", "unknown")
         block = f"[SOURCE {i} - {source}]\n{chunk['text']}"
         context_blocks.append(block)
