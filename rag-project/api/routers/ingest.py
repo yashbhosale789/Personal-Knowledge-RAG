@@ -88,7 +88,7 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
         # store = get_vectorstore()
         # store.add_documents(chunks, embedder)
 
-        delete_by_source(resolved_path) 
+        delete_by_source(str(resolved_path)) 
         chunks = chunk_documents(docs)
         add_chunks(chunks)
 
