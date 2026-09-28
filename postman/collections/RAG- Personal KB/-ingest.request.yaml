@@ -6,23 +6,21 @@ headers:
   "": ""
 body:
   type: json
-  content: "// {\r
+  content: "{\r
 
-    //   \"file_path\": \"data/documents/Adjusting the Steering Wheel.pdf\",\r
+    \  \"file_path\": \"data/documents/Adjusting the Steering Wheel.pdf\"\r
 
-    //   \"force_reingest\": false\r
-
-    // }\r
+    }\r
 
     \r
 
-    {\r
+    // {\r
 
-    \  \"file_path\": \"D:\\\\Development\\\\GenAI\\\\Personal Knowledge OS (RAG System)\\\\rag-project\\\\data\\\\documents\\\\Adjusting the Steering Wheel.pdf\",\r
+    //   \"file_path\": \"D:\\\\Development\\\\GenAI\\\\Personal Knowledge OS (RAG System)\\\\rag-project\\\\data\\\\documents\\\\Adjusting the Steering Wheel.pdf\",\r
 
-    \  \"force_reingest\": false\r
+    //   \"force_reingest\": false\r
 
-    }"
+    // }"
 auth:
   type: bearer
   credentials:
