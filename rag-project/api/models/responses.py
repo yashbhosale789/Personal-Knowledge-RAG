@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, Field
 
 
@@ -79,7 +78,7 @@ class QueryResponse(BaseModel):
 
 
 class IngestResponse(BaseModel):
-    status: str = Field(description="'success' or 'already_exists'.")
+    status: str = Field(description="'success'.")
 
     file_path: str
 
@@ -89,7 +88,7 @@ class IngestResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    status: str = Field(desription="'ok' or 'degraded'.")
+    status: str = Field(description="'ok' or 'degraded'.")
 
     version: str
 

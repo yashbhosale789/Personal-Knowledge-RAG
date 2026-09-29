@@ -1,4 +1,4 @@
-CAVEAT_TEXT = "\n\n[Note: parts of this answer couldnot be fully verified against the source material.]"
+CAVEAT_TEXT = "\n\n[Note: parts of this answer could not be fully verified against the source material.]"
 
 
 def score_confidence(sufficiency: dict, citation_check: dict) -> dict:

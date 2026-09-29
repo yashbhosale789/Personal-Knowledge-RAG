@@ -19,7 +19,7 @@ def _build_verifier_prompt(answer: str, cited_chunks: list[dict]) -> str:
     sources = "\n\n".join(
         f"[SOURCE {i}]\n {c['text']}" for i, c in enumerate(cited_chunks, 1)
     )
-    return f"ANSWEER:\n{answer}\n\nCITED SOURCES:\n{sources}"
+    return f"ANSWER:\n{answer}\n\nCITED SOURCES:\n{sources}"
 
 
 def verify_citation(answer: str, reranked_chunks: list[dict]) -> dict:
