@@ -1,8 +1,8 @@
 import json
-import time
 import logging
-import sys
 import os
+import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -109,7 +109,7 @@ def main():
     print(f"\n{'='*60}")
     print(f"Done. {success}/{len(results)} succeeded.")
     print(f"Results → {OUTPUT_PATH}")
-    print(f"Next:     python eval/ragas_eval.py")
+    print("Next:     python eval/ragas_eval.py")
 
 
 if __name__ == "__main__":

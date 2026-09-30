@@ -1,9 +1,10 @@
-from typing import List
-from langchain_core.documents import Document
-from src.retrieval.retriever import retrieve
-from src.llm.client import call_llm
-from config import SYSTEM_PROMPT
 import logging
+
+from langchain_core.documents import Document
+
+from config import SYSTEM_PROMPT
+from src.llm.client import call_llm
+from src.retrieval.retriever import retrieve
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 # Do not use any knowledge outside the provided context."""
 
 
-def build_promt(query: str, chunks: List[Document]) -> str:
+def build_promt(query: str, chunks: list[Document]) -> str:
     """
     Construct the RAG prompt: labeled context blocks + user query.
 

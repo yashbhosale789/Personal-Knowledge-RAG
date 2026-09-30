@@ -1,5 +1,7 @@
 import datetime
+
 from fastapi import APIRouter
+
 from api.models.responses import HealthResponse
 
 router = APIRouter()
@@ -23,7 +25,7 @@ async def health_check():
         status="ok" if _pipeline_ready else "degraged",
         version="0.1.0",
         pipeline_ready=_pipeline_ready,
-        timestamp=datetime.datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
     )
 
 

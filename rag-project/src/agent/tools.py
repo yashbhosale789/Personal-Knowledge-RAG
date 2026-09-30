@@ -2,6 +2,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+
 from config import CHUNKS_PATH
 from src.pipeline.advanced_rag import run_advanced_rag_pipeline as AdvancedRAGPipeline
 
@@ -28,9 +29,9 @@ def build_retriever_tool() -> dict[str, Any]:
             chunks = result.get("contexts", [])
             logger.info(f"Retrieved {len(chunks)} chunks")
             return _format_chunks_for_agent(chunks)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Retrieval failed: {e}")
-            return f"Retrieval error: {str(e)}"
+            return f"Retrieval error: {e!s}"
 
     return {
         "name": "retrieve",
@@ -77,9 +78,9 @@ def build_metadata_tool() -> dict[str, Any]:
                 f"safety procedures, and required equipment."
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Metadata tool failed: {e}")
-            return f"Metadata error: {str(e)}"
+            return f"Metadata error: {e!s}"
 
     return {
         "name": "get_document_info",

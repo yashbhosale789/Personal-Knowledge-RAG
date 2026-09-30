@@ -4,8 +4,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.vectorstore.store import delete_by_source, add_chunks
 from langchain_core.documents import Document
+
+from src.vectorstore.store import add_chunks, delete_by_source
 
 # no matching source -> 0, no exception
 assert delete_by_source("/nonexistent/path.pdf") == 0

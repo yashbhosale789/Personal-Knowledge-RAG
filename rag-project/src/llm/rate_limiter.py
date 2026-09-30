@@ -1,12 +1,13 @@
-import redis
 import logging
+
+import redis
 
 logger = logging.getLogger(__name__)
 
 from datetime import datetime, timezone
-from src.llm.redis_client import get_redis_client
 
 from config import RATE_LIMIT_PER_MINUTE, RATE_LIMIT_TTL_SECONDS
+from src.llm.redis_client import get_redis_client
 
 
 def is_rate_limited(api_key_hash: str, provider: str) -> bool:

@@ -1,25 +1,25 @@
-import requests
-import os
 import logging
-from dotenv import load_dotenv
+import os
 from pathlib import Path
+
+import requests
+from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent)
 
 from config import (
-    PIPELINE_PROVIDER,
-    OPENROUTER_API_URL,
-    OPENROUTER_MODEL,
-    OPENROUTER_API_KEY,
-    GROQ_API_URL,
-    GROQ_PIPELINE_MODEL,
-    GROQ_API_KEY,
+    GEMINI_API_KEY,
     GEMINI_API_URL,
     GEMINI_PIPELINE_MODEL,
-    GEMINI_API_KEY,
-    OLLAMA_BASE_URL,
-    OLLAMA_MODEL,
+    GROQ_API_KEY,
+    GROQ_API_URL,
+    GROQ_PIPELINE_MODEL,
     OLLAMA_API_URL,
+    OLLAMA_MODEL,
+    OPENROUTER_API_KEY,
+    OPENROUTER_API_URL,
+    OPENROUTER_MODEL,
+    PIPELINE_PROVIDER,
 )
 
 logger = logging.getLogger(__name__)

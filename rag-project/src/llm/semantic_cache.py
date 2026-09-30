@@ -1,23 +1,24 @@
-import redis
 import logging
+
+import redis
 
 logger = logging.getLogger(__name__)
 
-from redis.commands.search.field import VectorField, TextField
+import hashlib
+
+from redis.commands.search.field import TextField, VectorField
 from redis.commands.search.index_definition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 
-from src.llm.redis_client import get_redis_client
 from config import (
-    EMBEDDING_DIAMENSION,
     CACHE_INDEX_NAME,
     CACHE_KEY_PREFIX,
-    CACHE_TTL_SECONDS,
     CACHE_SIMILARITY_THRESHOLD,
+    CACHE_TTL_SECONDS,
+    EMBEDDING_DIAMENSION,
 )
-
-import hashlib
 from src.embedding.embedder import get_embedding_model
+from src.llm.redis_client import get_redis_client
 
 # import sys
 # from pathlib import Path

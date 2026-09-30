@@ -1,14 +1,13 @@
+import logging
 from pathlib import Path
-from typing import List
-from langchain_core.documents import Document
+
 from langchain_community.document_loaders import (
     PyPDFLoader,
     TextLoader,
     UnstructuredMarkdownLoader,
     UnstructuredWordDocumentLoader,
 )
-
-import logging
+from langchain_core.documents import Document
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ LOADER_MAP = {
 }
 
 
-def load_documents(file_path: Path) -> List[Document]:
+def load_documents(file_path: Path) -> list[Document]:
     """
     Load a single file into a list of Documents.
 
@@ -46,16 +45,16 @@ def load_documents(file_path: Path) -> List[Document]:
         logger.info(f"Loaded {len(docs)} document(s) from {file_path.name}")
         return docs
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Failed to load {file_path.name} : {e}")
         return []
 
 
-def load_directory(directory: Path) -> List[Document]:
+def load_directory(directory: Path) -> list[Document]:
     """
     Recursively load all supported files from a directory.
     """
-    all_docs: List[Document] = []
+    all_docs: list[Document] = []
 
     files = [
         f

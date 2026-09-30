@@ -5,7 +5,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import chromadb
-from config import STORAGE_DIR, CHROMA_COLLECTION
+
+from config import CHROMA_COLLECTION, STORAGE_DIR
 
 client = chromadb.PersistentClient(path=str(STORAGE_DIR))
 collection = client.get_collection(CHROMA_COLLECTION)

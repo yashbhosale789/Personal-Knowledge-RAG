@@ -1,9 +1,9 @@
-from typing import List
-from sentence_transformers import SentenceTransformer as SE
-from langchain_core.documents import Document
-from config import EMBEDDINGS_MODEL_NAME, EMBEDDING_DIAMENSION
 import logging
+
 import torch
+from sentence_transformers import SentenceTransformer as SE
+
+from config import EMBEDDING_DIAMENSION, EMBEDDINGS_MODEL_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def get_embedding_model() -> SE:
     return _model
 
 
-def embed_texts(texts: List[str]) -> List[List[float]]:
+def embed_texts(texts: list[str]) -> list[list[float]]:
     """
     Convert a list of strings to embedding vectors.
     Returns a list of float lists (one vector per text).
@@ -47,7 +47,7 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
     return embeddings.tolist()
 
 
-def embed_query(query: str) -> List[float]:
+def embed_query(query: str) -> list[float]:
     """
     Embed a single query string.
     BGE requires the prefix 'Represent this sentence: ' for query-side embeddings.

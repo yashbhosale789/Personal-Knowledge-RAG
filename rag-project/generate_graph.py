@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 import os
 import re
-import sys
+from logging import logger
 
 # Core Configuration
 OUTPUT_FILE = "project_context.dot"
@@ -93,8 +92,8 @@ def parse_dependencies(file_path, base_dir):
                     if os.path.exists(p) and os.path.isfile(p):
                         deps.append(os.path.relpath(p, base_dir))
                         break
-    except Exception:
-        pass  # Safeguard against locked or unreadable files
+    except Exception as e:  # noqa: BLE001
+        logger.debug(f"Skipping unreadable dependency file: {e}")
     return deps
 
 

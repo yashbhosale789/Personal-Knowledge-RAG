@@ -47,3 +47,7 @@ prometheus_client
 
 # Redis (rate limiting + semantic caching — Phase 9)
 redis
+
+# Code Review
+ruff
+bandit

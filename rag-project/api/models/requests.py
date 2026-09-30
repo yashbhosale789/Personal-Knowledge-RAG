@@ -1,5 +1,6 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
-from typing import Optional, Literal
 
 
 class QueryRequest(BaseModel):
@@ -11,7 +12,7 @@ class QueryRequest(BaseModel):
         examples=["How do i change a tyre on an Aventro Motors Vehicle?"],
     )
 
-    provider: Optional[Literal["groq", "openrouter", "gemini", "ollama"]] = Field(
+    provider: Literal["groq", "openrouter", "gemini", "ollama"] | None = Field(
         default=None,
         description="Override the LLM Provider for this request. If not set, use PIPELINE_PROVIDER from config.",
         examples=["groq", "openrouter", "gemini", "ollama"],

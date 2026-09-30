@@ -1,6 +1,7 @@
 import logging
-from src.llm.client import call_llm
+
 from config import REWRITE_SYSTEM
+from src.llm.client import call_llm
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,6 @@ def rewrite_query(query: str) -> str:
         logger.info(f"Query rewrite: {query} -> {rewritten}")
         return rewritten
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.info(f"Query rewrite failed, using original. Reason: {e}")
         return query

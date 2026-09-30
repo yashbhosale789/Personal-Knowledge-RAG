@@ -5,7 +5,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import logging
+
 from dotenv import load_dotenv
+
 from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
 load_dotenv()

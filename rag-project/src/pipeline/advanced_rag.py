@@ -3,16 +3,17 @@ import os
 import secrets
 
 from langchain_core.documents import Document
-from src.retrieval.retriever import retrieve
+
+from config import ABSTAIN_MESSAGE, SYSTEM_PROMPT, TOP_K
+from src.llm.client import call_llm
+from src.pipeline.citation_verification import verify_citation
+from src.pipeline.confidence import score_confidence
+from src.pipeline.context_sufficiency import check_sufficiency
+from src.pipeline.query_rewriter import rewrite_query
 from src.retrieval.bm25_retriever import BM25Retriever
 from src.retrieval.fusion import reciprocal_rank_fusion
 from src.retrieval.reranker import CrossEncoderReranker
-from src.pipeline.query_rewriter import rewrite_query
-from src.llm.client import call_llm
-from src.pipeline.context_sufficiency import check_sufficiency
-from src.pipeline.citation_verification import verify_citation
-from src.pipeline.confidence import score_confidence
-from config import SYSTEM_PROMPT, TOP_K, ABSTAIN_MESSAGE
+from src.retrieval.retriever import retrieve
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,6 @@ _reranker = CrossEncoderReranker()
 # in advanced_rag.py, near _bm25/_reranker
 def warmup() -> None:
     """No-op — importing this module already builds _bm25 and _reranker."""
-    pass
 
 
 def _dense_to_dicts(documents: list[Document], top_k: int) -> list[dict]:

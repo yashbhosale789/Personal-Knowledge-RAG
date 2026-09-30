@@ -4,8 +4,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.agent.react_agent import run_agent
 from src.agent.langchain_agent import run_langchain_agent
+from src.agent.react_agent import run_agent
 
 logging.basicConfig(
     level=logging.INFO,

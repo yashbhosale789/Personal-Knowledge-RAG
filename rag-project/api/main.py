@@ -1,14 +1,14 @@
+import asyncio
 import logging
 import logging.config
-import asyncio
-
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from api.routers import health, query, ingest, metrics
-from api.middleware.logging import StructuredLoggingMiddleware
 from api.core.exceptions import RAGException
+from api.middleware.logging import StructuredLoggingMiddleware
+from api.routers import health, ingest, metrics, query
 
 # from api.routers.metrics import router as metrics_router
 
@@ -45,7 +45,6 @@ def _warmup_retrieval_component() -> None:
     """
     from src.embedding.embedder import get_embedding_model
     from src.vectorstore.store import get_vectorstore
-    import src.pipeline.advanced_rag
 
     get_embedding_model()
     get_vectorstore()
@@ -53,9 +52,9 @@ def _warmup_retrieval_component() -> None:
 
 async def _warmup_llm(logger: logging.Logger) -> None:
     try:
+        import config
         from api.core.retry import call_with_fallback
         from src.llm.client import call_llm
-        import config
 
         def make_llm_call(provider: str):
             return call_llm("Reply with OK.", provider=provider)
@@ -65,7 +64,7 @@ async def _warmup_llm(logger: logging.Logger) -> None:
         )
         logger.info("LLM provider warmed up.")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning(f"LLM warmup failed (non-fatal, first request will retry): {e}")
 
 
@@ -77,13 +76,14 @@ async def lifespan(app: FastAPI):
 
     try:
         from starlette.concurrency import run_in_threadpool
+
         from src.llm.semantic_cache import create_cache_index
 
         # from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
         # Warm up: run a dummy query to force model loading
         # await run_in_threadpool(run_advanced_rag_pipeline, "warmup", return_contexts=False)
-        
+
         await run_in_threadpool(_warmup_retrieval_component)
         health.set_pipeline_ready(True)
         logger.info("Retrieval Components initialized and ready.")
@@ -91,7 +91,7 @@ async def lifespan(app: FastAPI):
         await run_in_threadpool(create_cache_index)
         logger.info("Semantic cache index ready.")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("Retrieval Components initialization failed: %s", e)
         # Server starts but in degraded state — health endpoint reports this
 

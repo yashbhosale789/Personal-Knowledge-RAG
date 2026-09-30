@@ -1,12 +1,13 @@
+import json
+import logging
 import time
 import uuid
-import logging
-import json
-from typing import Callable
+from collections.abc import Callable
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from api.core.metrics import http_requests_total, http_request_duration_seconds
+from api.core.metrics import http_request_duration_seconds, http_requests_total
 
 
 class StructuredLoggingMiddleware(BaseHTTPMiddleware):

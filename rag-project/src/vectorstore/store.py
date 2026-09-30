@@ -1,17 +1,14 @@
 import hashlib
-
-from typing import List
-from langchain_core.documents import Document
-from pathlib import Path
-from langchain_chroma import Chroma
-from langchain_core.embeddings import Embeddings
-from config import (
-    STORAGE_DIR,
-    CHROMA_COLLECTION,
-    EMBEDDINGS_MODEL_NAME,
-    EMBEDDING_DIAMENSION,
-)
 import logging
+
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
+
+from config import (
+    CHROMA_COLLECTION,
+    STORAGE_DIR,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +22,12 @@ class BGEEmbeddingAdapter(Embeddings):
     the vector store code — just swap the adapter.
     """
 
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
         from src.embedding.embedder import embed_texts
 
         return embed_texts(texts)
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(self, text: str) -> list[float]:
         from src.embedding.embedder import embed_query
 
         return embed_query(text)
@@ -57,7 +54,7 @@ def get_vectorstore() -> Chroma:
     )
 
 
-def add_chunks(chunks: List[Document]) -> None:
+def add_chunks(chunks: list[Document]) -> None:
     """
     Embed and store a list of chunks into Chroma.
     Chroma auto-persists to disk — no explicit save() call needed.
