@@ -7,25 +7,25 @@ An experimental, production-oriented Retrieval-Augmented Generation (RAG) servic
 - Loads documents, splits them into overlapping chunks, embeds them with `BAAI/bge-small-en-v1.5`, and stores them in a local Chroma database.
 - Rewrites a question before retrieval.
 - Combines dense Chroma retrieval with BM25 sparse retrieval using reciprocal-rank fusion.
-
 - Reranks candidates with `cross-encoder/ms-marco-MiniLM-L-6-v2`.
 - Rejects insufficient context before generation instead of guessing.
 - Instructs the LLM to answer only from retrieved context and emit `[SOURCE N]` citations.
-
 - Verifies citations and reports a confidence level and outcome.
 - Scans API-ingested documents for prompt-injection patterns.
+- Deletes ingested documents by source path, removing both the vector-store chunks and the underlying file.
 - Provides Redis-backed semantic caching and Prometheus metrics.
+- Deterministic per-chunk IDs ensure re-ingesting a document updates its existing chunks in place instead of duplicating them.
 
 ## Architecture
 
 ```text
 Document -> loader -> chunker -> BGE embeddings -> Chroma
-												   |
+                                                   |
 Question -> rewrite -> dense retrieval + BM25 -> RRF -> rerank
-												   |
-							  sufficiency gate -> grounded LLM answer
-												   |
-						 citation verification -> confidence and response
+                                                   |
+                              sufficiency gate -> grounded LLM answer
+                                                   |
+                         citation verification -> confidence and response
 ```
 
 The main runtime entry point is `api.main:app`. The pipeline implementation is in `src/pipeline/advanced_rag.py`.
@@ -46,6 +46,7 @@ tests/               Unit and component tests
 data/documents/      Default local document directory
 storage/chroma/      Persistent vector database
 storage/chunks.json  Human-readable CLI ingestion output
+.github/workflows/   CI: eval regression gate, lint/security gate
 ```
 
 ## Requirements
@@ -125,17 +126,17 @@ Invoke-RestMethod http://127.0.0.1:8000/health
 ```powershell
 $headers = @{ Authorization = "Bearer $env:API_KEY" }
 $body = @{
-	query = "What does the document say about vehicle maintenance?"
-	provider = "groq"
-	return_contexts = $true
+ query = "What does the document say about vehicle maintenance?"
+ provider = "groq"
+ return_contexts = $true
 } | ConvertTo-Json
 
 Invoke-RestMethod `
-	-Uri http://127.0.0.1:8000/query `
-	-Method Post `
-	-Headers $headers `
-	-ContentType "application/json" `
-	-Body $body
+ -Uri http://127.0.0.1:8000/query `
+ -Method Post `
+ -Headers $headers `
+ -ContentType "application/json" `
+ -Body $body
 ```
 
 The response includes the answer, rewritten query, source filenames, number of chunks used, provider, latency, sufficiency verdict, citation check, confidence, and an outcome of `answer`, `answer_low_confidence`, `abstain`, or `cached`.
@@ -146,22 +147,22 @@ The response includes the answer, rewritten query, source filenames, number of c
 $body = @{ file_path = "data/documents/manual.pdf"; force_reingest = $false } | ConvertTo-Json
 
 Invoke-RestMethod `
-	-Uri http://127.0.0.1:8000/ingest `
-	-Method Post `
-	-Headers $headers `
-	-ContentType "application/json" `
-	-Body $body
+ -Uri http://127.0.0.1:8000/ingest `
+ -Method Post `
+ -Headers $headers `
+ -ContentType "application/json" `
+ -Body $body
 ```
 
-The API blocks documents that match configured prompt-injection patterns and clears the semantic cache after a successful ingest.
+The API blocks documents that match configured prompt-injection patterns and clears the semantic cache after a successful ingest. Re-ingesting the same `file_path` replaces its existing chunks in place rather than duplicating them.
 
 ### Delete an ingested PDF
 
 ```powershell
 Invoke-RestMethod `
-	-Uri "http://127.0.0.1:8000/ingest?file_path=data/documents/manual.pdf" `
-	-Method Delete `
-	-Headers $headers
+ -Uri "http://127.0.0.1:8000/ingest?file_path=data/documents/manual.pdf" `
+ -Method Delete `
+ -Headers $headers
 ```
 
 This removes matching Chroma chunks, deletes the file, and clears the semantic cache.
@@ -214,6 +215,13 @@ python -m pytest
 
 Some tests import embedding, vector-store, or LLM components and therefore may require the models, local data, Redis, and provider configuration to be available.
 
+## Continuous Integration
+
+Every pull request against `main` runs two required checks:
+
+- **Eval Regression Gate** — rebuilds the index from `data/documents/`, runs the pipeline against a CI evaluation subset, and fails the PR if faithfulness or answer-relevancy drop below their configured floors.
+- **Code Quality** — runs `ruff` (linting) and `bandit` (security static analysis) against the application code, excluding tests and dependencies. Both are hard gates: a finding fails the PR.
+
 ## Docker Compose
 
 The Compose file defines:
@@ -226,10 +234,10 @@ The Compose file defines:
 Start the stack with:
 
 ```powershell
-docker compose -f docker_compose.yml up --build
+docker-compose up --build
 ```
 
-The current Compose setup reserves an NVIDIA GPU for the app. Docker Desktop and NVIDIA Container Toolkit configuration may be required. Before using Compose in a clean checkout, add the Prometheus configuration file referenced by `docker_compose.yml` (`./prometheus.yml`). The current Dockerfile also contains a shell path typo in its `useradd` command (`/bib/bash`); correct that to `/bin/bash` if the image build fails at user creation.
+The current Compose setup reserves an NVIDIA GPU for the app. Docker Desktop and NVIDIA Container Toolkit configuration may be required. The `app` service has no source volume mount, so code changes require `docker-compose up --build app` to take effect — there is no local hot-reload inside the container.
 
 ## Configuration Highlights
 
@@ -255,6 +263,7 @@ Provider selection is controlled by `PIPELINE_PROVIDER`, while evaluation and ag
 - API ingestion restricts paths to `data/documents/` and scans extracted text for prompt injection.
 - Retrieved document text is treated as data in the generation prompt, but provider and model security still depend on the configured LLM service.
 - The delete endpoint removes the source file as well as its vector-store chunks. Use it deliberately.
+- CI enforces static-analysis security checks (`bandit`) on every pull request; findings block the merge rather than being discovered after deployment.
 
 ## Current Limitations
 
@@ -262,8 +271,9 @@ Provider selection is controlled by `PIPELINE_PROVIDER`, while evaluation and ag
 - The API and CLI use different ingestion format policies, as described above.
 - Redis semantic caching is initialized lazily; query requests need a working Redis Stack instance.
 - Provider fallback is useful for transient failures, but each provider still needs valid credentials and compatible model configuration.
-- The Compose deployment is not turnkey until the missing `prometheus.yml` and Dockerfile shell-path issue are addressed.
 - The health response currently emits the misspelled degraded status value `degraged` when the pipeline is not ready; clients should rely on `pipeline_ready` until that is corrected.
+- No user-facing authentication/authorization layer exists yet beyond the single shared `API_KEY` — there is no per-user access control or document-level permissions.
+- A full manual security and reliability review beyond automated linting is in progress (auth, tenant isolation, provider fallback logic, prompt-injection defenses).
 
 ## License
 
