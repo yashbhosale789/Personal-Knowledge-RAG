@@ -2,8 +2,8 @@ import json
 import logging
 import re
 
-from src.llm.client import call_llm
 from config import CITATION_VERIFIER_SYSTEM, EVAL_PROVIDER
+from src.llm.client import call_llm
 
 logger = logging.getLogger(__name__)
 

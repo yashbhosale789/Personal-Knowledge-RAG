@@ -4,16 +4,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.stdout.reconfigure(encoding="utf-8")
 
-from src.retrieval.retriever import retrieve
+
+import logging
 
 from src.pipeline.rag import run_rag_pipeline
-import logging
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s - %(message)s"
 )
 
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()

@@ -1,13 +1,14 @@
-from typing import List
+import logging
+
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from config import CHUNK_SIZE, CHUNK_OVERLAP
-import logging
+
+from config import CHUNK_OVERLAP, CHUNK_SIZE
 
 logger = logging.getLogger(__name__)
 
 
-def chunk_documents(documents: List[Document]) -> List[Document]:
+def chunk_documents(documents: list[Document]) -> list[Document]:
     """
     Split a list of Documents into retrieval-sized chunks.
 

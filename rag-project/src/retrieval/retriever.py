@@ -1,13 +1,14 @@
-from typing import List
-from langchain_core.documents import Document
-from src.vectorstore.store import get_vectorstore
-from config import TOP_K
 import logging
+
+from langchain_core.documents import Document
+
+from config import TOP_K
+from src.vectorstore.store import get_vectorstore
 
 logger = logging.getLogger(__name__)
 
 
-def retrieve(query: str, top_k: int = TOP_K) -> List[Document]:
+def retrieve(query: str, top_k: int = TOP_K) -> list[Document]:
     """
     Given a query string, return the top_k most semantically similar chunks.
 

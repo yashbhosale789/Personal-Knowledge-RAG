@@ -1,11 +1,10 @@
-from typing import Optional
 
 
 class RAGException(Exception):
     # Base Exceptionfor all RAG API Errors.
 
     def __init__(
-        self, message: str, status_code: int = 500, details: Optional[dict] = None
+        self, message: str, status_code: int = 500, details: dict | None = None
     ):
         self.message = message
         self.status_code = status_code

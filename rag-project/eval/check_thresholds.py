@@ -6,7 +6,10 @@ SCORES_PATH = Path(__file__).parent / "ragas_scores.json"
 FAITHFULNESS_FLOOR = 0.85
 ANSWER_RELEVANCY_FLOOR = 0.75
 
-scores = json.load(open(SCORES_PATH))
+# scores = json.load(open(SCORES_PATH))
+
+with open(SCORES_PATH) as f:
+    scores = json.load(f)
 
 faithfulness_avg = sum(s["faithfulness"] for s in scores) / len(scores)
 ar_values = [

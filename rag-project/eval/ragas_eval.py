@@ -18,6 +18,7 @@ import os
 import sys
 import time
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
@@ -25,23 +26,24 @@ load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 import requests
+from sentence_transformers import SentenceTransformer
+
 from config import (
+    EMBEDDINGS_MODEL_NAME,
     EVAL_PROVIDER,
-    OPENROUTER_EVALUATOR_MODEL,
-    OPENROUTER_EVALUATOR_URL,
-    OPENROUTER_EVALUATOR_KEY,
-    OPENROUTER_REQUEST_DELAY,
-    GROQ_EVALUATOR_MODEL,
-    GROQ_API_URL,
-    GROQ_EVALUATOR_KEY,
-    GROQ_REQUEST_DELAY,
-    GEMINI_EVALUATOR_MODEL,
     GEMINI_API_URL,
     GEMINI_EVALUATOR_KEY,
+    GEMINI_EVALUATOR_MODEL,
     GEMINI_REQUEST_DELAY,
-    EMBEDDINGS_MODEL_NAME,
+    GROQ_API_URL,
+    GROQ_EVALUATOR_KEY,
+    GROQ_EVALUATOR_MODEL,
+    GROQ_REQUEST_DELAY,
+    OPENROUTER_EVALUATOR_KEY,
+    OPENROUTER_EVALUATOR_MODEL,
+    OPENROUTER_EVALUATOR_URL,
+    OPENROUTER_REQUEST_DELAY,
 )
 
 # Initialize the sentence transformer model for embedding calculation.
@@ -187,7 +189,7 @@ No explanation. No markdown."""
         data = json.loads(clean)
         # Calculate the score. If there are no claims, faithfulness is 1.0 (vacuously true).
         return round(data["supported"] / data["total"], 4) if data["total"] > 0 else 1.0
-    except Exception:
+    except Exception:  # noqa: BLE001
         # If JSON parsing fails or the LLM response is malformed, return a score of 0.
         return 0.0
 
@@ -245,7 +247,7 @@ No explanation. No markdown."""
         data = json.loads(clean)
         # Calculate the precision score.
         return round(data["relevant"] / data["total"], 4) if data["total"] > 0 else 0.0
-    except Exception:
+    except Exception:  # noqa: BLE001
         # If parsing fails, return a score of 0.
         return 0.0
 
@@ -298,7 +300,7 @@ No explanation. No markdown."""
         data = json.loads(clean)
         # Calculate the recall score. If no sentences, recall is 1.0.
         return round(data["covered"] / data["total"], 4) if data["total"] > 0 else 1.0
-    except Exception:
+    except Exception:  # noqa: BLE001
         # If parsing fails, return a score of 0.
         return 0.0
 
@@ -358,7 +360,7 @@ Example output: ["What color is the sky?", "Why is the sky blue?", "What does th
             # )
             return 0.0
 
-    except Exception as e:
+    except Exception:  # noqa: BLE001
         # If parsing fails or the response is malformed, return 0.
         # print(f"    [AR DEBUG] JSON parse failed: {e} | clean: {repr(clean[:200])}")
         return 0.0

@@ -1,15 +1,15 @@
 import datetime
 import logging
-from fastapi import APIRouter, Request, HTTPException, Depends
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.concurrency import run_in_threadpool
 
+from api.core.auth import verify_api_key
+from api.core.exceptions import PipelineNotReadyError, ProviderError
+from api.core.retry import call_with_fallback
 from api.models.requests import QueryRequest
 from api.models.responses import QueryResponse
-from api.core.exceptions import ProviderError, PipelineNotReadyError
-from api.core.retry import call_with_fallback
 from api.routers.health import is_pipeline_ready
-from api.core.auth import verify_api_key
-
 from src.llm.semantic_cache import find_cached_answer, store_cache_entry
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ async def query_endpoint(
             chunks_used=0,
             provider=cached["provider"],
             latency_ms=round(latency_ms, 2),
-            timestamp=datetime.datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
             sufficiency=None,
             citation_check=None,
             confidence=None,
@@ -112,7 +112,7 @@ async def query_endpoint(
         chunks_used=result.get("chunks_used", 0),
         provider=provider_used,
         latency_ms=round(latency_ms, 2),
-        timestamp=datetime.datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         sufficiency=result.get("sufficiency"),
         citation_check=result.get("citation_check"),
         confidence=result.get("confidence"),

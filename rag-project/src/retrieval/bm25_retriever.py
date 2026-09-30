@@ -1,7 +1,9 @@
 import json
 import logging
 from pathlib import Path
+
 from rank_bm25 import BM25Okapi
+
 from config import CHUNKS_PATH, TOP_K
 
 logger = logging.getLogger(__name__)

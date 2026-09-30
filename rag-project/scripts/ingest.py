@@ -1,14 +1,14 @@
+import json
 import logging
 import sys
-import json
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.stdout.reconfigure(encoding="utf-8")
 
-from config import BASE_DIR, DATA_DIR, CHUNKS_PATH
-from src.ingestion.loader import load_directory
+from config import CHUNKS_PATH, DATA_DIR
 from src.ingestion.chunker import chunk_documents
+from src.ingestion.loader import load_directory
 from src.vectorstore.store import add_chunks
 
 logging.basicConfig(
@@ -41,11 +41,11 @@ def main():
     save_chunks(chunks, CHUNKS_PATH)
     print(f"[OK] Chunks saved to : {CHUNKS_PATH}")
 
-    print(f"\n[OK] Ingestion complete.")
+    print("\n[OK] Ingestion complete.")
     print(f"   Documents loaded : {len(documents)}")
     print(f"   Chunks produced  : {len(chunks)}")
-    print(f"   Stored in : storage/chroma/")
-    print(f"\nSample chunk (first):")
+    print("   Stored in : storage/chroma/")
+    print("\nSample chunk (first):")
     print("-" * 60)
     print(chunks[0].page_content[:300])
     print("\nMetadata:", chunks[0].metadata)

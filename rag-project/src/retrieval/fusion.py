@@ -1,4 +1,5 @@
 import logging
+
 from config import RRF_K
 
 logger = logging.getLogger(__name__)

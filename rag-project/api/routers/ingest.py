@@ -1,15 +1,15 @@
 import logging
 import os
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Depends
+
+from fastapi import APIRouter, Depends, HTTPException
 from starlette.concurrency import run_in_threadpool
 
 import config
-from api.models.responses import IngestResponse, DeleteResponse
-from api.models.requests import IngestRequest
-from api.core.exceptions import IngestError
 from api.core.auth import verify_api_key
-
+from api.core.exceptions import IngestError
+from api.models.requests import IngestRequest
+from api.models.responses import DeleteResponse, IngestResponse
 from src.llm.semantic_cache import clear_cache
 from src.vectorstore.store import delete_by_source
 
@@ -50,14 +50,13 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
     # from pathlib import Path
     # import config
 
-    from src.ingestion.loader import load_documents
     from src.ingestion.chunker import chunk_documents
+    from src.ingestion.loader import load_documents
+    from src.pipeline.injection_scanner import scan_for_injection
 
     # from src.embedding.embedder import get_embedding_model
     # from src.vectorstore.store import get_vectorstore
-
     from src.vectorstore.store import add_chunks
-    from src.pipeline.injection_scanner import scan_for_injection
 
     resolved_path = _resolve_and_validate_path(file_path)
 
@@ -96,7 +95,7 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
             cleared_count = clear_cache()
             logger.info(f"Cleared {cleared_count} cache entries after ingest.")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Cache cleare failed aftrer ingest (non-fatal): {e}")
 
         return IngestResponse(
@@ -128,7 +127,7 @@ async def ingest_endpoint(body: IngestRequest, _: None = Depends(verify_api_key)
     except IngestError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
-    except Exception as e:
+    except Exception:
         logger.exception(f"Unexpected ingest error for {body.file_path}.")
         raise HTTPException(
             status_code=500, detail="Internal server error during ingestion."
@@ -148,7 +147,7 @@ def _run_delete(file_path: str) -> DeleteResponse:
             cleared_count = clear_cache()
             logger.info(f"Cleared {cleared_count} cache entries after delete.")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Cache clear failed after delete (non-fatal): {e}")
 
         return DeleteResponse(

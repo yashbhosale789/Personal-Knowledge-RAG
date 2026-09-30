@@ -1,9 +1,10 @@
+import hashlib
 import os
 import secrets
+
 from fastapi import Header, HTTPException, status
 
 import config
-import hashlib
 
 
 def verify_api_key(authorization: str | None = Header(None)) -> str:

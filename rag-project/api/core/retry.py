@@ -2,17 +2,19 @@ import asyncio
 import logging
 import random
 import time
+from collections.abc import Callable
+from typing import Any
+
 import requests
 
-from typing import Callable, List, Optional, Any
 from api.core.exceptions import ProviderError
-from src.llm.rate_limiter import is_rate_limited
 from api.core.metrics import (
     provider_call_duration_seconds,
     provider_call_errors_total,
     provider_requests_total,
     provider_retries_total,
 )
+from src.llm.rate_limiter import is_rate_limited
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,7 @@ async def call_with_retry(
 
             return result
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
 
             provider_call_errors_total.labels(provider=provider).inc()
 
@@ -64,7 +66,8 @@ async def call_with_retry(
                 break
 
             delay = min(base_delay * (2**attempt), max_delay)
-            jitter = delay * random.uniform(-0.2, 0.2)
+            # jitter has no security requirement — not used for crypto/tokens
+            jitter = delay * random.uniform(-0.2, 0.2)  # nosec B311
             sleep_time = max(0, delay + jitter)
 
             provider_retries_total.labels(provider=provider).inc()
@@ -87,9 +90,9 @@ async def call_with_retry(
 
 async def call_with_fallback(
     fn: Callable,
-    preferred_provider: Optional[str] = None,
+    preferred_provider: str | None = None,
     max_retries: int = 3,
-    api_key_hash: Optional[str] = None,
+    api_key_hash: str | None = None,
 ) -> tuple[Any, str]:
     if preferred_provider == "ollama":
         # Explicit-only: never auto-selected, never falls back to it.
@@ -97,7 +100,7 @@ async def call_with_fallback(
         provider_requests_total.labels(provider="ollama", outcome="success").inc()
         return result, "ollama"
 
-    providers_to_try: List[str] = []
+    providers_to_try: list[str] = []
     if preferred_provider:
         if preferred_provider not in PROVIDER_FALLBACK_ORDER:
             raise ProviderError(

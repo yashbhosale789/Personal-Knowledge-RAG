@@ -1,6 +1,8 @@
 import logging
+
 from sentence_transformers import CrossEncoder
-from config import TOP_K, RERANKER_MODEL
+
+from config import RERANKER_MODEL, TOP_K
 
 logger = logging.getLogger(__name__)
 

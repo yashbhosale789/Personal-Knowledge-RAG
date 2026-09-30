@@ -1,7 +1,8 @@
 import json
 import logging
+
+from config import SUFFICIENCY_CE_FLOOR, SUFFICIENCY_JUDGE_SYSTEM
 from src.llm.client import call_llm
-from config import SUFFICIENCY_CE_FLOOR, SUFFICIENCY_JUDGE_SYSTEM, PIPELINE_PROVIDER
 
 logger = logging.getLogger(__name__)
 
