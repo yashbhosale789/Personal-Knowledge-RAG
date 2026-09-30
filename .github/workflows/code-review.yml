@@ -1,0 +1,29 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: rag-project
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff and bandit
+        run: pip install ruff bandit
+
+      - name: Run ruff
+        run: ruff check .
+
+      - name: Run bandit
+        run: bandit -r src api eval scripts -x ./tests
