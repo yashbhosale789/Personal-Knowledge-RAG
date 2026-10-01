@@ -65,7 +65,7 @@ def verify_citation(answer: str, reranked_chunks: list[dict]) -> dict:
         }
 
     logger.info(
-        f"Citation Verified: Grounded={grounded}, unsupported={unsupported}, Reason={reason}"
+        f"Citation Verified: grounded={grounded}, unsupported_claims={unsupported}, reason={reason}"
     )
     return {
         "grounded": grounded,

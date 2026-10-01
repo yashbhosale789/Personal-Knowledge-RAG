@@ -53,7 +53,7 @@ def check_sufficiency(
             "ce_score": top_score,
         }
 
-    logger.info(f"Sufficiency: tier2 verdict = {sufficient} reason = {reason}")
+    logger.info(f"Sufficiency: tier2 verdict = {sufficient}, reason = {reason}")
     return {
         "sufficient": sufficient,
         "reason": reason,
