@@ -16,7 +16,12 @@ def check_sufficiency(
     query: str, reranked_chunks: list[dict], provider: str | None = None
 ) -> dict:
     if not reranked_chunks:
-        return {"sufficient": False, "reason": "No chunks retrieved.", "tier": "empty"}
+        return {
+            "sufficient": False,
+            "reason": "No chunks retrieved.",
+            "tier": "empty",
+            "ce_score": None,
+        }
 
     top_score = reranked_chunks[0]["ce_score"]
 
@@ -27,6 +32,7 @@ def check_sufficiency(
             "sufficient": False,
             "reason": f"Top reranker score ({top_score:.2f}) below relevance floor.",
             "tier": "score_floor",
+            "ce_score": top_score,
         }
 
     # Tier 2: LLM judge on the ambigous middle
@@ -40,13 +46,17 @@ def check_sufficiency(
 
     except (json.JSONDecodeError, KeyError, TypeError) as e:
         logger.warning(f"Sufficiency judge returned unparsable output : {raw} ({e})")
-        # Fail open: don't block answering just because the judge malformed its output.
-        # ponytail: naive fail-open on parse error. Upgrade: retry once, then fail closed if still bad.
         return {
             "sufficient": True,
             "reason": "Judge output unparsable, defaulted to sufficient.",
             "tier": "llm_judge",
+            "ce_score": top_score,
         }
 
     logger.info(f"Sufficiency: tier2 verdict = {sufficient} reason = {reason}")
-    return {"sufficient": sufficient, "reason": reason, "tier": "llm_judge"}
+    return {
+        "sufficient": sufficient,
+        "reason": reason,
+        "tier": "llm_judge",
+        "ce_score": top_score,
+    }
