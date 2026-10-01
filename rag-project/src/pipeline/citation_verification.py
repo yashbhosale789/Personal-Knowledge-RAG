@@ -60,7 +60,7 @@ def verify_citation(answer: str, reranked_chunks: list[dict]) -> dict:
         return {
             "grounded": False,
             "unsupported_claims": [],
-            "reason": "Answer contains no citation markers.",
+            "reason": "Citation verifier returned unparsable output.",
             "tier": "llm_judge",
         }
 
@@ -69,7 +69,7 @@ def verify_citation(answer: str, reranked_chunks: list[dict]) -> dict:
     )
     return {
         "grounded": grounded,
-        "unsupported": unsupported,
+        "unsupported_claims": unsupported,
         "reason": reason,
         "tier": "llm_judge",
     }
