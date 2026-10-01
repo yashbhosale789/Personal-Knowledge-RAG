@@ -149,7 +149,9 @@ def run_advanced_rag_pipeline(
     citation_check = verify_citation(answer, reranked)
 
     # Stage 5.75: Confidence
-    confidence = score_confidence(sufficiency, citation_check)
+    confidence = score_confidence(citation_check)   
+    # was score_confidence(sufficiency, citation_check)
+    
     if confidence["caveat"]:
         answer = answer + confidence["caveat"]
 
