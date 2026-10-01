@@ -77,7 +77,10 @@ ANSWER:"""
 
 # def run_advanced_rag_pipeline(query: str, top_k: int = TOP_K) -> dict:
 def run_advanced_rag_pipeline(
-    query: str, top_k: int = TOP_K, return_contexts: bool = False
+    query: str,
+    top_k: int = TOP_K,
+    return_contexts: bool = False,
+    provider: str | None = None,
 ) -> dict:
     """
     Advanced RAG pipeline:
@@ -87,7 +90,7 @@ def run_advanced_rag_pipeline(
     logger.info(f"Advanced RAG pipeline started for : {query[:60]}")
 
     # Stage 1: Query rewriting
-    rewritten = rewrite_query(query)
+    rewritten = rewrite_query(query, provider=provider)
 
     # Stage 2: Parallel retrieval
     dense_docs = retrieve(rewritten, top_k=top_k * 4)
@@ -112,7 +115,7 @@ def run_advanced_rag_pipeline(
         }
 
     # Stage 4.5: Context sufficiency gate
-    sufficiency = check_sufficiency(rewritten, reranked)
+    sufficiency = check_sufficiency(rewritten, reranked, provider=provider)
     if not sufficiency["sufficient"]:
         logger.info(
             f"Sufficiency gate blocked generation (tier={sufficiency['tier']}, reason={sufficiency['reason']})"
@@ -139,7 +142,7 @@ def run_advanced_rag_pipeline(
 
     # Stage 5: Prompt + LLM
     prompt = _build_prompt(rewritten, reranked)
-    answer = call_llm(prompt, system=SYSTEM_PROMPT)
+    answer = call_llm(prompt, system=SYSTEM_PROMPT, provider=provider)
     answer = answer.replace("【", "[").replace("】", "]")
 
     # Stage 5.5: Citaiton Verification

@@ -12,7 +12,9 @@ def _build_judge_prompt(query: str, chunks: list[dict]) -> str:
     return f"Question:\n{query}\n\nContext:\n{context}"
 
 
-def check_sufficiency(query: str, reranked_chunks: list[dict]) -> dict:
+def check_sufficiency(
+    query: str, reranked_chunks: list[dict], provider: str | None = None
+) -> dict:
     if not reranked_chunks:
         return {"sufficient": False, "reason": "No chunks retrieved.", "tier": "empty"}
 
@@ -29,7 +31,7 @@ def check_sufficiency(query: str, reranked_chunks: list[dict]) -> dict:
 
     # Tier 2: LLM judge on the ambigous middle
     prompt = _build_judge_prompt(query, reranked_chunks)
-    raw = call_llm(prompt, system=SUFFICIENCY_JUDGE_SYSTEM)
+    raw = call_llm(prompt, system=SUFFICIENCY_JUDGE_SYSTEM, provider=provider)
 
     try:
         verdict = json.loads(raw.strip())

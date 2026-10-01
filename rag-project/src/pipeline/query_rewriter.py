@@ -6,7 +6,7 @@ from src.llm.client import call_llm
 logger = logging.getLogger(__name__)
 
 
-def rewrite_query(query: str) -> str:
+def rewrite_query(query: str, provider: str | None = None) -> str:
     """
     Rewrites a conversational query into a precise search query.
 
@@ -21,7 +21,7 @@ def rewrite_query(query: str) -> str:
     """
 
     try:
-        rewritten = call_llm(prompt=query, system=REWRITE_SYSTEM)
+        rewritten = call_llm(prompt=query, system=REWRITE_SYSTEM, provider=provider)
         logger.info(f"Query rewrite: {query} -> {rewritten}")
         return rewritten
 

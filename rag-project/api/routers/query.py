@@ -18,20 +18,11 @@ router = APIRouter()
 
 
 def _run_pipeline(query: str, provider: str, return_contexts: bool) -> dict:
-    # Thin Synchronous wrapper around the pipeline.
-    # sets the provider in config before calling, resets after.
-
-    import config
     from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
-    original_provider = config.PIPELINE_PROVIDER
-
-    try:
-        config.PIPELINE_PROVIDER = provider
-        return run_advanced_rag_pipeline(query, return_contexts=return_contexts)
-
-    finally:
-        config.PIPELINE_PROVIDER = original_provider
+    return run_advanced_rag_pipeline(
+        query, return_contexts=return_contexts, provider=provider
+    )
 
 
 @router.post(
@@ -85,7 +76,7 @@ async def query_endpoint(
         result, provider_used = await call_with_fallback(
             make_pipeline_call,
             preferred_provider=body.provider or config.PIPELINE_PROVIDER,
-            max_retries=3,
+            max_retries=1,
             api_key_hash=api_key_hash,
         )
 
