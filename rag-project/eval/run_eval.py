@@ -73,6 +73,7 @@ def collect_results(dataset: list[dict]) -> list[dict]:
                 "ground_truth": ground_truth,
                 "rewritten_query": output.get("rewritten_query", ""),
                 "chunks_used": output.get("chunks_used", 0),
+                "sufficiency": output.get("sufficiency"),
             }
             results.append(record)
             print(f"[SUCCESS] {output['answer'][:80]}...")
