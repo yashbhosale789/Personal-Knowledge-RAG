@@ -73,6 +73,9 @@ def store_cache_entry(query: str, answer: str, provider: str) -> None:
 
     try:
         client.hset(
+            # NOTE: raw binary — never read this field back via get_redis_client()
+            # (decode_responses=True). Use get_redis_binary_client() instead if this
+            # ever needs retrieving (e.g. a debugging hgetall).
             key,
             mapping={
                 "embedding": embedding.astype("float32").tobytes(),
