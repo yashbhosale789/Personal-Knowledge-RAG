@@ -1,3 +1,5 @@
+import os
+import config
 import asyncio
 import logging
 import logging.config
@@ -29,6 +31,14 @@ LOGGING_CONFIG = {
     },
     "root": {"level": "INFO", "handlers": ["console"]},
 }
+
+
+def _validate_api_key_config() -> None:
+    key = os.getenv(config.API_KEY)
+    if not key or len(key) < 16:
+        raise RuntimeError(
+            "API_KEY is not set or is set too short (minimum 16 characters).\nSet a strong random API_KEY in your .env before starting the server."
+        )
 
 
 def _warmup_retrieval_component() -> None:
@@ -73,6 +83,8 @@ async def lifespan(app: FastAPI):
     logging.config.dictConfig(LOGGING_CONFIG)
     logger = logging.getLogger(__name__)
     logger.info("Starting RAG API - initializing pipeline...")
+
+    _validate_api_key_config()
 
     try:
         from starlette.concurrency import run_in_threadpool
