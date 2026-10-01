@@ -50,13 +50,13 @@ async def call_with_retry(
 
             last_exception = e
 
-            is_rate_limited = (
+            is_rate_limit_error = (
                 isinstance(e, requests.exceptions.HTTPError)
                 and e.response is not None
                 and e.response.status_code == 429
             )
 
-            if is_rate_limited:
+            if is_rate_limit_error:
                 logger.warning(
                     f"Provider {provider} rate limited (429) - skipping retries, falling back."
                 )
