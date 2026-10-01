@@ -71,6 +71,10 @@ def _call_openai_compatible(
     }
     headers = {"Content-Type": "application/json"}
     if key_env:
+        key = os.getenv(key_env)
+        if not key:
+            raise ValueError(f"{key_env} is not set - cannot call the provider.")
+
         headers["Authorization"] = f"Bearer {os.getenv(key_env)}"
         headers["HTTP-Referer"] = "https://github.com/personal-kb-rag"
 
