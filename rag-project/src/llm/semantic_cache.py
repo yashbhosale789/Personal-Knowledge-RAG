@@ -16,6 +16,7 @@ from config import (
     CACHE_SIMILARITY_THRESHOLD,
     CACHE_TTL_SECONDS,
     EMBEDDING_DIAMENSION,
+    ENTITY_GROUPS,
 )
 from src.embedding.embedder import get_embedding_model
 from src.llm.redis_client import get_redis_client
@@ -87,9 +88,6 @@ def store_cache_entry(query: str, answer: str, provider: str) -> None:
         client.expire(key, CACHE_TTL_SECONDS)
     except redis.RedisError:
         logger.warning("Redis unavailable — skipping cache write")
-
-
-ENTITY_GROUPS = [{"sedan", "suv", "hatchback"}]
 
 
 def entity_mismatch(query_a: str, query_b: str) -> bool:
