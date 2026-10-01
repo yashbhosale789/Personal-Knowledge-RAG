@@ -45,7 +45,7 @@ def reciprocal_rank_fusion(
         results.append(entry)
 
     logger.info(
-        f"RRD fusion: {len(ranked_list)} lists -> {len(docs)} unique docs -> top {len(results)} returned"
+        f"RRD fusion: {len(ranked_lists)} lists -> {len(docs)} unique docs -> top {len(results)} returned"
     )
 
     return results
