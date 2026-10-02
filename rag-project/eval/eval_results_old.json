@@ -1,0 +1,98 @@
+[
+  {
+    "id": "Q01",
+    "difficulty": "easy",
+    "question": "Where is the spare tyre located in an Aventro Sedan?",
+    "answer": "The spare tyre in an Aventro Sedan is located **under the boot floor in the trunk**[SOURCE 1][SOURCE 2]",
+    "contexts": [
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.",
+      "A ventro Motors: How to Change a Tyre\nChanging a flat tyre is a basic and essential automotive skill for every A ventro\nMotor car owner. This guide will walk you through:\n\u2022 Steps to change a tyre\n\u2022 Where the spare tyre and toolkit is found in all A ventro models\n\u2022 General tips and safety instructions\nWhere to Find the Spare Tyre & Toolkit in A ventro Models\nModel Type Common Location of Spare Tyre & Toolkit\nHatchback Under the boot floor in the rear compartment\nSedan Under the boot floor in the trunk",
+      "\u2022 Some spare tyres are \u201cspace savers\u201d and are not intended for long distances\nor high speeds.\nNeed Help?\nA ventro offersRoadside Assistance across India. If you are unable to change\nthe tyre, please contact your nearest:\n\u2022 A ventro Service Center\n\u2022 Or call A ventro Roadside Assistance (see main service manual/contact\ncard in your glove box)\nFind Service Centers\n\u2022 Mumbai: Andheri East\n\u2022 Delhi: Okhla Industrial Area, Phase II\n\u2022 Bengaluru: Electronic City\n\u2022 Chennai: Guindy Industrial Estate",
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2"
+    ],
+    "ground_truth": "In an Aventro Sedan, the spare tyre is located under the boot floor in the trunk.",
+    "rewritten_query": "spare tyre location in Aventro Sedan",
+    "chunks_used": 5,
+    "sufficiency": {
+      "sufficient": true,
+      "reason": "Context explicitly states the spare tyre for an Aventro Sedan is under the boot floor in the trunk.",
+      "tier": "llm_judge",
+      "ce_score": 2.451176881790161
+    },
+    "outcome": "answer",
+    "expect_abstain": true
+  },
+  {
+    "id": "Q06",
+    "difficulty": "medium",
+    "question": "What is the correct way to tighten lug nuts after fitting the spare tyre?",
+    "answer": "After the spare tyre is mounted, first replace the lug nuts and tighten them by hand, then lower the vehicle and use a lug wrench to tighten the lug nuts in a star\u2011pattern sequence to ensure even pressure[SOURCE 1].",
+    "contexts": [
+      "7. Mount the Spare Tyre\n\u2022 Line up the holes and push the spare onto the hub.\n\u2022 Replace the lug nuts and tighten them by hand.\n8. Lower the V ehicle\n\u2022 Carefully lower the car with the jack until the tyre touches the ground\nfirmly.\n\u2022 Remove the jack.\n9. Tighten the Lug Nuts\n\u2022 Use the lug wrench to tighten the lug nuts in a star pattern to ensure even\npressure.\n10. Replace the Hubcap or Wheel Cover (if applicable)\n\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment",
+      "4. Loosen the Lug Nuts\n\u2022 Use the lug wrench to turn the lug nuts counter-clockwise.\n\u2022 Loosen them slightly \u2013 do not remove fully at this stage.\n5. Lift the V ehicle with the Jack\n\u2022 Position the jack under the jacking point nearest to the flat tyre. Refer to\nyour owner\u2019s manual for the exact point.\n\u2022 Raise the vehicle until the flat tyre is about 6 inches above the ground.\n6. Remove the Lug Nuts and Tyre\n\u2022 Unscrew the lug nuts completely.\n\u2022 Remove the flat tyre and set it aside.\n7. Mount the Spare Tyre",
+      "\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.\n\u2022 Place wheel wedges/blocks (if available) to prevent vehicle movement.\n2. Gather T ools\nYou will need: - Spare tyre (found as per table above) - Jack (usually in toolkit)\n- Lug wrench (in toolkit) - Wheel wedges/blocks (optional) - Vehicle owner\u2019s\nmanual (for reference)\n3. Remove the Wheel Cover/Hubcap\n\u2022 If your wheel has a cover, use the flat end of the wrench or the provided\nlever to gently pry it off.\n1",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake."
+    ],
+    "ground_truth": "After fitting the spare tyre, the lug nuts should be tightened using a star pattern to ensure even pressure across the wheel.",
+    "rewritten_query": "correct way tighten lug nuts after fitting spare tyre",
+    "chunks_used": 5,
+    "sufficiency": {
+      "sufficient": true,
+      "reason": "Context specifies tightening lug nuts in a star pattern with a wrench after fitting the spare tyre.",
+      "tier": "llm_judge",
+      "ce_score": 7.893599510192871
+    },
+    "outcome": "answer",
+    "expect_abstain": true
+  },
+  {
+    "id": "Q09",
+    "difficulty": "hard",
+    "question": "Is it safe to drive at highway speeds for a long distance using the spare tyre?",
+    "answer": "No.\u202fAccording to the Aventro Motors tyre\u2011change guide, many spare tyres (especially \u201cspace\u2011saver\u201d spares) are **not intended for long distances or high speeds** and you should **drive slowly** after installing a spare before having its pressure checked at a service centre[SOURCE 1][SOURCE 2].",
+    "contexts": [
+      "\u2022 Some spare tyres are \u201cspace savers\u201d and are not intended for long distances\nor high speeds.\nNeed Help?\nA ventro offersRoadside Assistance across India. If you are unable to change\nthe tyre, please contact your nearest:\n\u2022 A ventro Service Center\n\u2022 Or call A ventro Roadside Assistance (see main service manual/contact\ncard in your glove box)\nFind Service Centers\n\u2022 Mumbai: Andheri East\n\u2022 Delhi: Okhla Industrial Area, Phase II\n\u2022 Bengaluru: Electronic City\n\u2022 Chennai: Guindy Industrial Estate",
+      "\u2022 Place the hubcap back onto the wheel.\n11. Stow Equipment\n\u2022 Put the flat tyre, jack, and tools back in their compartments.\n\u2022 Double check everything is secure.\nSafety & Tips\n\u2022 Never change a tyre on a slope or close to tra\ufb00ic.\n\u2022 Use hazard warning triangle if available.\n\u2022 After installation, drive slowly and get the spare tyre pressure checked at\nthe nearest A ventro Service Center.\n2",
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.",
+      "\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.\n\u2022 Place wheel wedges/blocks (if available) to prevent vehicle movement.\n2. Gather T ools\nYou will need: - Spare tyre (found as per table above) - Jack (usually in toolkit)\n- Lug wrench (in toolkit) - Wheel wedges/blocks (optional) - Vehicle owner\u2019s\nmanual (for reference)\n3. Remove the Wheel Cover/Hubcap\n\u2022 If your wheel has a cover, use the flat end of the wrench or the provided\nlever to gently pry it off.\n1",
+      "\u2022 A car merges ahead traveling at 80 km/h .\n\u2022 ACC detects the vehicle and smoothly reduces your speed to maintain a\nsafe gap.\n\u2022 When the lane ahead is clear, ACC returns your car to 100 km/h .\nAdvantages\n\u2022 Safety: Reduces risk of rear-end collisions.\n\u2022 Convenience: Less driver fatigue on long trips and in tra\ufb00ic jams.\n\u2022 E\ufb00iciency: Optimized speed and braking can improve fuel economy.\nLimitations\n\u2022 Sensor Limitations: May be affected by weather conditions, dirt, or\nobstructions.\n2"
+    ],
+    "ground_truth": "No. Some spare tyres are space savers and are not intended for long distances or high speeds. You should drive slowly and visit an Aventro Service Center as soon as possible.",
+    "rewritten_query": "safe to drive highway speeds on spare tyre",
+    "chunks_used": 5,
+    "sufficiency": {
+      "sufficient": true,
+      "reason": "Context states spare tyres aren't meant for high speeds and advises driving slowly",
+      "tier": "llm_judge",
+      "ce_score": 0.7087920904159546
+    },
+    "outcome": "answer",
+    "expect_abstain": true
+  },
+  {
+    "id": "Q13",
+    "difficulty": "adversarial",
+    "question": "What is the warranty period for an Aventro Sedan?",
+    "answer": "I don't have enough information in the knowledge base to answer this question accurately.",
+    "contexts": [
+      "Sedan Under the boot floor in the trunk\nSUV Under the boot floor or mounted underneath the rear of\nthe car\n(All Models) Toolkit is usually secured next to the spare tyre or inside a\nside panel of the boot/trunk\nNote: All variants (Petrol/Diesel/Electric/Hybrid) follow the same compart-\nment arrangement.\nSteps to Change a Tyre\n1. Park Safely\n\u2022 Pull over to a safe, flat location away from tra\ufb00ic.\n\u2022 Turn on your hazard lights.\n\u2022 Apply the handbrake.",
+      "A ventro Motors: How to Change a Tyre\nChanging a flat tyre is a basic and essential automotive skill for every A ventro\nMotor car owner. This guide will walk you through:\n\u2022 Steps to change a tyre\n\u2022 Where the spare tyre and toolkit is found in all A ventro models\n\u2022 General tips and safety instructions\nWhere to Find the Spare Tyre & Toolkit in A ventro Models\nModel Type Common Location of Spare Tyre & Toolkit\nHatchback Under the boot floor in the rear compartment\nSedan Under the boot floor in the trunk",
+      "Motors Customer Support at +91 124 1234567 .\nDrive safe, drive smart with A ventro!\n2",
+      "Adaptive Cruise Control (ACC): What is it &\nHow Does it Work?\nOverview\nAdaptive Cruise Control (ACC) is an advanced driver assistance system\n(ADAS) designed to automatically adjust a vehicle\u2019s cruising speed to maintain\na safe following distance from vehicles ahead. It\u2019s an evolution of traditional\ncruise control, offering greater safety, comfort, and convenience\u2014especially in\nhighway and stop-and-go tra\ufb00ic scenarios.\nWhat is Adaptive Cruise Control?",
+      "\u2022 SAE International: ADAS Features Guide\n\u2022 Vehicle Owner\u2019s Manuals (Various Manufacturers)\n3"
+    ],
+    "ground_truth": "The document does not cover warranty information. This is outside the scope of the tyre-changing guide.",
+    "rewritten_query": "Aventro Sedan warranty period",
+    "chunks_used": 5,
+    "sufficiency": {
+      "sufficient": false,
+      "reason": "Top reranker score (-10.58) below relevance floor.",
+      "tier": "score_floor",
+      "ce_score": -10.578700065612793
+    },
+    "outcome": "abstain",
+    "expect_abstain": true
+  }
+]
