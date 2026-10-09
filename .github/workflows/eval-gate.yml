@@ -42,6 +42,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
+      - name: Validate ML stack
+        run: |
+          python - <<'PY'
+          import torch
+          import transformers
+          import sentence_transformers
+          print("torch:", torch.__version__)
+          print("cuda available:", torch.cuda.is_available())
+          print("transformers:", transformers.__version__)
+          print("sentence-transformers:", sentence_transformers.__version__)
+          from transformers import PreTrainedModel
+          print("✓ PreTrainedModel OK")
+          PY
+
       - name: Run ingestion (build BM25 + vector index)
         run: python scripts/ingest.py
 
