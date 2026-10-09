@@ -40,6 +40,7 @@ def collect_results(dataset: list[dict]) -> list[dict]:
         question = item["question"]
         ground_truth = item["ground_truth"]
         difficulty = item["difficulty"]
+        expect_abstain = item.get("expect_abstain", False)
 
         if qid in already_done:
             print(f"[{i+1}/{len(dataset)}] {qid} — skipping (already done)")
@@ -74,6 +75,8 @@ def collect_results(dataset: list[dict]) -> list[dict]:
                 "rewritten_query": output.get("rewritten_query", ""),
                 "chunks_used": output.get("chunks_used", 0),
                 "sufficiency": output.get("sufficiency"),
+                "outcome": output.get("outcome"),
+                "expect_abstain": expect_abstain,
             }
             results.append(record)
             print(f"[SUCCESS] {output['answer'][:80]}...")

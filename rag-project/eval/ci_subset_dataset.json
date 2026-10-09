@@ -16,5 +16,12 @@
         "difficulty": "hard",
         "question": "Is it safe to drive at highway speeds for a long distance using the spare tyre?",
         "ground_truth": "No. Some spare tyres are space savers and are not intended for long distances or high speeds. You should drive slowly and visit an Aventro Service Center as soon as possible."
+    },
+    {
+        "id": "Q13",
+        "difficulty": "adversarial",
+        "question": "What is the warranty period for an Aventro Sedan?",
+        "ground_truth": "The document does not cover warranty information. This is outside the scope of the tyre-changing guide.",
+        "expect_abstain": true
     }
 ]
