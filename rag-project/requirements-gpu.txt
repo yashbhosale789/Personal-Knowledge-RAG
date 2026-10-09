@@ -1,0 +1,53 @@
+# GPU install for local NVIDIA machine (GTX 1650 / CUDA 12.4)
+--extra-index-url https://download.pytorch.org/whl/cu124
+torch==2.6.0+cu124
+torchvision==0.21.0+cu124
+torchaudio==2.6.0+cu124
+
+transformers>=4.45.0
+sentence-transformers>=3.0.1
+
+# Core LangChain
+langchain
+langchain-core
+langchain-chroma
+langchain-openai
+langchain-groq
+langchain-google-genai
+
+# Vector Store
+chromadb
+
+# Sparse Retrieval
+rank-bm25
+
+# Document Loaders
+pypdf
+unstructured
+
+# LLM & API
+groq
+requests
+python-dotenv
+
+# Evaluation
+ragas
+numpy
+
+# Agentic RAG
+langgraph
+
+# FastAPI
+fastapi
+uvicorn[standard]
+pydantic
+
+# Observability
+prometheus_client
+
+# Redis
+redis
+
+# Code Review
+ruff
+bandit
