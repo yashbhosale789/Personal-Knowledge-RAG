@@ -1,8 +1,11 @@
-# PyTorch with CUDA 12.4 (NVIDIA GTX 1650)
+# GPU install for local NVIDIA machine (GTX 1650 / CUDA 12.4)
 --extra-index-url https://download.pytorch.org/whl/cu124
 torch==2.6.0+cu124
 torchvision==0.21.0+cu124
 torchaudio==2.6.0+cu124
+
+transformers==5.14.1
+sentence-transformers==5.6.1
 
 # Core LangChain
 langchain
@@ -14,9 +17,6 @@ langchain-google-genai
 
 # Vector Store
 chromadb
-
-# Embeddings & Reranking (local)
-sentence-transformers
 
 # Sparse Retrieval
 rank-bm25
@@ -30,14 +30,14 @@ groq
 requests
 python-dotenv
 
-# Evaluation (Phase 3)
+# Evaluation
 ragas
 numpy
 
-# Agentic RAG (Phase 4)
+# Agentic RAG
 langgraph
 
-# FastAPI (Phase 5)
+# FastAPI
 fastapi
 uvicorn[standard]
 pydantic
@@ -45,9 +45,5 @@ pydantic
 # Observability
 prometheus_client
 
-# Redis (rate limiting + semantic caching — Phase 9)
+# Redis
 redis
-
-# Code Review
-ruff
-bandit

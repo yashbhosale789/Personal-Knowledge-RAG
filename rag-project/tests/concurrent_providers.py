@@ -5,6 +5,7 @@ load_dotenv()
 import os
 import threading
 import time
+
 import requests
 
 API_KEY = os.environ["API_KEY"]

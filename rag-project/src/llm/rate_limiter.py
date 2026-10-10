@@ -4,7 +4,7 @@ import redis
 
 logger = logging.getLogger(__name__)
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from config import RATE_LIMIT_PER_MINUTE, RATE_LIMIT_TTL_SECONDS
 from src.llm.redis_client import get_redis_client
@@ -12,7 +12,7 @@ from src.llm.redis_client import get_redis_client
 
 def is_rate_limited(api_key_hash: str, provider: str) -> bool:
     client = get_redis_client()
-    window = datetime.now(timezone.utc).strftime("%Y%m%d%H%M")
+    window = datetime.now(UTC).strftime("%Y%m%d%H%M")
     key = f"ratelimit:{api_key_hash}:{provider}:{window}"
 
     try:

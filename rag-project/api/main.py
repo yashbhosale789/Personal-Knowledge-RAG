@@ -1,13 +1,13 @@
-import os
-import config
 import asyncio
 import logging
 import logging.config
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+import config
 from api.core.exceptions import RAGException
 from api.middleware.logging import StructuredLoggingMiddleware
 from api.routers import health, ingest, metrics, query
@@ -109,7 +109,7 @@ async def lifespan(app: FastAPI):
 
     try:
         await asyncio.wait_for(_warmup_llm(logger), timeout=15)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning(
             "LLM warmup timed out after 15s (non-fatal, first request will retry)."
         )

@@ -8,6 +8,8 @@ jobs:
   eval:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
     defaults:
       run:
         working-directory: rag-project
