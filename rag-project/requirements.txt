@@ -47,7 +47,3 @@ prometheus_client
 
 # Redis
 redis
-
-# Code Review
-ruff
-bandit

@@ -25,7 +25,7 @@ async def health_check():
         status="ok" if _pipeline_ready else "degraded",
         version="0.1.0",
         pipeline_ready=_pipeline_ready,
-        timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        timestamp=datetime.datetime.now(datetime.UTC).isoformat(),
     )
 
 

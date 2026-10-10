@@ -109,7 +109,7 @@ async def lifespan(app: FastAPI):
 
     try:
         await asyncio.wait_for(_warmup_llm(logger), timeout=15)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning(
             "LLM warmup timed out after 15s (non-fatal, first request will retry)."
         )
