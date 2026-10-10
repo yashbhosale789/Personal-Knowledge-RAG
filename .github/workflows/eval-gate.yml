@@ -40,7 +40,9 @@ jobs:
           key: hf-bge-small-minilm
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
 
       - name: Run ingestion (build BM25 + vector index)
         run: python scripts/ingest.py
