@@ -1,14 +1,22 @@
 $kind: http-request
 name: /ingest
-url: http://localhost:8000/ingest
+url: https://localhost/ingest
 method: POST
 headers:
   "": ""
 body:
   type: json
-  content: "{\r
+  content: "// {\r
 
-    \  \"file_path\": \"data/documents/Adjusting the Steering Wheel.pdf\"\r
+    //   \"file_path\": \"data/documents/Advice for Pregnant Women While in a Car.pdf\"\r
+
+    // }\r
+
+    \r
+
+    {\r
+
+    \  \"file_path\": \" \"\r
 
     }\r
 

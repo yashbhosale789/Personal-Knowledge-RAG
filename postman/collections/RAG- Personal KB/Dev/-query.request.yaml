@@ -1,0 +1,149 @@
+$kind: http-request
+name: /query
+url: http://localhost:8000/query
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \r
+
+    \    // EVAL Golden Set  — Q01-Q12\r
+
+    \r
+
+    \    // \"query\": \"Where is the spare tyre located in an Aventro
+    Sedan?\"  // Q01\r
+
+    \    \"query\": \"Where is the toolkit stored in Aventro vehicles?\"  //
+    Q02\r
+
+    \    // \"query\": \"Where is the spare tyre located in an Aventro
+    SUV?\"    // Q03\r
+
+    \    // // \"query\": \"What steps should I take to safely park before
+    changing a tyre?\"  // Q04\r
+
+    \    // \"query\": \"Why should lug nuts be loosened before using the
+    jack?\"    // Q05\r
+
+    \    // \"query\": \"What is the correct way to tighten lug nuts after
+    fitting the spare tyre?\" // Q06\r
+
+    \    // \"query\": \"How high should the vehicle be raised when using the
+    jack?\"    // Q07\r
+
+    \    // \"query\": \"What should I do after fitting the spare tyre before
+    resuming normal driving?\"  // Q08\r
+
+    \    // \"query\": \"Is it safe to drive at highway speeds for a long
+    distance using the spare tyre?\"  // Q09\r
+
+    \    // \"query\": \"Does the spare tyre location differ between petrol and
+    electric variants of the same Aventro model?\"  // Q10\r
+
+    \    // \"query\": \"Which Aventro service center should I visit if I am in
+    Hyderabad?\"  // Q11 - unanswerable (fabricated location detail)\r
+
+    \    // \"query\": \"What is the recommended tyre pressure for an Aventro
+    Hatchback spare tyre?\"  // Q12 - trap, unanswerable\r
+
+    \r
+
+    \r
+
+    \    // Sufficiency Tier 1 (score_floor reject)\r
+
+    \r
+
+    \    // \"query\": \"Who is Yash Bhosale?\"\r
+
+    \    // \"query\": \"What is the capital of France?\"\r
+
+    \    // \"query\": \"How do I bake a chocolate cake?\"\r
+
+    \    // \"query\": \"What is the fuel efficiency of an Aventro Sedan?\"\r
+
+    \    // \"query\": \"What is the warranty period for an Aventro Sedan?\"\r
+
+    \r
+
+    \r
+
+    \    // Sufficiency Tier 2 (llm_judge reject)\r
+
+    \r
+
+    \    // \"query\": \"What is the exact torque specification in Nm for the
+    lug nuts on an Aventro Sedan?\"\r
+
+    \    // \"query\": \"How many kilograms does the spare tyre weigh?\"\r
+
+    \    // \"query\": \"What tools do I need and in what order should I use
+    them to change a tyre on an Aventro Sedan?\"\r
+
+    \r
+
+    \r
+
+    \    // Citation Verification (grounded = false)\r
+
+    \r
+
+    \    // \"query\": \"Position the jack under the jacking point nearest to
+    the flat tyre. Refer to your owner's manual for the exact point.\"\r
+
+    \    // \"query\": \"Place wheel wedges/blocks (if available) to prevent
+    vehicle movement.\"\r
+
+    \r
+
+    \r
+
+    \    // Edge cases — provider override, invalid provider, empty query\r
+
+    \r
+
+    \    // \"query\": \"Where is the spare tyre located in an Aventro
+    Sedan?\",\r
+
+    \    // \"provider\": \"google\"\r
+
+    \r
+
+    \    // \"query\": \"Position the jack under the jacking point nearest to
+    the flat tyre. Refer to your owner's manual for the exact point.\",\r
+
+    \    // \"provider\": \"ollama\"\r
+
+    \r
+
+    \    // \"query\": \"What tools are needed for a tyre change?\",\r
+
+    \    // \"provider\": \"invalid_provider\"\r
+
+    \r
+
+    \r
+
+    \    // Redis Cache test\r
+
+    \r
+
+    \    // \"query\": \"Where is the spare tyre located in an Aventro
+    Sedan?\"\r
+
+    \    // \"query\": \"Where can I find the spare wheel in an Aventro
+    Sedan?\"\r
+
+    \r
+
+    \    // \"query\": \"   \"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:API_KEY}}"
+settings: {}
+order: 2000

@@ -1,0 +1,32 @@
+$kind: http-request
+name: /ingest
+url: http://localhost:8000/ingest
+method: POST
+headers:
+  "": ""
+body:
+  type: json
+  content: "{\r
+
+    \  \"file_path\": \"data/documents/Advice for Pregnant Women While in a
+    Car.pdf\"\r
+
+    }\r
+
+    \r
+
+    // {\r
+
+    //   \"file_path\": \"D:\\\\Development\\\\GenAI\\\\Personal Knowledge OS
+    (RAG System)\\\\rag-project\\\\data\\\\documents\\\\Adjusting the Steering
+    Wheel.pdf\",\r
+
+    //   \"force_reingest\": false\r
+
+    // }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:API_KEY}}"
+settings: {}
+order: 5000
