@@ -1,0 +1,9 @@
+{$DOMAIN} {
+	@blocked path /metrics* /ingest*
+	handle @blocked {
+		respond 404
+	}
+	handle {
+		reverse_proxy app:8000
+	}
+}
