@@ -1,6 +1,6 @@
 $kind: http-request
 name: /health
-url: http://localhost/health
+url: https://yash-pkb-rag.duckdns.org/health
 method: GET
 settings: {}
 order: 1000

@@ -1,6 +1,6 @@
 $kind: http-request
 name: /query
-url: http://localhost:8000/query
+url: https://yash-pkb-rag.duckdns.org/query
 method: POST
 body:
   type: json
@@ -14,9 +14,9 @@ body:
 
     \    // \"query\": \"Where is the spare tyre located in an Aventro Sedan?\"  // Q01\r
 
-    \    \"query\": \"Where is the toolkit stored in Aventro vehicles?\"  // Q02\r
+    \    // \"query\": \"Where is the toolkit stored in Aventro vehicles?\"  // Q02\r
 
-    \    // \"query\": \"Where is the spare tyre located in an Aventro SUV?\"    // Q03\r
+    \    \"query\": \"Where is the spare tyre located in an Aventro SUV?\"    // Q03\r
 
     \    // // \"query\": \"What steps should I take to safely park before changing a tyre?\"  // Q04\r
 
@@ -124,6 +124,6 @@ body:
 auth:
   type: bearer
   credentials:
-    token: "{{vault:API_KEY}}"
+    token: "{{vault:PROD_API_KEY}}"
 settings: {}
 order: 2000

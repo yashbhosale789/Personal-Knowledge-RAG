@@ -1,6 +1,6 @@
 $kind: http-request
 name: /ingest
-url: https://localhost/ingest
+url: https://yash-pkb-rag.duckdns.org/ingest
 method: POST
 headers:
   "": ""
