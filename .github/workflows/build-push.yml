@@ -3,6 +3,12 @@ name: Build and Push Image
 on:
   push:
     branches: [main]
+    paths:
+      - "rag-project/**"
+      - "!rag-project/docker-compose*.yml"
+      - "!rag-project/Caddyfile"
+      - "!rag-project/prometheus.yml"
+      - ".github/workflows/build-push.yml"
   workflow_dispatch:
 
 permissions:

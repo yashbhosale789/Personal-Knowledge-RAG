@@ -16,7 +16,7 @@ body:
 
     \    // \"query\": \"Where is the toolkit stored in Aventro vehicles?\"  // Q02\r
 
-    \    \"query\": \"Where is the spare tyre located in an Aventro SUV?\"    // Q03\r
+    \    // \"query\": \"Where is the spare tyre located in an Aventro SUV?\"    // Q03\r
 
     \    // // \"query\": \"What steps should I take to safely park before changing a tyre?\"  // Q04\r
 
