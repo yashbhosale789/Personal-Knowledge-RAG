@@ -13,6 +13,7 @@ services:
     depends_on:
       app:
         condition: service_healthy
+    profiles: ["monitoring"]
 
   app:
     image: ghcr.io/yashbhosale789/personal-knowledge-rag:${IMAGE_TAG:?set IMAGE_TAG}
