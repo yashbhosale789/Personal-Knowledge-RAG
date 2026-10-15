@@ -1,0 +1,29 @@
+name: pkb-rag
+values:
+  - key: OPENROUTER_API_KEY
+    description: Open Router API Key
+    secret: true
+  - key: HF_TOKEN
+    description: Hugging Face API Key
+    secret: true
+  - key: GEMINI_API_KEY
+    description: Gemini API Key
+    secret: true
+  - key: GROQ_API_KEY
+    description: Groq API Key
+    secret: true
+  - key: API_KEY
+    description: Dev App API Key
+    secret: true
+  - key: PROD_API_KEY
+    description: 'Prod App API Key '
+    secret: true
+  - key: DOMAIN
+    description: Local Domain before AWS
+    secret: true
+  - key: GRAFANA_ADMIN_PASSWORD
+    description: Prod Grafana Admin Password
+    secret: true
+  - key: GRAFANA_ADMIN_PASSWORD
+    description: Dev Grafana Admin Password
+    secret: true
