@@ -74,3 +74,5 @@ Thumbs.db
 # Uncomment if evaluation results are dynamically generated and shouldn't be tracked:
 # **/eval_results.json
 # **/ragas_scores.json
+
+**/graphify-out/

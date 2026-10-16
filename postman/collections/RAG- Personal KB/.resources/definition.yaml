@@ -3,3 +3,5 @@ description: ""
 variables:
   - key: bearer_token_0476
     secret: true
+auth:
+  type: apikey
