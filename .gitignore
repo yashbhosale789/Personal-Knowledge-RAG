@@ -82,5 +82,8 @@ postman/environments/
 **/__pycache__/
 **/docs/
 **/claude/
+**/documents/
+**/postman/
 CHANGELOG.md
 CONTRIBUTING.md
+
