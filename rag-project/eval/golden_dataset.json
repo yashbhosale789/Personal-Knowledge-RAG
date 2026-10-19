@@ -1,0 +1,20 @@
+[
+    {
+        "id": "Q01",
+        "category": "normal",
+        "difficulty": "easy",
+        "question": "Where is the spare tyre located in an Aventro Sedan?",
+        "ground_truth": "In an Aventro Sedan, the spare tyre is located under the boot floor in the trunk.",
+        "expected_outcome": "answer",
+        "relevant": [
+            {
+                "source": "_Aventro Motors- How to Change a Tyre.pdf",
+                "evidence": "Sedan Under the boot floor in the trunk"
+            }
+        ],
+        "expected_gate": "pass",
+        "origin": "manual",
+        "split": "dev",
+        "ci": true
+    }
+]
