@@ -80,3 +80,7 @@ Thumbs.db
 # **/ragas_scores.json
 postman/environments/
 **/__pycache__/
+**/docs/
+**/claude/
+CHANGELOG.md
+CONTRIBUTING.md
