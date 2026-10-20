@@ -5,15 +5,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config import CHUNKS_PATH  # noqa: E402
-from generate_candidates import chunk_key, words  # noqa: E402
-from validate_dataset import DEFAULT_DATASET  # noqa: E402
+from generate_candidates import chunk_key, words
+from validate_dataset import DEFAULT_DATASET
+
+from config import CHUNKS_PATH
 
 CANDIDATES = Path(__file__).parent / "candidates.jsonl"
 REVIEWED = Path(__file__).parent / "candidates_reviewed.jsonl"
 DOC_PHRASES = re.compile(
     r"\b(listed|given|mentioned|according to|the (document|text|passage|guide|chunk))\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 
