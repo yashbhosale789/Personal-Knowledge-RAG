@@ -200,4 +200,22 @@ CACHE_KEY_PREFIX = "cache:"
 CACHE_TTL_SECONDS = 86400  # 24 Hours
 CACHE_SIMILARITY_THRESHOLD = 0.87
 
-# This is for testing
+# Evals/Generate Candidates
+
+GC_OUT_PATH = Path(__file__).parent / "candidates.jsonl"
+GC_SKIP_SOURCES = {"_Aventro Motors- How to Change a Tyre.pdf"}
+GC_DELAY = 3
+
+GC_SYSTEM = """You write evaluation questions for a retrieval-augmented QA system over car-manual style documents.
+Given one CHUNK of a document, write ONE question a real user might ask that the CHUNK alone fully answers.
+Rules:
+- Paraphrase. Do not reuse 5 or more consecutive words from the chunk in the question.
+- The question must make sense without the chunk (no "in this text", "according to the passage").
+- ground_truth: one or two sentences using ONLY facts stated in the chunk. No outside knowledge and no reasons the chunk does not give.
+- evidence: ONE contiguous span copied exactly from the chunk (25 to 300 characters) that contains the answer.
+- difficulty: easy (a single fact), medium (a short list or one step), hard (a number, an exception, or combining two statements).
+- Ask as a user would: never refer to the document itself ("given", "listed", "mentioned in the text").
+- Prefer a specific fact (a position, a number, a step, a condition) over a broad "what is X" question.
+- The chunk comes from PDF extraction and may contain broken words (for example "A ventro" for "Aventro"). Spell words correctly in question and ground_truth, but copy evidence exactly as it appears in the chunk.
+- If the chunk is only headings, a general overview, contact details, or has no specific answerable fact, return {"skip": true, "reason": "..."}.
+Return ONLY JSON: {"question": "...", "ground_truth": "...", "evidence": "...", "difficulty": "easy|medium|hard"}"""
