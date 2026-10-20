@@ -1,259 +1,514 @@
 [
-    {
-        "id": "Q01",
-        "category": "normal",
-        "difficulty": "easy",
-        "origin": "manual",
-        "split": "dev",
-        "ci": true,
-        "question": "Where is the spare tyre located in an Aventro Sedan?",
-        "ground_truth": "In an Aventro Sedan, the spare tyre is located under the boot floor in the trunk.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Sedan Under the boot floor in the trunk"
-            }
-        ]
-    },
-    {
-        "id": "Q02",
-        "category": "normal",
-        "difficulty": "easy",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "Where is the toolkit stored in Aventro vehicles?",
-        "ground_truth": "In all Aventro models, the toolkit is usually secured next to the spare tyre or inside a side panel of the boot or trunk.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Toolkit is usually secured next to the spare tyre or inside a side panel of the boot/trunk"
-            }
-        ]
-    },
-    {
-        "id": "Q03",
-        "category": "normal",
-        "difficulty": "easy",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "Where is the spare tyre located in an Aventro SUV?",
-        "ground_truth": "In an Aventro SUV, the spare tyre is located under the boot floor or mounted underneath the rear of the car.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "SUV Under the boot floor or mounted underneath the rear of the car"
-            }
-        ]
-    },
-    {
-        "id": "Q04",
-        "category": "normal",
-        "difficulty": "medium",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "What steps should I take to safely park before changing a tyre?",
-        "ground_truth": "You should pull over to a safe, flat location away from traffic, turn on your hazard lights, apply the handbrake, and place wheel wedges or blocks if available to prevent vehicle movement.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Pull over to a safe, flat location away from traffic"
-            },
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Turn on your hazard lights. Apply the handbrake."
-            },
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Place wheel wedges/blocks (if available) to prevent vehicle movement"
-            }
-        ]
-    },
-    {
-        "id": "Q05",
-        "category": "difficult",
-        "difficulty": "hard",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "Why should lug nuts be loosened before using the jack?",
-        "ground_truth": "The guide says to loosen the lug nuts slightly, without removing them fully, before lifting the vehicle with the jack. It does not state the reason.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Loosen them slightly - do not remove fully at this stage"
-            }
-        ]
-    },
-    {
-        "id": "Q06",
-        "category": "normal",
-        "difficulty": "medium",
-        "origin": "manual",
-        "split": "dev",
-        "ci": true,
-        "question": "What is the correct way to tighten lug nuts after fitting the spare tyre?",
-        "ground_truth": "After fitting the spare tyre, the lug nuts should be tightened using a star pattern to ensure even pressure across the wheel.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Use the lug wrench to tighten the lug nuts in a star pattern to ensure even pressure"
-            }
-        ]
-    },
-    {
-        "id": "Q07",
-        "category": "normal",
-        "difficulty": "medium",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "How high should the vehicle be raised when using the jack?",
-        "ground_truth": "The vehicle should be raised until the flat tyre is about 6 inches above the ground.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Raise the vehicle until the flat tyre is about 6 inches above the ground"
-            }
-        ]
-    },
-    {
-        "id": "Q08",
-        "category": "normal",
-        "difficulty": "medium",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "What should I do after fitting the spare tyre before resuming normal driving?",
-        "ground_truth": "After fitting the spare tyre, you should drive slowly and get the spare tyre pressure checked at the nearest Aventro Service Center.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "After installation, drive slowly and get the spare tyre pressure checked at the nearest Aventro Service Center"
-            }
-        ]
-    },
-    {
-        "id": "Q09",
-        "category": "difficult",
-        "difficulty": "hard",
-        "origin": "manual",
-        "split": "dev",
-        "ci": true,
-        "question": "Is it safe to drive at highway speeds for a long distance using the spare tyre?",
-        "ground_truth": "The guide says some spare tyres are space savers that are not intended for long distances or high speeds. After fitting the spare, drive slowly and get its pressure checked at the nearest Aventro Service Center.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Some spare tyres are space savers and are not intended for long distances or high speeds"
-            },
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "drive slowly and get the spare tyre pressure checked at the nearest Aventro Service Center"
-            }
-        ]
-    },
-    {
-        "id": "Q10",
-        "category": "difficult",
-        "difficulty": "hard",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "Does the spare tyre location differ between petrol and electric variants of the same Aventro model?",
-        "ground_truth": "No. All variants including Petrol, Diesel, Electric, and Hybrid follow the same compartment arrangement for the spare tyre and toolkit.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "All variants (Petrol/Diesel/Electric/Hybrid) follow the same compartment arrangement"
-            }
-        ]
-    },
-    {
-        "id": "Q11",
-        "category": "difficult",
-        "difficulty": "hard",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "Which Aventro service center should I visit if I am in Hyderabad?",
-        "ground_truth": "The Aventro Service Center in Hyderabad is located in Banjara Hills.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Hyderabad: Banjara Hills • Pune: Wakad"
-            }
-        ]
-    },
-    {
-        "id": "Q12",
-        "category": "unanswerable",
-        "difficulty": "hard",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "What is the recommended tyre pressure for an Aventro Hatchback spare tyre?",
-        "ground_truth": "The document does not specify the recommended tyre pressure for any Aventro model. This information is not available in the tyre-changing guide.",
-        "expected_outcome": "abstain",
-        "relevant": []
-    },
-    {
-        "id": "Q13",
-        "category": "unanswerable",
-        "difficulty": "medium",
-        "origin": "manual",
-        "split": "dev",
-        "ci": true,
-        "question": "What is the warranty period for an Aventro Sedan?",
-        "ground_truth": "The document does not cover warranty information. This is outside the scope of the tyre-changing guide.",
-        "expected_outcome": "abstain",
-        "relevant": []
-    },
-    {
-        "id": "Q14",
-        "category": "adversarial",
-        "difficulty": "hard",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "What tools do I need and in what order should I use them to change a tyre on an Aventro Sedan?",
-        "ground_truth": "The document lists the required tools (spare tyre, jack, lug wrench, wheel wedges/blocks, owner's manual) but does not specify a required order for using them beyond the general step sequence.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "You will need: - Spare tyre (found as per table above) - Jack (usually in toolkit) - Lug wrench (in toolkit)"
-            }
-        ]
-    },
-    {
-        "id": "Q15",
-        "category": "difficult",
-        "difficulty": "hard",
-        "origin": "manual",
-        "split": "dev",
-        "ci": false,
-        "question": "Where exactly should I position the jack to lift the vehicle?",
-        "ground_truth": "The document states to position the jack under the jacking point nearest the flat tyre, but explicitly defers the exact point to the vehicle owner's manual. It does not specify the exact location itself.",
-        "expected_outcome": "answer",
-        "relevant": [
-            {
-                "source": "_Aventro Motors- How to Change a Tyre.pdf",
-                "evidence": "Position the jack under the jacking point nearest to the flat tyre. Refer to your owner's manual for the exact point"
-            }
-        ]
-    }
+  {
+    "id": "Q01",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "manual",
+    "split": "dev",
+    "ci": true,
+    "question": "Where is the spare tyre located in an Aventro Sedan?",
+    "ground_truth": "In an Aventro Sedan, the spare tyre is located under the boot floor in the trunk.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Sedan Under the boot floor in the trunk"
+      }
+    ]
+  },
+  {
+    "id": "Q02",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "Where is the toolkit stored in Aventro vehicles?",
+    "ground_truth": "In all Aventro models, the toolkit is usually secured next to the spare tyre or inside a side panel of the boot or trunk.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Toolkit is usually secured next to the spare tyre or inside a side panel of the boot/trunk"
+      }
+    ]
+  },
+  {
+    "id": "Q03",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "Where is the spare tyre located in an Aventro SUV?",
+    "ground_truth": "In an Aventro SUV, the spare tyre is located under the boot floor or mounted underneath the rear of the car.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "SUV Under the boot floor or mounted underneath the rear of the car"
+      }
+    ]
+  },
+  {
+    "id": "Q04",
+    "category": "normal",
+    "difficulty": "medium",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "What steps should I take to safely park before changing a tyre?",
+    "ground_truth": "You should pull over to a safe, flat location away from traffic, turn on your hazard lights, apply the handbrake, and place wheel wedges or blocks if available to prevent vehicle movement.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Pull over to a safe, flat location away from traffic"
+      },
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Turn on your hazard lights. Apply the handbrake."
+      },
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Place wheel wedges/blocks (if available) to prevent vehicle movement"
+      }
+    ]
+  },
+  {
+    "id": "Q05",
+    "category": "difficult",
+    "difficulty": "hard",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "Why should lug nuts be loosened before using the jack?",
+    "ground_truth": "The guide says to loosen the lug nuts slightly, without removing them fully, before lifting the vehicle with the jack. It does not state the reason.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Loosen them slightly - do not remove fully at this stage"
+      }
+    ]
+  },
+  {
+    "id": "Q06",
+    "category": "normal",
+    "difficulty": "medium",
+    "origin": "manual",
+    "split": "dev",
+    "ci": true,
+    "question": "What is the correct way to tighten lug nuts after fitting the spare tyre?",
+    "ground_truth": "After fitting the spare tyre, the lug nuts should be tightened using a star pattern to ensure even pressure across the wheel.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Use the lug wrench to tighten the lug nuts in a star pattern to ensure even pressure"
+      }
+    ]
+  },
+  {
+    "id": "Q07",
+    "category": "normal",
+    "difficulty": "medium",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "How high should the vehicle be raised when using the jack?",
+    "ground_truth": "The vehicle should be raised until the flat tyre is about 6 inches above the ground.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Raise the vehicle until the flat tyre is about 6 inches above the ground"
+      }
+    ]
+  },
+  {
+    "id": "Q08",
+    "category": "normal",
+    "difficulty": "medium",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "What should I do after fitting the spare tyre before resuming normal driving?",
+    "ground_truth": "After fitting the spare tyre, you should drive slowly and get the spare tyre pressure checked at the nearest Aventro Service Center.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "After installation, drive slowly and get the spare tyre pressure checked at the nearest Aventro Service Center"
+      }
+    ]
+  },
+  {
+    "id": "Q09",
+    "category": "difficult",
+    "difficulty": "hard",
+    "origin": "manual",
+    "split": "dev",
+    "ci": true,
+    "question": "Is it safe to drive at highway speeds for a long distance using the spare tyre?",
+    "ground_truth": "The guide says some spare tyres are space savers that are not intended for long distances or high speeds. After fitting the spare, drive slowly and get its pressure checked at the nearest Aventro Service Center.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Some spare tyres are space savers and are not intended for long distances or high speeds"
+      },
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "drive slowly and get the spare tyre pressure checked at the nearest Aventro Service Center"
+      }
+    ]
+  },
+  {
+    "id": "Q10",
+    "category": "difficult",
+    "difficulty": "hard",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "Does the spare tyre location differ between petrol and electric variants of the same Aventro model?",
+    "ground_truth": "No. All variants including Petrol, Diesel, Electric, and Hybrid follow the same compartment arrangement for the spare tyre and toolkit.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "All variants (Petrol/Diesel/Electric/Hybrid) follow the same compartment arrangement"
+      }
+    ]
+  },
+  {
+    "id": "Q11",
+    "category": "difficult",
+    "difficulty": "hard",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "Which Aventro service center should I visit if I am in Hyderabad?",
+    "ground_truth": "The Aventro Service Center in Hyderabad is located in Banjara Hills.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Hyderabad: Banjara Hills • Pune: Wakad"
+      }
+    ]
+  },
+  {
+    "id": "Q12",
+    "category": "unanswerable",
+    "difficulty": "hard",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "What is the recommended tyre pressure for an Aventro Hatchback spare tyre?",
+    "ground_truth": "The document does not specify the recommended tyre pressure for any Aventro model. This information is not available in the tyre-changing guide.",
+    "expected_outcome": "abstain",
+    "relevant": []
+  },
+  {
+    "id": "Q13",
+    "category": "unanswerable",
+    "difficulty": "medium",
+    "origin": "manual",
+    "split": "dev",
+    "ci": true,
+    "question": "What is the warranty period for an Aventro Sedan?",
+    "ground_truth": "The document does not cover warranty information. This is outside the scope of the tyre-changing guide.",
+    "expected_outcome": "abstain",
+    "relevant": []
+  },
+  {
+    "id": "Q14",
+    "category": "adversarial",
+    "difficulty": "hard",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "What tools do I need and in what order should I use them to change a tyre on an Aventro Sedan?",
+    "ground_truth": "The document lists the required tools (spare tyre, jack, lug wrench, wheel wedges/blocks, owner's manual) but does not specify a required order for using them beyond the general step sequence.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "You will need: - Spare tyre (found as per table above) - Jack (usually in toolkit) - Lug wrench (in toolkit)"
+      }
+    ]
+  },
+  {
+    "id": "Q15",
+    "category": "difficult",
+    "difficulty": "hard",
+    "origin": "manual",
+    "split": "dev",
+    "ci": false,
+    "question": "Where exactly should I position the jack to lift the vehicle?",
+    "ground_truth": "The document states to position the jack under the jacking point nearest the flat tyre, but explicitly defers the exact point to the vehicle owner's manual. It does not specify the exact location itself.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "_Aventro Motors- How to Change a Tyre.pdf",
+        "evidence": "Position the jack under the jacking point nearest to the flat tyre. Refer to your owner's manual for the exact point"
+      }
+    ]
+  },
+  {
+    "id": "Q16",
+    "category": "normal",
+    "difficulty": "easy",
+    "question": "How does Adaptive Cruise Control control a vehicle’s speed in traffic?",
+    "ground_truth": "Adaptive Cruise Control automatically adjusts the vehicle’s cruising speed to keep a safe following distance from the cars ahead.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adaptive Cruise Control (ACC).pdf",
+        "evidence": "Adaptive Cruise Control (ACC) is an advanced driver assistance system (ADAS) designed to automatically adjust a vehicle’s cruising speed to maintain a safe following distance from vehicles ahead."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q17",
+    "category": "normal",
+    "difficulty": "easy",
+    "question": "What is the initial action to take when adjusting the seat?",
+    "ground_truth": "The first step is adjusting the seat distance from the pedals.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adjusting the Seat Positions.pdf",
+        "evidence": "1. Adjusting the Seat Distance from the Pedals"
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q18",
+    "category": "normal",
+    "difficulty": "medium",
+    "question": "What benefits are listed for adjusting the steering wheel?",
+    "ground_truth": "Comfort reduces fatigue during long drives; Control ensures effective steering and better handling; Safety ensures a clear view of the instrument cluster and optimal airbag positioning.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adjusting the Steering Wheel.pdf",
+        "evidence": "• Comfort: Reduces fatigue during long drives.\n• Control: Ensures effective steering and better handling.\n• Safety: Ensures clear view of the instrument cluster and optimal airbag positioning."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q19",
+    "category": "normal",
+    "difficulty": "easy",
+    "question": "Where should a pregnant driver place the lap portion of the seat belt?",
+    "ground_truth": "The lap belt should be positioned under the belly, low on the hips, and across the upper thighs, and it must never go across the stomach.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Advice for Pregnant Women While in a Car.pdf",
+        "evidence": "Lap Belt : Position it under the belly , low on the hips, and across the upper thighs. It should never go across your stomach."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q20",
+    "category": "normal",
+    "difficulty": "easy",
+    "question": "What steps should I follow to adjust the seat distance from the pedals?",
+    "ground_truth": "First, locate the seat adjustment lever under the front edge of the seat. Pull the lever up to unlock the seat. Slide the seat forward or backward until your feet reach the pedals comfortably with a slight knee bend. Release the lever to lock the seat, then gently rock the seat to confirm it is securely locked.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adjusting the Seat Positions.pdf",
+        "evidence": "Locate the seat adjustment lever under the front edge of the seat.\n• Pull the lever up to unlock the seat.\n• Slide the seat forward or backward until your feet reach the pedals com-\nfortably while keeping a slight bend at your knees.\n• Release the lever to lock the seat in position.\n• Gently rock the seat to ensure it is securely locked."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q21",
+    "category": "normal",
+    "difficulty": "easy",
+    "question": "In which direction should a pregnant driver tilt the steering wheel for safety?",
+    "ground_truth": "The steering wheel should be angled toward the driver’s chest rather than the belly.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Advice for Pregnant Women While in a Car.pdf",
+        "evidence": "Tilt Steering Wheel Upwards : If possible, angle the steering wheel towards your chest, not your belly."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q22",
+    "category": "normal",
+    "difficulty": "easy",
+    "question": "Where are the radar sensors for adaptive cruise control usually installed?",
+    "ground_truth": "Radar sensors are typically mounted in the grille or front bumper to detect vehicles ahead and measure their speed and distance.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adaptive Cruise Control (ACC).pdf",
+        "evidence": "Typically mounted in the grille or front bumper to detect vehicles ahead and measure their speed and distance."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q23",
+    "category": "normal",
+    "difficulty": "easy",
+    "question": "How do you free the seat backrest so it can be adjusted?",
+    "ground_truth": "Lean forward slightly and pull or rotate the control to release the backrest.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adjusting the Seat Positions.pdf",
+        "evidence": "Lean forward slightly and pull or rotate the control to release the backrest."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q24",
+    "category": "normal",
+    "difficulty": "easy",
+    "question": "What action should you take to change the steering wheel's tilt?",
+    "ground_truth": "To adjust the tilt, move the wheel up or down to a comfortable height.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adjusting the Steering Wheel.pdf",
+        "evidence": "Tilt: Move the wheel up or down to a comfortable height."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q25",
+    "category": "normal",
+    "difficulty": "easy",
+    "question": "How frequently should a pregnant driver pause to stretch on a long journey?",
+    "ground_truth": "She should stop and get out to stretch legs and walk a little every 60‑90 minutes.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Advice for Pregnant Women While in a Car.pdf",
+        "evidence": "Every 60-90 Minutes : Stop and get out to stretch legs and walk a little."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q26",
+    "category": "normal",
+    "difficulty": "easy",
+    "question": "What sensors are employed in some adaptive cruise control systems to improve object detection and lane tracking?",
+    "ground_truth": "Lidar sensors or cameras are used in some systems for enhanced object detection and lane tracking.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adaptive Cruise Control (ACC).pdf",
+        "evidence": "Lidar Sensors or Cameras:\nUsed in some systems for enhanced object detection and lane tracking."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q27",
+    "category": "difficult",
+    "difficulty": "easy",
+    "question": "What is the maximum angle the backrest may be reclined from the upright position?",
+    "ground_truth": "The backrest should never be more than 30° from upright.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adjusting the Seat Positions.pdf",
+        "evidence": "The ideal angle is slightly reclined for comfort, but never more than 30° from upright."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q28",
+    "category": "difficult",
+    "difficulty": "easy",
+    "question": "Is it okay for the steering wheel to hide the gauges while driving?",
+    "ground_truth": "The steering wheel should not obstruct your view of the gauges.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adjusting the Steering Wheel.pdf",
+        "evidence": "The steering wheel should not obstruct your view of the gauges."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q29",
+    "category": "difficult",
+    "difficulty": "easy",
+    "question": "What should a pregnant woman bring to help with motion sickness while traveling by car?",
+    "ground_truth": "She should bring ginger candies, anti‑nausea wristbands, or any other doctor‑recommended remedies.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Advice for Pregnant Women While in a Car.pdf",
+        "evidence": "• Motion Sickness: Bring ginger candies, anti-nausea wristbands, or other remedies advised by your doctor."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  },
+  {
+    "id": "Q30",
+    "category": "difficult",
+    "difficulty": "easy",
+    "question": "What function does the electronic control unit perform in Adaptive Cruise Control?",
+    "ground_truth": "The ECU processes sensor data and commands the throttle and brakes as needed.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Adaptive Cruise Control (ACC).pdf",
+        "evidence": "Processes sensor data and commands the throttle and brakes as needed."
+      }
+    ],
+    "origin": "synthetic",
+    "split": "dev",
+    "ci": false
+  }
 ]
