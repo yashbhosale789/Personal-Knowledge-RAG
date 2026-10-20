@@ -7,20 +7,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config import (
-    CHUNKS_PATH,
-    GC_DELAY,
-    GC_SKIP_SOURCES,
-    GC_SYSTEM,
-)  # noqa: E402
-from src.llm.client import call_llm  # noqa: E402
 from validate_dataset import (
     DIFFICULTIES,
     basename,
     check_span,
     load_chunks,
     norm,
-)  # noqa: E402
+)
+
+from config import (
+    CHUNKS_PATH,
+    GC_DELAY,
+    GC_SKIP_SOURCES,
+    GC_SYSTEM,
+)
+from src.llm.client import call_llm
 
 OUT_PATH = Path(__file__).parent / "candidates.jsonl"
 
@@ -47,7 +48,7 @@ def ask(prompt: str) -> str:
     for attempt in range(3):
         try:
             return call_llm(prompt, system=GC_SYSTEM)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             if "429" not in str(e) or attempt == 2:
                 raise
             time.sleep(60 * (attempt + 1))
