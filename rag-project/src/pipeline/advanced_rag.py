@@ -75,6 +75,17 @@ QUESTION:
 ANSWER:"""
 
 
+def retrieve_context(
+    query: str, top_k: int = TOP_K, reranker: CrossEncoderReranker | None = None
+) -> dict[str, list[dict]]:
+    """Stages 2-4: dense + BM25 -> RRF -> rerank. Returns every stage so eval can inspect them."""
+    dense = _dense_to_dicts(retrieve(query, top_k=top_k * 4), top_k * 4)
+    bm25 = _bm25.retrieve(query, top_k=top_k * 4)
+    fused = reciprocal_rank_fusion(ranked_lists=[dense, bm25], top_k=top_k * 2)
+    reranked = (reranker or _reranker).rerank(query, candidates=fused)
+    return {"dense": dense, "bm25": bm25, "fused": fused, "reranked": reranked}
+
+
 # def run_advanced_rag_pipeline(query: str, top_k: int = TOP_K) -> dict:
 def run_advanced_rag_pipeline(
     query: str,
@@ -92,18 +103,22 @@ def run_advanced_rag_pipeline(
     # Stage 1: Query rewriting
     rewritten = rewrite_query(query, provider=provider)
 
-    # Stage 2: Parallel retrieval
-    dense_docs = retrieve(rewritten, top_k=top_k * 4)
-    dense_results = _dense_to_dicts(dense_docs, top_k * 4)
-    bm25_results = _bm25.retrieve(rewritten, top_k=top_k * 4)
+    # # Stage 2: Parallel retrieval
+    # dense_docs = retrieve(rewritten, top_k=top_k * 4)
+    # dense_results = _dense_to_dicts(dense_docs, top_k * 4)
+    # bm25_results = _bm25.retrieve(rewritten, top_k=top_k * 4)
 
-    # Stage 3: RRF fusion
-    fused = reciprocal_rank_fusion(
-        ranked_lists=[dense_results, bm25_results], top_k=top_k * 2
-    )
+    # # Stage 3: RRF fusion
+    # fused = reciprocal_rank_fusion(
+    #     ranked_lists=[dense_results, bm25_results], top_k=top_k * 2
+    # )
 
-    # Stage 4: Rerank
-    reranked = _reranker.rerank(rewritten, candidates=fused)
+    # # Stage 4: Rerank
+    # reranked = _reranker.rerank(rewritten, candidates=fused)
+
+    # Commented out above and made a call below
+    # Stages 2-4: hybrid retrieval -> RRF fusion -> rerank
+    reranked = retrieve_context(rewritten, top_k=top_k)["reranked"]
 
     if not reranked:
         return {
@@ -149,9 +164,9 @@ def run_advanced_rag_pipeline(
     citation_check = verify_citation(answer, reranked)
 
     # Stage 5.75: Confidence
-    confidence = score_confidence(citation_check)   
+    confidence = score_confidence(citation_check)
     # was score_confidence(sufficiency, citation_check)
-    
+
     if confidence["caveat"]:
         answer = answer + confidence["caveat"]
 
