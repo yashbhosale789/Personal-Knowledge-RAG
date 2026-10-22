@@ -8,6 +8,7 @@ dataset/
 **/__pycache__/
 **/.venv/
 **/venv/
+/.claude
 *.py[cod]
 
 # ==========================================
@@ -84,3 +85,4 @@ postman/environments/
 # ==========================================
 graphify-out/
 .graphify/
+CLAUDE.md
