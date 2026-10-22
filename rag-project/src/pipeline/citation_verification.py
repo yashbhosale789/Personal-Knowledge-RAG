@@ -4,10 +4,11 @@ import re
 
 from config import CITATION_VERIFIER_SYSTEM, EVAL_PROVIDER
 from src.llm.client import call_llm
+from src.pipeline.json_reply import parse_json_reply
 
 logger = logging.getLogger(__name__)
 
-_CITATION_PATTERN = re.compile(r"[\[【]SOURCE\s*\d+[\]】]")
+_CITATION_PATTERN = re.compile(r"[\[【]\s*SOURCE\s*\d+\s*[\]】]", re.IGNORECASE)
 
 
 def _has_citation(answer: str) -> bool:
@@ -50,7 +51,7 @@ def verify_citation(answer: str, reranked_chunks: list[dict]) -> dict:
     raw = call_llm(prompt, system=CITATION_VERIFIER_SYSTEM, provider=EVAL_PROVIDER)
 
     try:
-        verdict = json.loads(raw.strip())
+        verdict = parse_json_reply(raw)
         grounded = bool(verdict["grounded"])
         unsupported = list(verdict.get("unsupported_claims", []))
         reason = str(verdict["reason"])
