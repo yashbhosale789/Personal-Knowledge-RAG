@@ -126,13 +126,23 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--gap", type=float, default=30.0, help="minimum seconds per pipeline run"
     )
+    p.add_argument(
+        "--ci-only",
+        action="store_true",
+        help="run only items with ci=true, ignoring --split",
+    )
     return p.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     golden = json.loads(DEFAULT_DATASET.read_text(encoding="utf-8"))
-    items = [i for i in golden if args.split == "all" or i["split"] == args.split]
+    # items = [i for i in golden if args.split == "all" or i["split"] == args.split]
+    items = [
+        i
+        for i in golden
+        if (i["ci"] if args.ci_only else args.split in ("all", i["split"]))
+    ]
     fp = store.fingerprint()
     done = {
         k
