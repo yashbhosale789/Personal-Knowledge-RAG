@@ -19,37 +19,37 @@ The system combines local dense embeddings and sparse keyword retrieval with rec
 ```mermaid
 flowchart TD
     subgraph Ingestion ["Ingestion Pipeline"]
-        Doc[Personal Documents<br/>PDF, DOCX, MD, TXT] --> Chunker[Overlapping Recursive Chunker<br/>512 tokens / 64 overlap]
-        Chunker --> Embedder[Dense Embeddings<br/>BAAI/bge-small-en-v1.5]
-        Embedder --> Chroma[(Chroma Vector DB<br/>Deterministic Chunk IDs)]
-        Chunker --> BM25Index[(BM25 Sparse Index)]
+        Doc["Personal Documents<br/>PDF, DOCX, MD, TXT"] --> Chunker["Overlapping Recursive Chunker<br/>512 tokens / 64 overlap"]
+        Chunker --> Embedder["Dense Embeddings<br/>BAAI/bge-small-en-v1.5"]
+        Embedder --> Chroma[("Chroma Vector DB<br/>Deterministic Chunk IDs")]
+        Chunker --> BM25Index[("BM25 Sparse Index")]
     end
 
     subgraph Query ["Query Resolution Pipeline"]
-        UserQuery[User Query] --> RateLimit[Token Bucket Rate Limiter<br/>Redis]
-        RateLimit --> CacheCheck{Semantic Cache Hit?<br/>RediSearch Cosine ≥ 0.87}
-        CacheCheck -- Yes --> CachedResp[Return Cached Response<br/>~15ms Latency]
-        CacheCheck -- No --> Rewriter[Query Rewrite / Expansion]
+        UserQuery["User Query"] --> RateLimit["Token Bucket Rate Limiter<br/>Redis"]
+        RateLimit --> CacheCheck{"Semantic Cache Hit?<br/>RediSearch Cosine ≥ 0.87"}
+        CacheCheck -- Yes --> CachedResp["Return Cached Response<br/>~15ms Latency"]
+        CacheCheck -- No --> Rewriter["Query Rewrite / Expansion"]
     
-        Rewriter --> DenseSearch[Dense Chroma Retrieval<br/>Top-K Candidates]
-        Rewriter --> SparseSearch[BM25 Sparse Retrieval<br/>Top-K Candidates]
+        Rewriter --> DenseSearch["Dense Chroma Retrieval<br/>Top-K Candidates"]
+        Rewriter --> SparseSearch["BM25 Sparse Retrieval<br/>Top-K Candidates"]
     
-        DenseSearch & SparseSearch --> RRF[Reciprocal Rank Fusion<br/>RRF Merge & Deduplication]
-        RRF --> Reranker[Cross-Encoder Reranker<br/>ms-marco-MiniLM-L-6-v2]
+        DenseSearch & SparseSearch --> RRF["Reciprocal Rank Fusion<br/>RRF Merge & Deduplication"]
+        RRF --> Reranker["Cross-Encoder Reranker<br/>ms-marco-MiniLM-L-6-v2"]
     
-        Reranker --> SufficiencyGate{Context Sufficiency Gate<br/>Score Threshold Check}
-        SufficiencyGate -- Insufficient --> Abstain[Abstain / Safe Refusal<br/>Zero Hallucination]
-        SufficiencyGate -- Sufficient --> LLM[Grounded LLM Prompt<br/>Groq / Gemini / OpenRouter / Ollama]
+        Reranker --> SufficiencyGate{"Context Sufficiency Gate<br/>Score Threshold Check"}
+        SufficiencyGate -- Insufficient --> Abstain["Abstain / Safe Refusal<br/>Zero Hallucination"]
+        SufficiencyGate -- Sufficient --> LLM["Grounded LLM Prompt<br/>Groq / Gemini / OpenRouter / Ollama"]
     
-        LLM --> CitationGate[Citation Verification<br/>Verify [SOURCE N] References]
-        CitationGate --> ConfidenceEngine[Confidence Scoring<br/>Answer vs Low-Confidence]
-        ConfidenceEngine --> StoreCache[Store in Redis Semantic Cache]
-        StoreCache --> FinalAnswer[Deliver Grounded Answer + Citations]
+        LLM --> CitationGate["Citation Verification<br/>Verify [SOURCE N] References"]
+        CitationGate --> ConfidenceEngine["Confidence Scoring<br/>Answer vs Low-Confidence"]
+        ConfidenceEngine --> StoreCache["Store in Redis Semantic Cache"]
+        StoreCache --> FinalAnswer["Deliver Grounded Answer + Citations"]
     end
 
     subgraph Telemetry ["Observability & Metrics"]
-        FinalAnswer -.-> Metrics[Prometheus Metrics Exporter]
-        Metrics -.-> Grafana[Grafana Dashboards]
+        FinalAnswer -.-> Metrics["Prometheus Metrics Exporter"]
+        Metrics -.-> Grafana["Grafana Dashboards"]
     end
 ```
 
