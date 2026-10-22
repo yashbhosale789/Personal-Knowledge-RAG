@@ -2,11 +2,11 @@
 
 Use at the beginning of a substantial new chat if the project context files have not already been retrieved.
 
-Read the available project context files:
-1. `Ponytail.md`
-2. `Roadmap.md`
-3. `Architecture.md`
-4. `Memory.md`
+Read the available project context files (located in `docs/context/` or uploaded to Claude Project Context):
+1. `docs/context/Ponytail.md` (or `Ponytail.md`)
+2. `docs/context/Roadmap.md` (or `Roadmap.md`)
+3. `docs/context/Architecture.md` (or `Architecture.md`)
+4. `docs/context/Memory.md` (or `Memory.md`)
 
 Then retrieve only the repository documentation relevant to the task.
 
