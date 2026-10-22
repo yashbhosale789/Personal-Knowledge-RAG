@@ -4,7 +4,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import cache
 from pathlib import Path
 
@@ -13,12 +13,13 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import config  # noqa: E402
-import store  # noqa: E402
-from src.pipeline.citation_verification import _CITATION_PATTERN  # noqa: E402
-from src.pipeline.confidence import CAVEAT_TEXT  # noqa: E402
-from src.pipeline.json_reply import parse_json_reply  # noqa: E402
-from validate_dataset import DEFAULT_DATASET  # noqa: E402
+import store
+from validate_dataset import DEFAULT_DATASET
+
+import config
+from src.pipeline.citation_verification import _CITATION_PATTERN
+from src.pipeline.confidence import CAVEAT_TEXT
+from src.pipeline.json_reply import parse_json_reply
 
 JUDGE_MODEL = "gemini-3.5-flash-lite"
 GEN_PATH = Path(__file__).parent / "generations.jsonl"
@@ -320,7 +321,7 @@ def judge_generations(args: argparse.Namespace) -> None:
             "score": score,
             "detail": detail,
             "judge_model": JUDGE_MODEL,
-            "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "ts": datetime.now(UTC).isoformat(timespec="seconds"),
         }
         store.append(JUDGE_PATH, record)
         print(f"[{n}/{len(pending)}] {gen['variant']} {gen['qid']} {metric} = {score}")
