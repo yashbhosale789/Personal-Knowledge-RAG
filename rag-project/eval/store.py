@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
-import config  # noqa: E402
+import config
 
 CODE_DIRS = ("src/pipeline", "src/retrieval", "src/llm")
 CONFIG_KEYS = (

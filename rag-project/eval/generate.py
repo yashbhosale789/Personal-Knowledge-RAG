@@ -2,21 +2,22 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import config  # noqa: E402
-import store  # noqa: E402
-from retrieval_eval import get_rewrite, load_rewrites  # noqa: E402
+import store
+from retrieval_eval import get_rewrite, load_rewrites
+from validate_dataset import DEFAULT_DATASET
+
+import config
 from src.pipeline.advanced_rag import (
     retrieve_context,
     run_advanced_rag_pipeline,
-)  # noqa: E402
-from validate_dataset import DEFAULT_DATASET  # noqa: E402
+)
 
 RESULTS_PATH = Path(__file__).parent / "generations.jsonl"
 REFUSAL_PHRASE = "don't have enough information"
@@ -69,7 +70,7 @@ def to_record(
         "sufficiency": out.get("sufficiency"),
         "citation_check": out.get("citation_check"),
         "latency_ms": latency_ms,
-        "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "ts": datetime.now(UTC).isoformat(timespec="seconds"),
     }
 
 
