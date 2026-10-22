@@ -3,6 +3,7 @@ import logging
 
 from config import SUFFICIENCY_CE_FLOOR, SUFFICIENCY_JUDGE_SYSTEM
 from src.llm.client import call_llm
+from src.pipeline.json_reply import parse_json_reply
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def check_sufficiency(
     raw = call_llm(prompt, system=SUFFICIENCY_JUDGE_SYSTEM, provider=provider)
 
     try:
-        verdict = json.loads(raw.strip())
+        verdict = parse_json_reply(raw)
         sufficient = bool(verdict["sufficient"])
         reason = str(verdict["reason"])
 

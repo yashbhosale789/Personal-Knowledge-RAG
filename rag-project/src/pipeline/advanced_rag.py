@@ -92,6 +92,7 @@ def run_advanced_rag_pipeline(
     top_k: int = TOP_K,
     return_contexts: bool = False,
     provider: str | None = None,
+    rewritten: str | None = None,
 ) -> dict:
     """
     Advanced RAG pipeline:
@@ -101,7 +102,7 @@ def run_advanced_rag_pipeline(
     logger.info(f"Advanced RAG pipeline started for : {query[:60]}")
 
     # Stage 1: Query rewriting
-    rewritten = rewrite_query(query, provider=provider)
+    rewritten = rewritten or rewrite_query(query, provider=provider)
 
     # # Stage 2: Parallel retrieval
     # dense_docs = retrieve(rewritten, top_k=top_k * 4)
