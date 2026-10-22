@@ -55,7 +55,9 @@ venv/
 env/
 **/env/
 
+# ==========================================
 # Testing & Linting
+# ==========================================
 .pytest_cache/
 .ruff_cache/
 .coverage
@@ -73,16 +75,12 @@ Thumbs.db
 ~$*.docx
 
 # ==========================================
-# Generated Evaluation Outputs (Optional)
+# API Testing Secrets
 # ==========================================
-# Uncomment if evaluation results are dynamically generated and shouldn't be tracked:
-# **/eval_results.json
-# **/ragas_scores.json
 postman/environments/
-**/__pycache__/
-**/docs/
-**/claude/
-**/documents/
-**/postman/
-CHANGELOG.md
-CONTRIBUTING.md
+
+# ==========================================
+# Knowledge Graph Artifacts (Graphify)
+# ==========================================
+graphify-out/
+.graphify/
