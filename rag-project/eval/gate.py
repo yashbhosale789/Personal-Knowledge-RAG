@@ -38,7 +38,7 @@ def evaluate(items, gens, judged, variant, fp, faith_floor, rel_floor):
         if gen["refused"]:
             continue
 
-        for metric, value in scores.items():
+        for metric, value in scores:
             if metric == "correctness" and item["expected_outcome"] != "answer":
                 continue
             record = judged.get(f"{gen['key']}|{metric}")
