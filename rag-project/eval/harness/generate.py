@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 import time
 from datetime import UTC, datetime
 
@@ -129,7 +130,7 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-def main() -> None:
+def main() -> int:
     args = parse_args()
     golden = json.loads(DEFAULT_DATASET.read_text(encoding="utf-8"))
     # items = [i for i in golden if args.split == "all" or i["split"] == args.split]
@@ -152,6 +153,7 @@ def main() -> None:
     ]
     pending = pending[: args.limit] if args.limit else pending
     print(f"fingerprint {fp}: {len(pending)} runs to do, {len(done)} already stored")
+    incomplete = False
     cache = load_rewrites()
     retrieve_context(
         "warm-up"
@@ -170,7 +172,9 @@ def main() -> None:
                 print(
                     "429 persisted after retries; quota likely exhausted. Rerun later to resume."
                 )
+                incomplete = True
                 break
+            incomplete = True
             record = {
                 "key": store.key(variant, item["id"], fp),
                 "variant": variant,
@@ -190,6 +194,7 @@ def main() -> None:
         )
         time.sleep(max(0.0, args.gap - (time.monotonic() - started)))
     summarize(items, args.variants, fp)
+    return 1 if incomplete else 0
 
 
 def _selfcheck() -> None:
@@ -210,4 +215,4 @@ def _selfcheck() -> None:
 
 if __name__ == "__main__":
     _selfcheck()
-    main()
+    sys.exit(main())
