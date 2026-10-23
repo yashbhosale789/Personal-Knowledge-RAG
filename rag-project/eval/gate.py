@@ -38,14 +38,14 @@ def evaluate(items, gens, judged, variant, fp, faith_floor, rel_floor):
         if gen["refused"]:
             continue
 
-        for metric, value in scores:
+        for metric, values in scores.items():
             if metric == "correctness" and item["expected_outcome"] != "answer":
                 continue
             record = judged.get(f"{gen['key']}|{metric}")
             if record is None or record["score"] is None:
                 problems.append(f"{item['id']}: {metric} not judged")
             else:
-                value.append(record["score"])
+                values.append(record["score"])
 
     means = {m: sum(v) / len(v) for m, v in scores.items() if v}
     for metric, floor in (("faithfulness", faith_floor), ("relevancy", rel_floor)):
