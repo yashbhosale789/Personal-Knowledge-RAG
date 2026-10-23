@@ -1,9 +1,9 @@
 import json
 import sys
 from collections import Counter
-from pathlib import Path
 
-PATH = Path(__file__).parent / "golden_dataset.json"
+from eval.paths import GOLDEN_PATH as PATH
+
 golden = json.loads(PATH.read_text(encoding="utf-8"))
 if any(i["split"] == "test" for i in golden):
     sys.exit("test split already assigned; refusing to reassign")

@@ -28,7 +28,7 @@ Choose metrics based on the task and verify their definitions before use:
 - Re-run evaluation after token/context optimizations.
 
 ## Current known checkpoint
-A 2026-10-19 note reported 40 Chroma chunks across 5 PDFs and a successful validation of Q01 v2 using `eval/validate_dataset.py`. Verify this state before treating it as current; it does not prove full evaluation coverage or phase completion.
+A 2026-10-19 note reported 40 Chroma chunks across 5 PDFs and a successful validation of Q01 v2 using `eval/tools/validate_dataset.py`. Verify this state before treating it as current; it does not prove full evaluation coverage or phase completion.
 
 ## Acceptance thresholds
 Set thresholds from observed baseline and project requirements. Do not invent passing scores or imply that a metric alone proves production readiness.

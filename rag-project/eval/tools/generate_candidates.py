@@ -3,17 +3,6 @@ import re
 import sys
 import time
 import unicodedata
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from validate_dataset import (
-    DIFFICULTIES,
-    basename,
-    check_span,
-    load_chunks,
-    norm,
-)
 
 from config import (
     CHUNKS_PATH,
@@ -21,9 +10,15 @@ from config import (
     GC_SKIP_SOURCES,
     GC_SYSTEM,
 )
+from eval.paths import CANDIDATES_PATH as OUT_PATH
+from eval.tools.validate_dataset import (
+    DIFFICULTIES,
+    basename,
+    check_span,
+    load_chunks,
+    norm,
+)
 from src.llm.client import call_llm
-
-OUT_PATH = Path(__file__).parent / "candidates.jsonl"
 
 
 def words(text: str) -> list[str]:

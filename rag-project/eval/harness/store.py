@@ -1,13 +1,10 @@
 import ast
 import hashlib
 import json
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT))
-
 import config
+from eval.paths import ROOT
 
 CODE_DIRS = ("src/pipeline", "src/retrieval", "src/llm")
 CONFIG_KEYS = (

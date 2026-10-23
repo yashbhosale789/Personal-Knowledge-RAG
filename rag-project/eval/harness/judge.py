@@ -2,29 +2,22 @@ import argparse
 import json
 import os
 import re
-import sys
 import time
 from datetime import UTC, datetime
 from functools import cache
-from pathlib import Path
 
 import numpy as np
 import requests
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import store
-from validate_dataset import DEFAULT_DATASET
-
 import config
+from eval.harness import store
+from eval.paths import CALIBRATION_PATH, GEN_PATH, JUDGE_PATH
+from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
 from src.pipeline.citation_verification import _CITATION_PATTERN
 from src.pipeline.confidence import CAVEAT_TEXT
 from src.pipeline.json_reply import parse_json_reply
 
 JUDGE_MODEL = "gemini-3.5-flash-lite"
-GEN_PATH = Path(__file__).parent / "generations.jsonl"
-JUDGE_PATH = Path(__file__).parent / "judgments.jsonl"
-CALIBRATION_PATH = Path(__file__).parent / "judge_calibration.json"
 _state = {"last": 0.0, "gap": 4.5}
 
 FAITHFULNESS = """You are evaluating whether an answer is faithful to the given context.

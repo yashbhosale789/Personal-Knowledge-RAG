@@ -1,17 +1,13 @@
 import json
 import re
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from generate_candidates import chunk_key, words
-from validate_dataset import DEFAULT_DATASET
-
 from config import CHUNKS_PATH
+from eval.paths import CANDIDATES_PATH as CANDIDATES
+from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
+from eval.paths import REVIEWED_PATH as REVIEWED
+from eval.tools.generate_candidates import chunk_key, words
 
-CANDIDATES = Path(__file__).parent / "candidates.jsonl"
-REVIEWED = Path(__file__).parent / "candidates_reviewed.jsonl"
 DOC_PHRASES = re.compile(
     r"\b(listed|given|mentioned|according to|the (document|text|passage|guide|chunk))\b",
     re.IGNORECASE,

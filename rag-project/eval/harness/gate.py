@@ -1,13 +1,10 @@
 import argparse
 import json
 import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import store
-from judge import GEN_PATH, JUDGE_PATH
-from validate_dataset import DEFAULT_DATASET
+from eval.harness import store
+from eval.paths import GEN_PATH, JUDGE_PATH
+from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
 
 FAITHFULNESS_FLOOR = 0.85
 RELEVANCY_FLOOR = 0.75
