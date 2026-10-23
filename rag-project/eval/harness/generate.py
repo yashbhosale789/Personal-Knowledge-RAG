@@ -1,25 +1,20 @@
 import argparse
 import json
-import sys
 import time
 from datetime import UTC, datetime
-from pathlib import Path
 
 import requests
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import store
-from retrieval_eval import get_rewrite, load_rewrites
-from validate_dataset import DEFAULT_DATASET
-
 import config
+from eval.harness import store
+from eval.harness.retrieval_eval import get_rewrite, load_rewrites
+from eval.paths import GEN_PATH as RESULTS_PATH
+from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
 from src.pipeline.advanced_rag import (
     retrieve_context,
     run_advanced_rag_pipeline,
 )
 
-RESULTS_PATH = Path(__file__).parent / "generations.jsonl"
 REFUSAL_PHRASE = "don't have enough information"
 
 

@@ -1,21 +1,15 @@
 import argparse
 import json
 import random
-import sys
 from math import comb
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import store
-from judge import GEN_PATH, JUDGE_PATH
-from validate_dataset import DEFAULT_DATASET
-
-EVAL_DIR = Path(__file__).parent
+from eval.harness import store
+from eval.paths import GEN_PATH, JUDGE_PATH, RUNS_DIR
+from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
 
 
 def load_ret(stage: str, filename: str) -> dict[str, dict[str, float]]:
-    rows = json.loads((EVAL_DIR / filename).read_text(encoding="utf-8"))
+    rows = json.loads((RUNS_DIR / filename).read_text(encoding="utf-8"))
     return {r["id"]: r["metrics"][stage] for r in rows}
 
 

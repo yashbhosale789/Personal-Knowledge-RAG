@@ -85,7 +85,7 @@ Personal Knowledge OS (RAG System)/
 │   │   ├── pipeline/             # Advanced RAG stages, sufficiency & citation gates
 │   │   ├── retrieval/            # Dense, BM25, RRF fusion, and cross-encoder reranking
 │   │   └── vectorstore/          # Chroma vector store persistence layer
-│   ├── eval/                     # Evaluation engine, golden datasets, Ragas scoring, CI gates
+│   ├── eval/                     # Evaluation harness (generate, judge, gate), golden dataset, security evals
 │   ├── scripts/                  # CLI utilities (ingest, interactive query, inspect embeddings)
 │   ├── tests/                    # Unit, component, and pipeline integration test suites
 │   ├── docker-compose.yml        # Multi-container orchestration (App, Redis, Prometheus, Grafana)
@@ -292,17 +292,20 @@ The system treats RAG quality as a first-class engineering discipline:
 To execute the offline evaluation suite:
 
 ```powershell
+# Run from rag-project/. Validate the golden dataset against the ingested chunks
+python -m eval.tools.validate_dataset
+
 # Run the pipeline against the golden evaluation dataset
-python eval/run_eval.py
+python -m eval.harness.generate
 
-# Calculate Ragas scores using LLM-as-a-judge
-python eval/ragas_eval.py
+# Score the answers with the LLM judge
+python -m eval.harness.judge
 
-# Verify quality against production threshold gates
-python eval/check_thresholds.py
+# Verify quality against the regression gate thresholds
+python -m eval.harness.gate
 
 # Evaluate resistance to document-based prompt injection
-python eval/injection_eval.py
+python -m eval.security.injection_eval
 ```
 
 ---

@@ -79,7 +79,7 @@ Goals:
 - Keep evaluation runs resumable/batchable and avoid unnecessary LLM calls.
 Known snapshot:
 - Current corpus contains 40 chunks across 5 PDFs.
-- `eval/validate_dataset.py` passed for Q01 v2 format against `storage/chunks.json`.
+- `eval/tools/validate_dataset.py` passed for Q01 v2 format against `storage/chunks.json`.
 - These facts do **not** mean all Phase 13.0 goals are complete. Inspect the repository and the latest memory notes to establish the exact remaining work.
 
 ### Phase 13.1 — Token and cost accounting

@@ -48,20 +48,20 @@ jobs:
         run: python scripts/ingest.py
 
       - name: Clear stale eval state
-        run: rm -f eval/generations.jsonl eval/judgments.jsonl eval/rewrites.json
+        run: rm -rf eval/runs
 
       - name: Run pipeline on CI subset
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-        run: python eval/generate.py --variants ci --ci-only --gap 10
+        run: python -m eval.harness.generate --variants ci --ci-only --gap 10
 
       - name: Judge answers
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python eval/judge.py --variants ci
+        run: python -m eval.harness.judge --variants ci
 
       - name: Check gate
-        run: python eval/gate.py --variant ci
+        run: python -m eval.harness.gate --variant ci
 
 concurrency:
   group: eval-gate-${{ github.ref }}

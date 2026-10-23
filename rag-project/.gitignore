@@ -69,10 +69,8 @@ Thumbs.db
 ~$*.docx
 
 # ==========================================
-# Generated Evaluation Outputs (Optional)
+# Generated Evaluation Outputs
 # ==========================================
-# Uncomment if evaluation results are dynamically generated and shouldn't be tracked:
-# **/eval_results.json
-# **/ragas_scores.json
+eval/runs/
 
 **/graphify-out/

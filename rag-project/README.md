@@ -41,7 +41,7 @@ src/pipeline/        Advanced RAG stages and safety/quality gates
 src/retrieval/       Dense retrieval, BM25, fusion, and reranking
 src/vectorstore/     Persistent Chroma store
 scripts/             CLI ingestion, querying, inspection, and agentic queries
-eval/                RAGAS, threshold, and prompt-injection evaluations
+eval/                Golden dataset, generate/judge/gate eval harness, retrieval and prompt-injection evaluations
 tests/               Unit and component tests
 data/documents/      Default local document directory
 storage/chroma/      Persistent vector database
@@ -196,16 +196,17 @@ python test_setup.py
 
 ## Evaluation
 
-The `eval/` directory contains the test datasets and evaluation runners. Most evaluation commands call an LLM and may incur provider latency or usage costs.
+The `eval/` directory contains the golden dataset and the evaluation runners. Run everything from `rag-project/` with `python -m`. Most evaluation commands call an LLM and may incur provider latency or usage costs. See `eval/README.md` for the full run order.
 
 ```powershell
-python eval/run_eval.py
-python eval/ragas_eval.py
-python eval/check_thresholds.py
-python eval/injection_eval.py
+python -m eval.tools.validate_dataset
+python -m eval.harness.generate
+python -m eval.harness.judge
+python -m eval.harness.gate
+python -m eval.security.injection_eval
 ```
 
-`run_eval.py` writes `eval/eval_results.json` and supports resuming completed cases. Set `EVAL_DATASET_PATH` to evaluate a different dataset. `check_thresholds.py` fails when the configured faithfulness or answer-relevancy floors are not met.
+`generate` and `judge` write to `eval/runs/` and resume completed cases. `gate` fails when the configured faithfulness or relevancy floors are not met. The earlier `run_eval`, `ragas_eval` and `check_thresholds` scripts are retired and kept untouched in `eval/legacy/`.
 
 Run the automated tests with:
 

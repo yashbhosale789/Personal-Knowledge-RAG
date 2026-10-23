@@ -1,12 +1,7 @@
 import json
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
+from eval.paths import INJECTION_CASES_PATH as CASES_PATH
 from src.pipeline.injection_scanner import scan_for_injection
-
-CASES_PATH = Path(__file__).parent / "injection_cases.json"
 
 
 def main():

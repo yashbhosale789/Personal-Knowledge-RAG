@@ -1,15 +1,10 @@
 import json
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config import SYSTEM_PROMPT
+from eval.paths import INJECTION_CASES_PATH as CASE_PATH
+from eval.paths import INJECTION_RESULTS_PATH as RESULTS_PATH
 from src.llm.client import call_llm
 from src.pipeline.advanced_rag import _build_prompt
-
-CASE_PATH = Path(__file__).parent / "injection_cases.json"
-RESULTS_PATH = Path(__file__).parent / "injection_results.json"
 
 
 def load_cases() -> list[dict]:

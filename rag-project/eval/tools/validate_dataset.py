@@ -5,11 +5,8 @@ import unicodedata
 from collections import Counter
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from config import CHUNKS_PATH
-
-DEFAULT_DATASET = Path(__file__).parent / "golden_dataset.json"
+from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
 
 CATEGORIES = {
     "normal",

@@ -61,7 +61,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - **Operating constraints:** Hard $0 budget. Groq free-tier TPM limits apply. Evaluation runs must be batchable, resumable, and offline paired comparisons (no online traffic split).
  
 **13.0a Status:**
-- `eval/validate_dataset.py` validates schema and evidence spans against `storage/chunks.json` using alphanumeric-only normalization. Exits 0 on `eval/golden_dataset.json` with Q01 in v2 format.
+- `eval/tools/validate_dataset.py` validates schema and evidence spans against `storage/chunks.json` using alphanumeric-only normalization. Exits 0 on `eval/data/golden_dataset.json` with Q01 in v2 format.
 - Corpus rebuilt: 40 chunks across 5 PDFs in both Chroma and `storage/chunks.json`.
 
 ## 3. Current evaluation and corpus facts

@@ -2,19 +2,16 @@ import json
 import sys
 import time
 from hashlib import sha256
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from validate_dataset import DEFAULT_DATASET, basename, norm
 
 import config
+from eval.paths import BASELINE_PATH as RESULTS_PATH
+from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
+from eval.paths import REWRITES_PATH
+from eval.tools.validate_dataset import basename, norm
 from src.pipeline.advanced_rag import retrieve_context
 from src.pipeline.query_rewriter import rewrite_query
 from src.vectorstore.store import get_vectorstore
 
-REWRITES_PATH = Path(__file__).parent / "rewrites.json"
-RESULTS_PATH = Path(__file__).parent / "retrieval_baseline.json"
 STAGE_KS = {
     "dense": (1, 5, 20),
     "bm25": (1, 5, 20),
