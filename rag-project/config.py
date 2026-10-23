@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -69,8 +70,9 @@ OLLAMA_MODEL = "llama3.2:3b-instruct-q4_K_M"  # must match what you've pulled lo
 
 
 # Evaluator LLM — switch EVAL_PROVIDER to change evaluator
-
-EVAL_PROVIDER = "groq"  # "openrouter" | "groq" | "gemini"
+# EVAL Provider could be set from .env
+EVAL_PROVIDER = os.getenv("EVAL_PROVIDER", "groq")  # "openrouter" | "groq" | "gemini"
+# EVAL_PROVIDER = "groq"  # "openrouter" | "groq" | "gemini"
 
 OPENROUTER_EVALUATOR_MODEL = "poolside/laguna-s-2.1:free"
 OPENROUTER_EVALUATOR_URL = OPENROUTER_API_URL
