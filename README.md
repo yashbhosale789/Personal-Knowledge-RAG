@@ -4,7 +4,7 @@
 [![FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![Vector Store](https://img.shields.io/badge/VectorStore-ChromaDB-orange.svg)](https://www.trychroma.com/)
 [![Cache & Search](<https://img.shields.io/badge/Cache-Redis%20Stack-red.svg>)](https://redis.io/)
-[![CI/CD](<https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20Eval%20Gate-green.svg>)](https://github.com/)
+[![CI/CD](<https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20Eval%20Gate-green.svg>)](https://github.com/yashbhosale789/RAG-Project/actions/workflows/eval-gate.yml)
 [![Deployed to AWS](https://img.shields.io/badge/Deployed%20to-AWS%20EC2-FF9900.svg?logo=amazon-aws)](https://aws.amazon.com/)
 [![License: Apache 2.0](<https://img.shields.io/badge/License-Apache%202.0-blue.svg>)](LICENSE)
 
