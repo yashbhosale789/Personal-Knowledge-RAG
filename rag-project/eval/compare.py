@@ -7,9 +7,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import store  # noqa: E402
-from judge import GEN_PATH, JUDGE_PATH  # noqa: E402
-from validate_dataset import DEFAULT_DATASET  # noqa: E402
+import store
+from judge import GEN_PATH, JUDGE_PATH
+from validate_dataset import DEFAULT_DATASET
 
 EVAL_DIR = Path(__file__).parent
 
