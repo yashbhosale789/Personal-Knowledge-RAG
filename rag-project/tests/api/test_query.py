@@ -1,0 +1,193 @@
+from api.core.exceptions import ProviderError
+from api.routers import query as query_router
+
+from .conftest import pipeline_result
+
+
+def post(client, auth_headers, **body):
+    body.setdefault("query", "How do I tighten the lug nuts?")
+    return client.post("/query", json=body, headers=auth_headers)
+
+
+# --- health ----------------------------------------------------------------
+
+
+def test_health_reports_degraded_until_the_pipeline_is_ready(client):
+    body = client.get("/health").json()
+    assert body["status"] == "degraded"
+    assert body["pipeline_ready"] is False
+
+
+def test_health_reports_ok_when_ready(client, ready):
+    body = client.get("/health").json()
+    assert body["status"] == "ok"
+    assert body["pipeline_ready"] is True
+    assert set(body) == {"status", "version", "pipeline_ready", "timestamp"}
+
+
+def test_metrics_endpoint_exposes_prometheus_text(client):
+    r = client.get("/metrics")
+    assert r.status_code == 200
+    assert "http_requests_total" in r.text
+
+
+# --- validation ------------------------------------------------------------
+
+
+def test_empty_query_is_422(client, fakes, ready, auth_headers):
+    assert post(client, auth_headers, query="").status_code == 422
+
+
+def test_overlong_query_is_422(client, fakes, ready, auth_headers):
+    assert post(client, auth_headers, query="x" * 2001).status_code == 422
+
+
+def test_unknown_provider_is_422(client, fakes, ready, auth_headers):
+    assert post(client, auth_headers, provider="nonsense").status_code == 422
+
+
+def test_missing_query_field_is_422(client, fakes, ready, auth_headers):
+    assert client.post("/query", json={}, headers=auth_headers).status_code == 422
+
+
+def test_whitespace_only_query_is_400(client, fakes, ready, auth_headers):
+    r = post(client, auth_headers, query="   ")
+    assert r.status_code == 400
+    assert fakes.pipeline_calls == []
+
+
+def test_not_ready_pipeline_is_503(client, fakes, auth_headers):
+    r = post(client, auth_headers)
+    assert r.status_code == 503
+    assert fakes.pipeline_calls == []
+
+
+# --- success path ----------------------------------------------------------
+
+
+def test_answer_response_carries_the_pipeline_result(
+    client, fakes, ready, auth_headers
+):
+    r = post(client, auth_headers)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["answer"] == "Use the lug wrench [SOURCE 1]."
+    assert body["sources"] == ["manual.pdf"]
+    assert body["chunks_used"] == 3
+    assert body["rewritten_query"] == "lug wrench"
+    assert body["outcome"] == "answer"
+    assert body["confidence"] == "high"
+    assert body["citation_check"]["grounded"] is True
+    assert body["sufficiency"]["sufficient"] is True
+    assert body["query"] == "How do I tighten the lug nuts?"
+    assert body["latency_ms"] >= 0
+
+
+def test_query_id_matches_the_request_id_header(client, fakes, ready, auth_headers):
+    r = post(client, auth_headers)
+    assert r.json()["query_id"] == r.headers["X-Request-ID"]
+    assert r.json()["query_id"] != "unknown"
+
+
+def test_each_request_gets_its_own_id(client, fakes, ready, auth_headers):
+    a = post(client, auth_headers).json()["query_id"]
+    b = post(client, auth_headers).json()["query_id"]
+    assert a != b
+
+
+def test_query_is_trimmed_before_the_pipeline_sees_it(
+    client, fakes, ready, auth_headers
+):
+    post(client, auth_headers, query="  lug nuts  ")
+    assert fakes.pipeline_calls[0]["query"] == "lug nuts"
+
+
+def test_provider_override_is_used_and_reported(client, fakes, ready, auth_headers):
+    r = post(client, auth_headers, provider="gemini")
+    assert fakes.pipeline_calls[0]["provider"] == "gemini"
+    assert r.json()["provider"] == "gemini"
+
+
+def test_answers_are_cached(client, fakes, ready, auth_headers):
+    post(client, auth_headers)
+    assert len(fakes.cache_writes) == 1
+    assert fakes.cache_writes[0][1] == "Use the lug wrench [SOURCE 1]."
+
+
+# --- abstention ------------------------------------------------------------
+
+
+def test_abstention_is_reported_and_never_cached(client, fakes, ready, auth_headers):
+    fakes.result = pipeline_result(
+        answer="I don't have enough information in the knowledge base to answer this question accurately.",
+        outcome="abstain",
+        citation_check=None,
+        confidence=None,
+        sufficiency={"sufficient": False, "reason": "off topic", "tier": "score_floor"},
+    )
+    r = post(client, auth_headers)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["outcome"] == "abstain"
+    assert body["citation_check"] is None
+    assert body["confidence"] is None
+    assert body["sufficiency"]["sufficient"] is False
+    assert fakes.cache_writes == []
+
+
+def test_low_confidence_answer_is_reported(client, fakes, ready, auth_headers):
+    fakes.result = pipeline_result(outcome="answer_low_confidence", confidence="low")
+    body = post(client, auth_headers).json()
+    assert body["outcome"] == "answer_low_confidence"
+    assert body["confidence"] == "low"
+
+
+# --- cache hit -------------------------------------------------------------
+
+
+def test_cache_hit_skips_the_pipeline(client, fakes, ready, auth_headers):
+    fakes.cached = {
+        "answer": "cached answer",
+        "provider": "groq",
+        "query": "q",
+        "similarity": 0.99,
+    }
+    r = post(client, auth_headers)
+    body = r.json()
+    assert body["outcome"] == "cached"
+    assert body["answer"] == "cached answer"
+    assert body["provider"] == "groq"
+    assert body["sources"] == [] and body["chunks_used"] == 0
+    assert fakes.pipeline_calls == []
+    assert fakes.cache_writes == []
+
+
+# --- failures --------------------------------------------------------------
+
+
+def test_all_providers_failing_is_502(client, fakes, ready, auth_headers):
+    fakes.error = ProviderError("down", provider="groq")
+    r = post(client, auth_headers)
+    assert r.status_code == 502
+
+
+def test_first_provider_failing_falls_back(
+    client, fakes, ready, auth_headers, monkeypatch
+):
+    calls = []
+
+    def flaky(query, provider, return_contexts):
+        calls.append(provider)
+        if provider == "groq":
+            raise RuntimeError("boom")
+        return pipeline_result()
+
+    monkeypatch.setattr(query_router, "_run_pipeline", flaky)
+    r = post(client, auth_headers, provider="groq")
+    assert r.status_code == 200
+    assert r.json()["provider"] == "openrouter"
+    assert calls[0] == "groq"
+
+
+def test_get_on_a_post_route_is_405(client):
+    assert client.get("/query").status_code == 405

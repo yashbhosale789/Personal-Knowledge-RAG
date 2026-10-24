@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.pipeline.citation_verification import verify_citation
 
@@ -23,7 +23,7 @@ fabricated_answer = (
 result = verify_citation(fabricated_answer, [real_chunk])
 print(result)
 
-assert (
-    result["grounded"] is False
-), "Verifier should have flagged the fabricated detail as ungrounded"
+assert result["grounded"] is False, (
+    "Verifier should have flagged the fabricated detail as ungrounded"
+)
 print("PASS: verifier correctly caught the fabricated claim")

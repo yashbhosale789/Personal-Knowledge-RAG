@@ -1,9 +1,9 @@
-# test_rewriter.py — temporary
+# Manual live-LLM check — run: python tests/manual/check_rewriter.py
 
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.stdout.reconfigure(encoding="utf-8")
 
 from src.pipeline.query_rewriter import rewrite_query
