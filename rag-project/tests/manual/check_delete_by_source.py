@@ -1,8 +1,8 @@
-# test_delete_by_source.py — run with: python -m test_delete_by_source
+# Manual check against the real store — run: python tests/manual/check_delete_by_source.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from langchain_core.documents import Document
 
