@@ -1,8 +1,23 @@
 name: Eval Regression Gate
 
+# Expensive and stochastic (LLM calls, provider rate limits), so it does not run on every
+# push: only when pipeline code, config, data or the eval harness change, weekly, or on demand.
+# A real regression fails the job; an incomplete run (rate limit/provider error) is reported
+# as a warning and in the job summary instead of blocking (F-13). Not a required check.
 on:
   pull_request:
     branches: [main]
+    paths:
+      - "rag-project/src/**"
+      - "rag-project/config.py"
+      - "rag-project/eval/**"
+      - "rag-project/scripts/ingest.py"
+      - "rag-project/data/**"
+      - "rag-project/requirements.txt"
+      - ".github/workflows/eval-gate.yml"
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
 
 jobs:
   eval:
@@ -51,6 +66,7 @@ jobs:
         run: rm -rf eval/runs
 
       - name: Run pipeline on CI subset
+        continue-on-error: true
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
@@ -61,12 +77,28 @@ jobs:
           }
 
       - name: Judge answers
+        continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python -m eval.harness.judge --variants ci
 
+      # gate exit codes: 0 pass, 1 regression (blocks), 2 incomplete (reports)
       - name: Check gate
-        run: python -m eval.harness.gate --variant ci
+        run: |
+          set +e
+          python -m eval.harness.gate --variant ci | tee gate.txt
+          code=${PIPESTATUS[0]}
+          {
+            echo "### Eval gate (corpus c1)"
+            echo '```'
+            cat gate.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -eq 2 ]; then
+            echo "::warning title=Eval gate incomplete::generation or judging did not finish (rate limit or provider error); no regression was measured. See the job summary."
+            exit 0
+          fi
+          exit "$code"
 
 concurrency:
   group: eval-gate-${{ github.ref }}
