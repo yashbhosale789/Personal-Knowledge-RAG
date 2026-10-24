@@ -191,7 +191,7 @@ Other useful scripts include:
 python scripts/advanced_query.py
 python scripts/agentic_query.py
 python scripts/inspect_embeddings.py
-python tests/manual/check_setup.py
+python test_setup.py
 ```
 
 ## Evaluation
@@ -208,43 +208,20 @@ python -m eval.security.injection_eval
 
 `generate` and `judge` write to `eval/runs/` and resume completed cases. `gate` fails when the configured faithfulness or relevancy floors are not met. The earlier `run_eval`, `ragas_eval` and `check_thresholds` scripts are retired and kept untouched in `eval/legacy/`.
 
-## Tests
-
-Install the pinned dev tooling once (`requirements-dev.txt`), then run from `rag-project/`:
+Run the automated tests with:
 
 ```powershell
-pip install -r requirements-dev.txt
-python -m pytest                      # default: unit, API, contract, integration — $0, no network, no model downloads
-python -m pytest -m slow              # real embedder + reranker smoke test (downloads models on first run)
-python -m pytest --cov                # with coverage (CI enforces a floor, see below)
+python -m pytest
 ```
 
-| Layer | Location | Notes |
-| --- | --- | --- |
-| Unit | `tests/unit/` | pure functions, fake providers, eval-harness math |
-| API + contract | `tests/api/` | `TestClient` with the pipeline faked; the `/query` response schema is pinned in `tests/contracts/query_response.json` |
-| Integration | `tests/integration/` | temp Chroma + deterministic fake embedder + real BM25: ingest → query → delete → query |
-| Redis | `tests/redis/` | `@pytest.mark.redis`; needs `redis/redis-stack` on `REDIS_HOST:6379`, skipped when none is reachable (a failure under `CI`) |
-| Slow | `tests/slow/` | `@pytest.mark.slow`; excluded from the default run |
-
-- Known defects are pinned by `xfail(strict=True)` tests tagged with their finding ID (F-01, F-03). Fixing one makes its test pass, which fails the build until the marker is removed.
-- If the `/query` response shape changes on purpose, run `UPDATE_CONTRACT=1 python -m pytest tests/api/test_contract.py` and commit the snapshot (it bumps `contract_version`).
-- `tests/manual/` holds live scripts (real LLM, real store). They are not collected by pytest.
-
-## Dependencies
-
-`requirements.in` lists the direct dependencies; `requirements.txt` is the pinned lock (Python 3.11, Linux) used by Docker and CI; `requirements-dev.in`/`.txt` hold the test tooling. torch is installed separately (CPU wheel in Docker/CI, CUDA via `requirements-local.txt`). To change a dependency, edit the `.in` file and recompile with the command in the header of the lock file.
+Some tests import embedding, vector-store, or LLM components and therefore may require the models, local data, Redis, and provider configuration to be available.
 
 ## Continuous Integration
 
-Pull requests against `main` run:
+Every pull request against `main` runs two required checks:
 
-- **Tests** — `pytest -m "not slow"` with a Redis service container, offline with an empty Hugging Face cache (proves the default run never downloads a model), a coverage floor (`--cov-fail-under`, ratcheted up, never lowered), and `eval.tools.validate_dataset`. Required check: `pytest`.
-- **Code Quality** — runs `ruff` (linting) and `bandit` (security static analysis) against the application code. Both are hard gates: a finding fails the PR.
-- **Dependency Audit** — `pip-audit` on the locks, on dependency changes and weekly. Reports; it does not gate unrelated PRs.
-- **Eval Regression Gate** — LLM-judged and rate-limit-prone, so it runs only when pipeline code, config, data or the eval harness change, weekly, and on demand. A real faithfulness/relevancy regression fails it; an incomplete run (provider rate limit) is reported as a warning and in the job summary instead of blocking.
-
-Dependabot proposes weekly pip and GitHub Actions updates.
+- **Eval Regression Gate** — rebuilds the index from `data/documents/`, runs the pipeline against a CI evaluation subset, and fails the PR if faithfulness or answer-relevancy drop below their configured floors.
+- **Code Quality** — runs `ruff` (linting) and `bandit` (security static analysis) against the application code, excluding tests and dependencies. Both are hard gates: a finding fails the PR.
 
 ## Docker Compose
 
