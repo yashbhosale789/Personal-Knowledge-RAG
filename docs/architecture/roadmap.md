@@ -175,6 +175,8 @@ Exit: items 1–6 done; dataset tagged `v1` against corpus `c1` (the current 5 P
 
 Addresses F-04, F-05, F-06, F-13, F-19, F-22.
 
+**Status: implemented locally 2026-10-23; NOT closed — exit criterion "CI green on a PR" unverified (uncommitted) and required checks cannot be enabled on this plan (branch-protection API returns 403).** Evidence: 206 passed / 6 strict xfail on the default run (offline, empty HF cache); coverage 65.55% with floor 65; ruff and bandit clean; retrieval output identical before/after the lazy-init refactor (54 queries, all stages); Redis layer verified against `redis/redis-stack-server`; slow smoke test passes with real models. Details and remaining manual step (required checks) are in `Memory.md` §2. F-22: `pip-audit` and Dependabot are in place; container-image scanning is not added (the roadmap scopes only pip-audit and Dependabot).
+
 Method: write tests first. Known defects get `xfail(strict=True)` tests tagged with their finding ID. Phase 15.0 removes the markers as each fix lands; a strict xfail that starts passing fails the build, so nobody forgets.
 
 #### A. Testability refactor (behaviour-preserving only)
@@ -405,9 +407,9 @@ Status as of 2026-10-23. Gap items name the owning phase.
 | Auth (shared key), rate limiting, HTTPS | Done for single-user | Phases 9, 12; decision → 13.5 |
 | Automated deployment, health check, rollback | Done, verified live | Phase 12 |
 | Regression evaluation in CI | Partial — LLM-judge gate only | 13.0, 13.1 |
-| Unit / API / integration tests in CI | **Gap** | F-04 → 13.1 |
-| Reproducible builds (pinned dependencies) | **Gap** | F-06 → 13.1 |
-| Dependency / image vulnerability scanning | **Gap** | F-22 → 13.1 |
+| Unit / API / integration tests in CI | Built in 13.1; confirm on the first PR run | F-04 → 13.1 |
+| Reproducible builds (pinned dependencies) | Lock built in 13.1; confirm with a CI/Docker build | F-06 → 13.1 |
+| Dependency / image vulnerability scanning | pip-audit + Dependabot built in 13.1; image scan still a gap | F-22 → 13.1 |
 | Prompt / model versioning | **Gap** | 13.2 |
 | Per-stage cost and latency visibility | **Gap** | 13.3, 13.4 |
 | Alerting and SLOs | **Gap** | F-20 → 13.5 (final numbers 15.4) |
