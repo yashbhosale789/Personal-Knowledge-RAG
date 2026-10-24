@@ -73,6 +73,16 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - Pipeline configuration: `CHUNK_SIZE=512`, `CHUNK_OVERLAP=64`; `TOP_K=5`; `RRF_K=60`; reranker `cross-encoder/ms-marco-MiniLM-L-6-v2`; `SUFFICIENCY_CE_FLOOR=-7.0`.
 - LLM Providers: Groq primary (`openai/gpt-oss-120b` or Llama 3.3/3.1); OpenRouter and Gemini fallback; Ollama is local-dev-only.
 
+**Phase 13.1 (new numbering — "Test foundation and CI hygiene") — IMPLEMENTED 2026-10-23, pending first CI run on a PR**
+- Suite in `rag-project/tests/` (`unit`, `api`, `integration`, `redis`, `slow`, `contracts`; live scripts moved to `tests/manual/`). Default run: **206 passed, 6 strict xfail, 3 deselected (`slow`)**, ~90 s, offline with an empty HF cache. Line coverage **65.55%**; CI floor `--cov-fail-under=65` (ratchet up only, never down). Measured over `src` and `api` (`.coveragerc`).
+- Known defects pinned with `xfail(strict=True)`: F-01 (API-ingested docs not in BM25; deleted docs stay retrievable), F-03 (script ingest: not idempotent for shrinking docs, no injection scan, no cache clear), plus the buried soft-injection case (INJ04) the regex scanner misses. Phase 15.0 removes each marker as its fix lands.
+- F-05: BM25 and the reranker are now lazy (`get_bm25()` / `get_reranker()` / `warmup()` in `advanced_rag.py`), warmed at app startup. Verified behaviour-preserving: all four stage outputs (dense/bm25/fused/reranked, scores rounded to 4 dp) were byte-identical for the 54 cached rewrites before and after. Side effect: the eval fingerprint changed because `src/pipeline` was edited, so older local `eval/runs/` entries no longer match.
+- F-19: `verify_api_key` fails closed (401, never 500) when the key env var is unset or the presented key is non-ASCII. Startup already refused a missing/short key; both are now tested.
+- F-06: `requirements.in` (direct deps) -> `requirements.txt` (pinned lock, py3.11/Linux, torch family excluded because torch is installed first from the CPU index); `requirements-dev.in/.txt` for tooling. `requirements-local.txt` now reads `requirements.in`.
+- F-04/F-13: new workflows `tests.yml` (pytest + Redis service + dataset validation) and `audit.yml` (pip-audit, weekly); `eval-gate.yml` now runs on pipeline-path PRs, weekly and on demand, and reports (warning + job summary) instead of blocking when the run is incomplete (gate exit 2). `.github/dependabot.yml` covers pip and GitHub Actions.
+- pip-audit currently reports 5 chromadb advisories (PYSEC-2026-311/3813/3814/3815): all concern the Chroma *server*; we use the embedded client; no fix version exists. Explicitly ignored in `audit.yml` — remove the ignores when chromadb ships a fix.
+- **Open exit criteria (not verified):** (1) the new workflows have never run on GitHub — work is uncommitted by the owner's choice; push a branch, open a PR and confirm `Tests`, `Code Quality`, `Dependency Audit` are green before marking 13.1 closed. (2) Required checks: `gh api .../branches/main/protection` returns 403 ("Upgrade to GitHub Pro or make this repository public"), so branch protection cannot be enabled on this private free-plan repo; decide whether to upgrade/make public or rely on discipline. F-25 dead-code cleanup done in the touched files (`advanced_rag.py`, `main.py`, `auth.py`).
+
 ## 4. Open issues and carryovers
  
 ### Security / repository hygiene
