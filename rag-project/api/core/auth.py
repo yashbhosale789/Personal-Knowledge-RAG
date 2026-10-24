@@ -15,8 +15,13 @@ def verify_api_key(authorization: str | None = Header(None)) -> str:
         )
 
     provided_key = authorization.removeprefix("Bearer ")
+    expected_key = os.getenv(config.API_KEY)
 
-    if not secrets.compare_digest(provided_key, os.getenv(config.API_KEY)):
+    # Fail closed: an unset key must reject every request with 401, never 500.
+    # Bytes comparison: compare_digest raises TypeError on non-ASCII str.
+    if not expected_key or not secrets.compare_digest(
+        provided_key.encode(), expected_key.encode()
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key.",
