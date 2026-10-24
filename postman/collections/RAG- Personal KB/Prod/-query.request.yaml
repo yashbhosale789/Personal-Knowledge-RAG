@@ -12,7 +12,7 @@ body:
 
     \r
 
-    \    \"query\": \"Where is the spare tyre located in an Aventro Sedan?\"  // Q01\r
+    \    // \"query\": \"Where is the spare tyre located in an Aventro Sedan?\"  // Q01\r
 
     \    // \"query\": \"Where is the toolkit stored in Aventro vehicles?\"  // Q02\r
 

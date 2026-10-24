@@ -29,4 +29,4 @@ auth:
   credentials:
     token: "{{vault:API_KEY}}"
 settings: {}
-order: 6000
+order: 5000
