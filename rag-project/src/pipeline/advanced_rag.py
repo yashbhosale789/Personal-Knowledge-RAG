@@ -17,14 +17,30 @@ from src.retrieval.retriever import retrieve
 
 logger = logging.getLogger(__name__)
 
-# Initialised once at module load — models are expensive to reload per request
-_bm25 = BM25Retriever()
-_reranker = CrossEncoderReranker()
+# Built lazily on first use (or by warmup() at app startup) — models are expensive
+# to reload per request, and importing this module must not load them (F-05).
+_bm25: BM25Retriever | None = None
+_reranker: CrossEncoderReranker | None = None
 
 
-# in advanced_rag.py, near _bm25/_reranker
+def get_bm25() -> BM25Retriever:
+    global _bm25
+    if _bm25 is None:
+        _bm25 = BM25Retriever()
+    return _bm25
+
+
+def get_reranker() -> CrossEncoderReranker:
+    global _reranker
+    if _reranker is None:
+        _reranker = CrossEncoderReranker()
+    return _reranker
+
+
 def warmup() -> None:
-    """No-op — importing this module already builds _bm25 and _reranker."""
+    """Builds the BM25 index and loads the reranker so the first request is not cold."""
+    get_bm25()
+    get_reranker()
 
 
 def _dense_to_dicts(documents: list[Document], top_k: int) -> list[dict]:
@@ -80,13 +96,12 @@ def retrieve_context(
 ) -> dict[str, list[dict]]:
     """Stages 2-4: dense + BM25 -> RRF -> rerank. Returns every stage so eval can inspect them."""
     dense = _dense_to_dicts(retrieve(query, top_k=top_k * 4), top_k * 4)
-    bm25 = _bm25.retrieve(query, top_k=top_k * 4)
+    bm25 = get_bm25().retrieve(query, top_k=top_k * 4)
     fused = reciprocal_rank_fusion(ranked_lists=[dense, bm25], top_k=top_k * 2)
-    reranked = (reranker or _reranker).rerank(query, candidates=fused)
+    reranked = (reranker or get_reranker()).rerank(query, candidates=fused)
     return {"dense": dense, "bm25": bm25, "fused": fused, "reranked": reranked}
 
 
-# def run_advanced_rag_pipeline(query: str, top_k: int = TOP_K) -> dict:
 def run_advanced_rag_pipeline(
     query: str,
     top_k: int = TOP_K,
@@ -104,20 +119,6 @@ def run_advanced_rag_pipeline(
     # Stage 1: Query rewriting
     rewritten = rewritten or rewrite_query(query, provider=provider)
 
-    # # Stage 2: Parallel retrieval
-    # dense_docs = retrieve(rewritten, top_k=top_k * 4)
-    # dense_results = _dense_to_dicts(dense_docs, top_k * 4)
-    # bm25_results = _bm25.retrieve(rewritten, top_k=top_k * 4)
-
-    # # Stage 3: RRF fusion
-    # fused = reciprocal_rank_fusion(
-    #     ranked_lists=[dense_results, bm25_results], top_k=top_k * 2
-    # )
-
-    # # Stage 4: Rerank
-    # reranked = _reranker.rerank(rewritten, candidates=fused)
-
-    # Commented out above and made a call below
     # Stages 2-4: hybrid retrieval -> RRF fusion -> rerank
     reranked = retrieve_context(rewritten, top_k=top_k)["reranked"]
 
@@ -161,12 +162,11 @@ def run_advanced_rag_pipeline(
     answer = call_llm(prompt, system=SYSTEM_PROMPT, provider=provider)
     answer = answer.replace("【", "[").replace("】", "]")
 
-    # Stage 5.5: Citaiton Verification
+    # Stage 5.5: Citation Verification
     citation_check = verify_citation(answer, reranked)
 
     # Stage 5.75: Confidence
     confidence = score_confidence(citation_check)
-    # was score_confidence(sufficiency, citation_check)
 
     if confidence["caveat"]:
         answer = answer + confidence["caveat"]

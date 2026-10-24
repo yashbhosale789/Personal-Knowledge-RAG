@@ -12,8 +12,6 @@ from api.core.exceptions import RAGException
 from api.middleware.logging import StructuredLoggingMiddleware
 from api.routers import health, ingest, metrics, query
 
-# from api.routers.metrics import router as metrics_router
-
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -48,16 +46,17 @@ def _warmup_retrieval_component() -> None:
     the LLM: provider health is transient and already handled per-request by
     call_with_fallback (see _warmup_llm).
 
-    Importing advanced_rag triggers its own module-level singleton creation
-    (_bm25, _reranker) — must import the module itself, not re-instantiate
-    BM25Retriever/CrossEncoderReranker separately, or warmup builds throwaway
-    copies while the real pipeline still cold-loads its own on first call.
+    Calls advanced_rag.warmup() rather than instantiating BM25Retriever /
+    CrossEncoderReranker here, or warmup would build throwaway copies while the
+    real pipeline still cold-loads its own on first call.
     """
     from src.embedding.embedder import get_embedding_model
+    from src.pipeline.advanced_rag import warmup
     from src.vectorstore.store import get_vectorstore
 
     get_embedding_model()
     get_vectorstore()
+    warmup()
 
 
 async def _warmup_llm(logger: logging.Logger) -> None:
@@ -90,11 +89,6 @@ async def lifespan(app: FastAPI):
         from starlette.concurrency import run_in_threadpool
 
         from src.llm.semantic_cache import create_cache_index
-
-        # from src.pipeline.advanced_rag import run_advanced_rag_pipeline
-
-        # Warm up: run a dummy query to force model loading
-        # await run_in_threadpool(run_advanced_rag_pipeline, "warmup", return_contexts=False)
 
         await run_in_threadpool(_warmup_retrieval_component)
         health.set_pipeline_ready(True)
