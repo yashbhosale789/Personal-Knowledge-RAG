@@ -86,3 +86,11 @@ postman/environments/
 graphify-out/
 .graphify/
 CLAUDE.md
+# ==========================================
+# Test artifacts
+# ==========================================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
