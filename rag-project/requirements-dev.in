@@ -1,0 +1,9 @@
+# Test and CI tooling. Lock: requirements-dev.txt (compiled against requirements.txt).
+#   uv pip compile requirements-dev.in -c requirements.txt --python-version 3.11 \
+#     --python-platform linux --no-header --annotation-style line -o requirements-dev.txt
+pytest
+pytest-cov
+httpx
+pip-audit
+ruff==0.16.10
+bandit==1.9.4
