@@ -1,0 +1,11 @@
+$kind: http-request
+name: /delete
+url: http://127.0.0.1:8001/ingest?file_path=data/documents/Adjusting the Steering Wheel.pdf
+method: DELETE
+queryParams:
+  file_path: data/documents/Adjusting the Steering Wheel.pdf
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:API_KEY}}"
+order: 3000
