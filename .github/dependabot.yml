@@ -8,6 +8,12 @@ updates:
     groups:
       python-minor-and-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # unstructured 0.27.34 (latest) requires filelock<4, so the lock cannot move to 4.x
+      # without downgrading unstructured. The filelock advisories are ignored in audit.yml.
+      # Remove this entry and those flags once unstructured allows filelock>=4.2.1.
+      - dependency-name: "filelock"
+        versions: ["4.x"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
