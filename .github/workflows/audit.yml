@@ -35,6 +35,13 @@ jobs:
       # *server* (remote model loading, server RBAC/tenant authorization). We only use the
       # embedded PersistentClient and run no Chroma server; no fixed version exists yet.
       # Drop these flags once chromadb ships a fix.
+      # Ignored (reviewed 2026-10-25): filelock 3.32.7 advisories, fixed in 4.2.1. filelock is
+      # transitive and unstructured 0.27.34 (latest) requires filelock<4, so the lock cannot move
+      # to a fixed version without downgrading unstructured. The advisories concern filelock's
+      # SQLite ReadWriteLock (CVE-2026-112940 Linux, CVE-2026-112913 Windows) and Windows soft
+      # locks (CVE-2026-112907); all need another local account on the same host. We call none of
+      # these lock types, and chromadb's ReadWriteLock is its own thread-based class.
+      # Drop these flags once unstructured allows filelock>=4.2.1.
       - name: Audit runtime and dev locks
         run: |
           pip-audit -r requirements.txt -r requirements-dev.txt --no-deps --disable-pip \
@@ -42,4 +49,7 @@ jobs:
             --ignore-vuln PYSEC-2026-311 \
             --ignore-vuln PYSEC-2026-3813 \
             --ignore-vuln PYSEC-2026-3814 \
-            --ignore-vuln PYSEC-2026-3815
+            --ignore-vuln PYSEC-2026-3815 \
+            --ignore-vuln CVE-2026-112940 \
+            --ignore-vuln CVE-2026-112913 \
+            --ignore-vuln CVE-2026-112907
