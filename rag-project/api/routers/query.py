@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import json
 import logging
 
@@ -8,6 +9,7 @@ from starlette.concurrency import run_in_threadpool
 import config
 from api.core.auth import verify_api_key
 from api.core.exceptions import PipelineNotReadyError, ProviderError
+from api.core.metrics import rag_query_outcomes_total
 from api.core.retry import call_with_fallback
 from api.models.requests import QueryRequest
 from api.models.responses import QueryResponse
@@ -40,7 +42,10 @@ def _log_query(
     latency_ms: float,
     stages: list[dict],
     llm_usage: dict | None = None,
+    **fields,
 ) -> None:
+    """fields: outcome-specific extras (cache-hit similarity, rewritten-query hash)."""
+    rag_query_outcomes_total.labels(outcome=str(outcome)).inc()
     stages_ms = observability.summarize(stages)
     llm_ms = llm_usage["llm_ms"] if llm_usage else 0
     logger.info(
@@ -60,6 +65,7 @@ def _log_query(
                 "unaccounted_ms": round(
                     latency_ms - sum(stages_ms.values()) - llm_ms, 1
                 ),
+                **fields,
             }
         )
     )
@@ -103,7 +109,17 @@ async def _answer(
 
     if cached is not None:
         latency_ms = (__import__("time").monotonic() - start_time) * 1000
-        _log_query(request_id, "cached", cached["provider"], latency_ms, stages)
+        # For the Phase 15.3 cache-layer decision: how close hits are, and how many
+        # are verbatim repeats an exact-match cache would also catch.
+        _log_query(
+            request_id,
+            "cached",
+            cached["provider"],
+            latency_ms,
+            stages,
+            cache_similarity=round(cached["similarity"], 4),
+            cache_exact_repeat=cached["query"] == query,
+        )
         grounding = cached.get("grounding") or {}
         return QueryResponse(
             query_id=request_id,
@@ -141,7 +157,9 @@ async def _answer(
         )
         raise HTTPException(status_code=502, detail=e.message)
 
-    if result.get("outcome") != "abstain":
+    # Not cached: an abstain, or an empty retrieval, which must not outlive the
+    # ingest that would answer it.
+    if result.get("outcome") not in ("abstain", "empty"):
         with observability.timed("cache_store"):
             await run_in_threadpool(
                 store_cache_entry,
@@ -153,6 +171,7 @@ async def _answer(
             )
 
     latency_ms = (__import__("time").monotonic() - start_time) * 1000
+    rewritten = result.get("rewritten_query")
     _log_query(
         request_id,
         result.get("outcome"),
@@ -160,6 +179,10 @@ async def _answer(
         latency_ms,
         stages,
         result.get("llm_usage"),
+        # For Phase 15.3: repeats of one rewrite are what a retrieval cache would reuse.
+        rewritten_query_hash=(
+            hashlib.sha256(rewritten.encode()).hexdigest()[:12] if rewritten else None
+        ),
     )
 
     return QueryResponse(

@@ -1,5 +1,5 @@
 {
-  "contract_version": 2,
+  "contract_version": 3,
   "schema": {
     "$defs": {
       "CitationVerificationInfo": {
@@ -167,7 +167,7 @@
           }
         ],
         "default": null,
-        "description": "'abstain' | 'answer_low_confidence' | 'answer' \u2014 derived from sufficiency/citation_check/confidence.",
+        "description": "'abstain' | 'answer_low_confidence' | 'answer' \u2014 derived from sufficiency/citation_check/confidence; 'cached' for a semantic-cache hit; 'empty' when retrieval found nothing.",
         "title": "Outcome"
       },
       "prompt_version": {

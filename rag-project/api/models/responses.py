@@ -73,7 +73,7 @@ class QueryResponse(BaseModel):
 
     outcome: str | None = Field(
         default=None,
-        description="'abstain' | 'answer_low_confidence' | 'answer' — derived from sufficiency/citation_check/confidence.",
+        description="'abstain' | 'answer_low_confidence' | 'answer' — derived from sufficiency/citation_check/confidence; 'cached' for a semantic-cache hit; 'empty' when retrieval found nothing.",
     )
 
     prompt_version: str = Field(

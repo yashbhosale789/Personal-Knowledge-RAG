@@ -245,6 +245,7 @@ def test_no_retrieved_chunks_short_circuits(wired):
     result = ar.run_advanced_rag_pipeline("anything")
     assert result["chunks_used"] == 0
     assert result["sources"] == []
+    assert result["outcome"] == "empty"
     assert wired.llm_calls == []
 
 

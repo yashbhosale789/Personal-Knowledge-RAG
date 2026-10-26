@@ -224,6 +224,7 @@ def test_prompt_version_and_llm_usage_are_in_the_query_log(
     timing = {
         k: events[0].pop(k) for k in ("latency_ms", "stages_ms", "unaccounted_ms")
     }
+    assert len(events[0].pop("rewritten_query_hash")) == 12
     assert events == [
         {
             "event": "query",
@@ -368,3 +369,81 @@ def test_a_cache_hit_returns_the_grounding_of_the_original_answer(
     body = post(client, auth_headers).json()
     assert body["outcome"] == "cached"
     assert {f: body[f] for f in GROUNDING_FIELDS} == stored
+
+
+# --- RAG quality signals (Phase 13.4 step 3) --------------------------------
+
+
+@pytest.mark.parametrize(
+    "outcome, cached",
+    [
+        ("answer", True),
+        ("answer_low_confidence", True),
+        ("abstain", False),
+        ("empty", False),
+    ],
+)
+def test_each_outcome_is_counted_and_only_answers_are_cached(
+    client, fakes, ready, auth_headers, outcome, cached
+):
+    from prometheus_client import REGISTRY
+
+    def count():
+        labels = {"outcome": outcome}
+        return REGISTRY.get_sample_value("rag_query_outcomes_total", labels) or 0
+
+    fakes.result = pipeline_result(outcome=outcome)
+    before = count()
+    assert post(client, auth_headers).json()["outcome"] == outcome
+    assert count() == before + 1
+    assert bool(fakes.cache_writes) is cached
+
+
+def test_query_log_records_cache_similarity_on_a_hit_and_a_rewrite_hash_on_a_miss(
+    client, fakes, ready, auth_headers, caplog
+):
+    """For the Phase 15.3 cache-layer decision."""
+    import hashlib
+    import json
+
+    from prometheus_client import REGISTRY
+
+    def events():
+        return [
+            json.loads(r.getMessage())
+            for r in caplog.records
+            if r.name == "api.routers.query" and r.getMessage().startswith("{")
+        ]
+
+    with caplog.at_level("INFO", logger="api.routers.query"):
+        post(client, auth_headers)  # miss
+        hits = REGISTRY.get_sample_value(
+            "rag_query_outcomes_total", {"outcome": "cached"}
+        )
+        q = "How do I tighten the lug nuts?"
+        fakes.cached = {
+            "answer": "a",
+            "provider": "groq",
+            "query": q,
+            "similarity": 0.98765,
+        }
+        post(client, auth_headers)  # verbatim repeat
+        fakes.cached = {
+            **fakes.cached,
+            "query": "lug nut tightening?",
+            "similarity": 0.93,
+        }
+        post(client, auth_headers)  # paraphrase
+
+    miss, repeat, paraphrase = events()
+    expected = hashlib.sha256(b"lug wrench").hexdigest()[:12]  # fake rewrite
+    assert miss["rewritten_query_hash"] == expected
+    assert "cache_similarity" not in miss
+    assert (repeat["cache_similarity"], repeat["cache_exact_repeat"]) == (0.9877, True)
+    assert (paraphrase["cache_similarity"], paraphrase["cache_exact_repeat"]) == (
+        0.93,
+        False,
+    )
+    assert "rewritten_query_hash" not in repeat
+    after = REGISTRY.get_sample_value("rag_query_outcomes_total", {"outcome": "cached"})
+    assert after == (hits or 0) + 2

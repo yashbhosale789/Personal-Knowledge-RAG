@@ -37,6 +37,13 @@ provider_requests_total = Counter(
     ["provider", "outcome"],
 )
 
+rag_query_outcomes_total = Counter(
+    "rag_query_outcomes_total",
+    "Served /query requests by outcome: cached | answer | answer_low_confidence "
+    "(citation check failed) | abstain (insufficient context) | empty (nothing retrieved).",
+    ["outcome"],
+)
+
 # Constant per deploy: rag_prompt_info{version="..."} 1
 prompt_info = Info("rag_prompt", "Pipeline prompt version in use.")
 prompt_info.info({"version": PROMPT_VERSION})
