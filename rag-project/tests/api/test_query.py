@@ -1,3 +1,5 @@
+import pytest
+
 from api.core.exceptions import ProviderError
 from api.routers import query as query_router
 
@@ -218,6 +220,10 @@ def test_prompt_version_and_llm_usage_are_in_the_query_log(
         for r in caplog.records
         if r.name == "api.routers.query" and r.getMessage().startswith("{")
     ]
+    assert len(events) == 1
+    timing = {
+        k: events[0].pop(k) for k in ("latency_ms", "stages_ms", "unaccounted_ms")
+    }
     assert events == [
         {
             "event": "query",
@@ -228,6 +234,7 @@ def test_prompt_version_and_llm_usage_are_in_the_query_log(
             "llm_usage": fakes.result["llm_usage"],  # Phase 13.3: per-stage usage
         }
     ]
+    assert set(timing["stages_ms"]) == {"cache_embed", "cache_lookup", "cache_store"}
 
 
 def test_cache_hit_reports_the_current_prompt_version(
@@ -256,3 +263,91 @@ def test_metrics_expose_the_prompt_version(client):
     from config import PROMPT_VERSION
 
     assert f'version="{PROMPT_VERSION}"' in client.get("/metrics").text
+
+
+# --- request tracing (Phase 13.4) ------------------------------------------
+
+
+def test_every_api_and_src_log_line_of_a_query_carries_its_request_id(
+    client, fakes, ready, auth_headers, monkeypatch
+):
+    """The ID reaches a src/ logger in the pipeline's worker thread without being passed."""
+    import io
+    import json
+    import logging
+
+    from src.observability import JsonFormatter, RequestIdFilter
+
+    def pipeline(query, provider, return_contexts):
+        logging.getLogger("src.pipeline.advanced_rag").info("in the pipeline thread")
+        return fakes.result
+
+    monkeypatch.setattr(query_router, "_run_pipeline", pipeline)
+    buf = io.StringIO()
+    handler = logging.StreamHandler(buf)
+    handler.setFormatter(JsonFormatter())
+    handler.addFilter(RequestIdFilter())
+    handler.addFilter(lambda r: r.name.startswith(("api.", "src.")))
+    root = logging.getLogger()
+    level = root.level
+    root.addHandler(handler)
+    root.setLevel(logging.INFO)
+    try:
+        r = post(client, auth_headers)
+    finally:
+        root.removeHandler(handler)
+        root.setLevel(level)
+
+    lines = [json.loads(line) for line in buf.getvalue().splitlines()]
+    assert "in the pipeline thread" in [line.get("message") for line in lines]
+    assert "query" in [line.get("event") for line in lines]
+    assert "/query" in [line.get("path") for line in lines]  # api.access
+    assert {line["request_id"] for line in lines} == {r.headers["X-Request-ID"]}
+
+
+def test_named_stages_account_for_the_query_latency(
+    client, fakes, ready, auth_headers, monkeypatch, caplog
+):
+    import json
+    import time
+
+    from src.llm import usage
+    from src.observability import timed
+
+    def pipeline(query, provider, return_contexts):
+        with timed("dense_retrieve"):
+            with timed("dense_embed"):
+                time.sleep(0.05)
+            time.sleep(0.05)
+        with timed("rerank"):
+            time.sleep(0.1)
+        return pipeline_result(llm_usage=usage.summarize([]))
+
+    monkeypatch.setattr(query_router, "_run_pipeline", pipeline)
+    with caplog.at_level("INFO", logger="api.routers.query"):
+        body = post(client, auth_headers).json()
+
+    [event] = [
+        json.loads(r.getMessage())
+        for r in caplog.records
+        if r.name == "api.routers.query" and r.getMessage().startswith("{")
+    ]
+    stages = event["stages_ms"]
+    assert list(stages) == [
+        "cache_embed",
+        "cache_lookup",
+        "dense_embed",
+        "dense_retrieve",
+        "rerank",
+        "cache_store",
+    ]
+    # Self-time: the nested dense_embed is not counted again in dense_retrieve.
+    assert 45 <= stages["dense_retrieve"] < 90
+    assert event["latency_ms"] >= 200
+    remainder = event["latency_ms"] - sum(stages.values())
+    assert event["unaccounted_ms"] == pytest.approx(remainder, abs=0.2)
+    assert 0 <= event["unaccounted_ms"] < 50
+    assert body["latency_ms"] == pytest.approx(event["latency_ms"], abs=0.1)
+
+    metrics = client.get("/metrics").text
+    assert 'rag_stage_duration_seconds_count{stage="rerank"}' in metrics

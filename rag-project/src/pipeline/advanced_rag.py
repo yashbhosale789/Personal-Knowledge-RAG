@@ -7,6 +7,7 @@ from langchain_core.documents import Document
 from config import ABSTAIN_MESSAGE, ANSWER_TEMPLATE, SYSTEM_PROMPT, TOP_K
 from src.llm import usage
 from src.llm.client import call_llm
+from src.observability import timed
 from src.pipeline.citation_verification import verify_citation
 from src.pipeline.confidence import score_confidence
 from src.pipeline.context_sufficiency import check_sufficiency
@@ -79,10 +80,14 @@ def retrieve_context(
     query: str, top_k: int = TOP_K, reranker: CrossEncoderReranker | None = None
 ) -> dict[str, list[dict]]:
     """Stages 2-4: dense + BM25 -> RRF -> rerank. Returns every stage so eval can inspect them."""
-    dense = _dense_to_dicts(retrieve(query, top_k=top_k * 4), top_k * 4)
-    bm25 = get_bm25().retrieve(query, top_k=top_k * 4)
-    fused = reciprocal_rank_fusion(ranked_lists=[dense, bm25], top_k=top_k * 2)
-    reranked = (reranker or get_reranker()).rerank(query, candidates=fused)
+    with timed("dense_retrieve"):
+        dense = _dense_to_dicts(retrieve(query, top_k=top_k * 4), top_k * 4)
+    with timed("bm25"):
+        bm25 = get_bm25().retrieve(query, top_k=top_k * 4)
+    with timed("fusion"):
+        fused = reciprocal_rank_fusion(ranked_lists=[dense, bm25], top_k=top_k * 2)
+    with timed("rerank"):
+        reranked = (reranker or get_reranker()).rerank(query, candidates=fused)
     return {"dense": dense, "bm25": bm25, "fused": fused, "reranked": reranked}
 
 

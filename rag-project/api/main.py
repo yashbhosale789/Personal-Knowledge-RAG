@@ -16,16 +16,13 @@ from api.routers import health, ingest, metrics, query
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {
-        "json": {
-            "()": "logging.Formatter",
-            "fmt": "%(message)s",
-        }
-    },
+    "formatters": {"json": {"()": "src.observability.JsonFormatter"}},
+    "filters": {"request_id": {"()": "src.observability.RequestIdFilter"}},
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "json",
+            "filters": ["request_id"],
         }
     },
     "root": {"level": "INFO", "handlers": ["console"]},
@@ -143,5 +140,9 @@ async def rag_exception_handler(request: Request, exc: RAGException):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, e: Exception):
-    logging.getLogger(__name__).exception("Unhandled exception")
+    # Runs outside the logging middleware's context, so pass the ID explicitly.
+    logging.getLogger(__name__).exception(
+        "Unhandled exception",
+        extra={"request_id": getattr(request.state, "request_id", None)},
+    )
     return JSONResponse(status_code=500, content={"error": "Internal server error."})
