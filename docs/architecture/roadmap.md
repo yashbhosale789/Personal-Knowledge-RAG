@@ -213,7 +213,19 @@ Exit: CI runs the suite on every PR and it is green; coverage floor recorded in 
 
 ### Phase 13.2 — Prompt versioning
 
-**Status: implemented locally 2026-10-26; NOT closed — CI (incl. the Redis cache tests) not yet run on a PR.** Decision: prompts stay in `rag-project/config.py` (the generation user template moved there as `ANSWER_TEMPLATE`); separate prompt files and a manual version string were tried and rejected as ceremony for a single-developer repo. `config.PROMPT_VERSION` is a 12-hex hash of all five pipeline prompts, so any edit changes it. It appears in the `/query` response (`prompt_version`, contract v2), a structured `event=query` log line, the `event=prompts_loaded` startup log, the Prometheus `rag_prompt_info` metric, the semantic-cache namespace (prompt version + answering model + verifier model; index renamed `semantic_cache_idx_v2`), and every generation, judge and retrieval-baseline eval record (prompts were already in the eval fingerprint). Prompt text verified byte-identical before/after. The judge/verifier `Question:/Context:` framings stay in code: covered by the eval code hash, not by the cache namespace. Initial `PROMPT_VERSION`: `938331ced9a6`.
+**Status: CLOSED 2026-10-26.** PR #67 (merge `49eb33f`), deployed to production the same day; the old `semantic_cache_idx` was dropped after the deploy (runbook: `docs/runbooks/redis-stack-guide.md`).
+
+Evidence: CI on PR #67 — `pytest` 222 passed / 6 strict xfail / 0 skipped (the Redis cache-invalidation tests ran against the `services:` container), coverage 66.52% (floor 65); `eval` gate, ruff and bandit green. Prompt text verified byte-identical before/after the move. Initial `PROMPT_VERSION`: `938331ced9a6`. No evaluation numbers are quoted for this sub-phase.
+
+What was built: prompts stay in `rag-project/config.py` (the generation user template moved there as `ANSWER_TEMPLATE`). `config.PROMPT_VERSION` is a 12-hex hash of all five pipeline prompts, so any edit changes it. It appears in the `/query` response (`prompt_version`, contract v2), a structured `event=query` log line, the `event=prompts_loaded` startup log, the Prometheus `rag_prompt_info` metric, the semantic-cache namespace (prompt version + answering model + verifier model; index `semantic_cache_idx_v2`), and every generation, judge and retrieval-baseline eval record (prompts were already in the eval fingerprint).
+
+Decisions:
+- Separate prompt files with a registry and a manual version string were built, then rejected as ceremony for a single-developer repo: a content hash in `config.py` meets every exit criterion with less code.
+- `deploy/deploy.sh` already deletes `cache:*` on every deploy, so in production a prompt edit was already invalidated by the deploy. The namespace's production value is model scoping (a `provider` override no longer receives another model's cached answer) and not depending on the deploy script (local runs, restarts, config changes).
+
+Unresolved (not fixed by 13.2):
+- The judge/verifier user-turn framings (`Question:/Context:`) stay in code: covered by the eval code hash, not by the cache namespace.
+- F-14 (entity guard hard-coded to `sedan/suv/hatchback`) is unchanged; the namespace does not address it. Still owned by 15.1.
 
 - Store prompts in the repository (`config.py`); the version is a hash of their text.
 - Include the prompt-version identifier in relevant responses, logs, metrics, **and the semantic-cache key** (F-14), together with the model name.
@@ -462,7 +474,7 @@ Status as of 2026-10-23. Gap items name the owning phase.
 | Unit / API / integration tests in CI | Built in 13.1; confirm on the first PR run | F-04 → 13.1 |
 | Reproducible builds (pinned dependencies) | Lock built in 13.1; confirm with a CI/Docker build | F-06 → 13.1 |
 | Dependency / image vulnerability scanning | pip-audit + Dependabot built in 13.1; image scan still a gap | F-22 → 13.1 |
-| Prompt / model versioning | **Gap** | 13.2 |
+| Prompt / model versioning | Done — `config.PROMPT_VERSION` in responses, logs, metrics, cache namespace and eval records | 13.2, PR #67 |
 | Per-stage cost and latency visibility | **Gap** | 13.3, 13.4 |
 | Request correlation and tracing | Partial — request ID in the `api/` layer only | 13.4 |
 | Alerting and SLOs | **Gap** | F-20 → 13.5 (final numbers 15.4) |

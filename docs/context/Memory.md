@@ -53,7 +53,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 **Phase plan**
 - **13.0 Evaluation foundation:** Grow validated golden dataset to roughly 50–60 questions spanning normal, difficult, ambiguous, multi-hop, unanswerable, and adversarial cases; synthetic questions must be validated by Yash. Add retrieval-relevance labels. Build a harness that compares two variants on the same questions and reports a confidence interval.
 - **13.1 Token/cost accounting:** Account for tokens/cost by pipeline stage.
-- **13.2 Prompt versioning:** Prompt files live in repository; include prompt version ID in every response/log/metric/cache namespace. No external prompt platform.
+- **13.2 Prompt versioning:** CLOSED 2026-10-26 (see the 13.2 entry in §3). Prompts stay in `config.py`; `config.PROMPT_VERSION` (content hash) in every response/log/metric/cache namespace/eval record. No external prompt platform.
 - **13.3 Reranker/model benchmark:** Compare candidates through evaluation harness. Retrieval metrics (Recall@K, MRR, NDCG) do not require LLM judge calls.
 - **13.4 Tracing:** Add Langfuse tracing, fail-open and non-blocking. Langfuse Cloud Hobby proposed—confirm with Yash before taking this step and verify free-tier terms. Self-hosting impractical on current hardware.
 - **13.5 Token optimization:** Each change validated against evaluation harness.
@@ -82,6 +82,12 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - F-04/F-13: new workflows `tests.yml` (pytest + Redis service + dataset validation) and `audit.yml` (pip-audit, weekly); `eval-gate.yml` now runs on pipeline-path PRs, weekly and on demand, and reports (warning + job summary) instead of blocking when the run is incomplete (gate exit 2). `.github/dependabot.yml` covers pip and GitHub Actions.
 - pip-audit currently reports 5 chromadb advisories (PYSEC-2026-311/3813/3814/3815): all concern the Chroma *server*; we use the embedded client; no fix version exists. Explicitly ignored in `audit.yml` — remove the ignores when chromadb ships a fix.
 - **Open exit criteria (not verified):** (1) the new workflows have never run on GitHub — work is uncommitted by the owner's choice; push a branch, open a PR and confirm `Tests`, `Code Quality`, `Dependency Audit` are green before marking 13.1 closed. (2) Required checks: `gh api .../branches/main/protection` returns 403 ("Upgrade to GitHub Pro or make this repository public"), so branch protection cannot be enabled on this private free-plan repo; decide whether to upgrade/make public or rely on discipline. F-25 dead-code cleanup done in the touched files (`advanced_rag.py`, `main.py`, `auth.py`).
+
+**Phase 13.2 (new numbering — "Prompt versioning") — CLOSED 2026-10-26**
+- Merged as PR #67 (`49eb33f`), deployed the same day; old Redis index `semantic_cache_idx` dropped on prod after the deploy. CI: 222 passed / 6 strict xfail / 0 skipped (Redis tests ran), coverage 66.52% (floor 65), eval gate green.
+- Prompts stay in `rag-project/config.py`; the generation user template moved there as `ANSWER_TEMPLATE`. `config.PROMPT_VERSION` = 12-hex SHA-256 of the five pipeline prompts (`REWRITE_SYSTEM`, `SYSTEM_PROMPT`, `ANSWER_TEMPLATE`, `SUFFICIENCY_JUDGE_SYSTEM`, `CITATION_VERIFIER_SYSTEM`); initial value `938331ced9a6`. Add any new pipeline prompt to that hash.
+- Where it appears: `/query` response field `prompt_version` (API contract v2), `event=query` and `event=prompts_loaded` JSON logs, Prometheus `rag_prompt_info{version=...}`, the semantic-cache namespace (prompt version + answering model + verifier model; index `semantic_cache_idx_v2`, TAG filter on `namespace`), and eval generation/judge/retrieval records.
+- Not covered: the judge/verifier `Question:/Context:` framings (in code; eval code hash only). F-14 entity guard unchanged (15.1).
 
 ## 4. Open issues and carryovers
  
@@ -120,6 +126,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - Redis persistence is intentionally omitted; cache and rate limits fail open.
 - $0 hard budget constraint: No paid services or unexpected cloud charges.
 - Online A/B testing replaced with offline paired comparisons on the golden dataset.
+- Separate prompt files / a prompt registry with manual version strings (13.2): built, then rejected as ceremony for a single-developer repo. Prompts stay in `config.py`, versioned by content hash.
  
 ### Technical lessons
 - All chunks and query embeddings must share the exact same embedding model and normalization.
@@ -127,6 +134,8 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - Semantic cache requires an entity guard in addition to the 0.87 cosine similarity threshold to prevent confusing semantically similar queries across different entities.
 - Ollama requires native `/api/chat` with `stream: false`; its OpenAI-compatible endpoint allocates excessive KV cache.
 - `create_cache_index()` must run on startup because fresh ephemeral Redis instances lack the RediSearch schema.
+- A new field in the cache index needs a new index name (`create_cache_index()` returns early if the name exists); drop the old index afterwards **without** `DD`, because both indexes cover the `cache:` prefix.
+- `deploy/deploy.sh` deletes `cache:*` on every deploy, so prompt edits shipped by deploy were already invalidated in prod; the cache namespace matters for model scoping (`provider` override) and non-deploy restarts.
 - Ingestion must use deterministic chunk IDs (SHA-256 of `source::chunk_index`) and delete previous source chunks only after successful validation.
 
 ## 7. Working style and collaboration rules
