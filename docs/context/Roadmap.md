@@ -1,6 +1,6 @@
 # Personal Knowledge OS — RAG Project Roadmap
 
-Last updated: 2026-10-23
+Last updated: 2026-10-26
 
 Current phase: **Phase 13 — LLMOps foundations**
 
@@ -143,16 +143,21 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 
 #### 13.4 Observability: request tracing
 
-- Request IDs across every pipeline stage
+- Full correlation: one request ID across every pipeline stage, log line and trace
 - Per-stage timing and outcome in logs and metrics
-- Optional external LLM tracing, non-blocking and fail-open
+- RAG quality metrics: cache hits, abstention, citation-verification failures, empty retrievals
+- LLM tracing with Langfuse Cloud (free tier) on OpenTelemetry, non-blocking and fail-open, with content masking
+- Cardinality rules: high-cardinality data in logs and traces, never in metric labels
 
 #### 13.5 Operational readiness
 
-- Alerting rules and notifications
+- Provisional SLOs and error budgets for availability and latency
+- Error-budget burn-rate alerts with free notifications through Grafana alerting
+- External uptime monitoring
+- Docker log rotation and logging/retention policy
 - Short-lived deployment credentials
 - Container resource limits
-- Authorization model and logging/retention policy
+- Authorization model
 - Index rebuild procedure
 
 ### Phase 14 — Human feedback and React frontend
@@ -211,7 +216,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 #### 15.4 Final operational validation
 
 - Load testing and capacity statement
-- Service-level objectives and alert thresholds
+- Final SLO targets and alert thresholds from load-test measurements
 - Production-readiness review
 
 ### Phase 16 — Graph RAG and Multimodal RAG
@@ -246,7 +251,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 | Automated testing and CI quality gates | 10, 11, 13 |
 | Security | 9, 11, 13 |
 | Reliability | 9, 11, 12, 15 |
-| Observability | 7, 13 |
+| Observability: logs, metrics, traces, correlation, alerts, SLOs | 7, 13, 15 |
 | LLMOps: prompts, cost, tracing | 13 |
 | Deployment and delivery | 10, 12, 13 |
 | User experience and feedback | 14 |
