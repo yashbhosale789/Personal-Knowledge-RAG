@@ -134,6 +134,7 @@ def main() -> None:
                 "split": item["split"],
                 "brand": "aventro" in item["question"].lower(),
                 "query": query,
+                "prompt_version": config.PROMPT_VERSION,
                 "metrics": metrics,
             }
         )

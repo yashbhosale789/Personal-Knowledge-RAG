@@ -1,5 +1,5 @@
 {
-  "contract_version": 1,
+  "contract_version": 2,
   "schema": {
     "$defs": {
       "CitationVerificationInfo": {
@@ -169,6 +169,11 @@
         "default": null,
         "description": "'abstain' | 'answer_low_confidence' | 'answer' \u2014 derived from sufficiency/citation_check/confidence.",
         "title": "Outcome"
+      },
+      "prompt_version": {
+        "description": "Hash of the pipeline prompts in config.py that produced the answer.",
+        "title": "Prompt Version",
+        "type": "string"
       }
     },
     "required": [
@@ -179,7 +184,8 @@
       "chunks_used",
       "provider",
       "latency_ms",
-      "timestamp"
+      "timestamp",
+      "prompt_version"
     ],
     "title": "QueryResponse",
     "type": "object"

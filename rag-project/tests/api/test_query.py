@@ -191,3 +191,59 @@ def test_first_provider_failing_falls_back(
 
 def test_get_on_a_post_route_is_405(client):
     assert client.get("/query").status_code == 405
+
+
+# --- prompt version (Phase 13.2) ------------------------------------------
+
+
+def test_prompt_version_is_in_the_response_and_the_query_log(
+    client, fakes, ready, auth_headers, caplog
+):
+    import json
+
+    from config import PROMPT_VERSION
+
+    with caplog.at_level("INFO", logger="api.routers.query"):
+        body = post(client, auth_headers).json()
+
+    assert body["prompt_version"] == PROMPT_VERSION
+    events = [
+        json.loads(r.getMessage())
+        for r in caplog.records
+        if r.name == "api.routers.query" and r.getMessage().startswith("{")
+    ]
+    assert events == [
+        {
+            "event": "query",
+            "request_id": body["query_id"],
+            "outcome": "answer",
+            "provider": "groq",
+            "prompt_version": PROMPT_VERSION,
+        }
+    ]
+
+
+def test_cache_hit_reports_the_current_prompt_version(
+    client, fakes, ready, auth_headers
+):
+    from config import PROMPT_VERSION
+
+    fakes.cached = {"answer": "a", "provider": "groq", "query": "q", "similarity": 1.0}
+    assert post(client, auth_headers).json()["prompt_version"] == PROMPT_VERSION
+
+
+def test_cache_lookup_is_scoped_to_the_requested_provider(
+    client, fakes, ready, auth_headers, monkeypatch
+):
+    lookups = []
+    monkeypatch.setattr(
+        query_router, "find_cached_answer", lambda q, provider: lookups.append(provider)
+    )
+    post(client, auth_headers, provider="gemini")
+    assert lookups == ["gemini"]
+
+
+def test_metrics_expose_the_prompt_version(client):
+    from config import PROMPT_VERSION
+
+    assert f'version="{PROMPT_VERSION}"' in client.get("/metrics").text

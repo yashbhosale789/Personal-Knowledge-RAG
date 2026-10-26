@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import logging.config
 import os
@@ -84,6 +85,9 @@ async def lifespan(app: FastAPI):
     logger.info("Starting RAG API - initializing pipeline...")
 
     _validate_api_key_config()
+    logger.info(
+        json.dumps({"event": "prompts_loaded", "prompt_version": config.PROMPT_VERSION})
+    )
 
     try:
         from starlette.concurrency import run_in_threadpool
