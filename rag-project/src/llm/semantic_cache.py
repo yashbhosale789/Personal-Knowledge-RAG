@@ -1,3 +1,4 @@
+import json
 import logging
 
 import redis
@@ -30,6 +31,17 @@ from src.llm.redis_client import get_redis_client
 # sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # from experiments.semantic_cache_threshold import entity_mismatch
+
+
+# What a cache hit must return besides the answer, so a cited answer stays cited.
+# Stored as one JSON field; it is not indexed, only returned.
+GROUNDING_FIELDS = (
+    "sources",
+    "chunks_used",
+    "sufficiency",
+    "citation_check",
+    "confidence",
+)
 
 
 def cache_namespace(provider: str | None = None) -> str:
@@ -89,7 +101,11 @@ def cache_embedding(query: str) -> bytes:
 
 
 def store_cache_entry(
-    query: str, answer: str, provider: str, embedding: bytes | None = None
+    query: str,
+    answer: str,
+    provider: str,
+    embedding: bytes | None = None,
+    grounding: dict | None = None,
 ) -> None:
     client = get_redis_client()
     if embedding is None:
@@ -111,6 +127,7 @@ def store_cache_entry(
                 "answer": answer,
                 "provider": provider,
                 "namespace": namespace,
+                "grounding": json.dumps(grounding or {}),
             },
         )
         client.expire(key, CACHE_TTL_SECONDS)
@@ -143,7 +160,7 @@ def find_cached_answer(
     knn_query = (
         Query(f"(@namespace:{{{namespace}}})=>[KNN 1 @embedding $vec AS score]")
         .sort_by("score")
-        .return_fields("query", "answer", "provider", "score")
+        .return_fields("query", "answer", "provider", "grounding", "score")
         .dialect(2)
     )
 
@@ -173,6 +190,8 @@ def find_cached_answer(
         "answer": top_hit.answer,
         "provider": top_hit.provider,
         "similarity": similarity,
+        # Entries written before grounding was stored have none.
+        "grounding": json.loads(getattr(top_hit, "grounding", None) or "{}"),
     }
 
 

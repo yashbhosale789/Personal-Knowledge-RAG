@@ -351,3 +351,20 @@ def test_named_stages_account_for_the_query_latency(
 
     metrics = client.get("/metrics").text
     assert 'rag_stage_duration_seconds_count{stage="rerank"}' in metrics
+
+
+def test_a_cache_hit_returns_the_grounding_of_the_original_answer(
+    client, fakes, ready, auth_headers
+):
+    """Phase 13.4: a cited answer must not come back uncited from the cache."""
+    from src.llm.semantic_cache import GROUNDING_FIELDS
+
+    post(client, auth_headers)  # miss: the pipeline's grounding is stored
+    stored = fakes.cache_writes[0][4]
+    assert stored == {f: fakes.result[f] for f in GROUNDING_FIELDS}
+
+    fakes.cached = {"answer": "a", "provider": "groq", "query": "q", "similarity": 0.97}
+    fakes.cached["grounding"] = stored
+    body = post(client, auth_headers).json()
+    assert body["outcome"] == "cached"
+    assert {f: body[f] for f in GROUNDING_FIELDS} == stored

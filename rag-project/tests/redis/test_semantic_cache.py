@@ -74,3 +74,30 @@ def test_entries_are_scoped_to_the_answering_model(isolated_cache):
     sc = isolated_cache
     sc.store_cache_entry("Where is the jack?", "In the boot.", "groq")
     assert sc.find_cached_answer("Where is the jack?", "gemini") is None
+
+
+def test_a_hit_returns_the_grounding_stored_with_the_answer(isolated_cache, client):
+    sc = isolated_cache
+    grounding = {
+        "sources": ["tyre.pdf"],
+        "chunks_used": 5,
+        "sufficiency": {"sufficient": True, "reason": "ok", "tier": "llm_judge"},
+        "citation_check": {
+            "grounded": True,
+            "unsupported_claims": [],
+            "reason": "ok",
+            "tier": "llm_judge",
+        },
+        "confidence": "high",
+    }
+    sc.store_cache_entry(
+        "Where is the jack?", "In the boot [SOURCE 1].", "groq", None, grounding
+    )
+    assert sc.find_cached_answer("Where is the jack?", "groq")["grounding"] == grounding
+
+    # An entry written before grounding was stored still hits, with no grounding.
+    for key in client.scan_iter(match=f"{sc.CACHE_KEY_PREFIX}*"):
+        client.hdel(key, "grounding")
+    hit = sc.find_cached_answer("Where is the jack?", "groq")
+    assert hit["answer"] == "In the boot [SOURCE 1]."
+    assert hit["grounding"] == {}
