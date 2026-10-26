@@ -146,6 +146,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 - Full correlation: one request ID across every pipeline stage, log line and trace
 - Per-stage timing and outcome in logs and metrics
 - RAG quality metrics: cache hits, abstention, citation-verification failures, empty retrievals
+- Cached answers keep their sources, citation check and confidence
 - LLM tracing with Langfuse Cloud (free tier) on OpenTelemetry, non-blocking and fail-open, with content masking
 - Cardinality rules: high-cardinality data in logs and traces, never in metric labels
 
@@ -176,6 +177,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 #### 14.1 React frontend
 
 - Query interface with answers, citations and abstention display
+- Streamed answers, with verification and confidence sent after the text
 - Feedback controls
 - Responsive layout, automated tests and CI build
 
@@ -188,7 +190,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 | 15.0 | Ingestion and index lifecycle |
 | 15.1 | Corpus scale-up and multi-format ingestion |
 | 15.2 | Retrieval and model benchmarking |
-| 15.3 | Token optimization |
+| 15.3 | Token and cache optimization |
 | 15.4 | Final operational validation |
 
 #### 15.0 Ingestion and index lifecycle
@@ -206,12 +208,14 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 #### 15.2 Retrieval and model benchmarking
 
 - Chunking, retrieval, reranker and model comparisons
-- Pipeline-stage ablations
+- Pipeline-stage ablations, including skipping the rewrite for short, clear queries
 - Agentic versus deterministic pipeline comparison
 
-#### 15.3 Token optimization
+#### 15.3 Token and cache optimization
 
 - Prompt and context reduction validated against the evaluation baseline
+- Layered cache in Redis: exact-match → existing semantic cache → retrieval cache, each added only if measured traffic justifies it
+- Speculative generation in parallel with the sufficiency check, to cut time to first token
 
 #### 15.4 Final operational validation
 

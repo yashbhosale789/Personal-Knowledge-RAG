@@ -237,6 +237,8 @@ Order of work:
 1. **Full correlation first (free, local):** store the request ID in a `contextvars` variable set by the middleware, and add a logging filter so every logger in `api/` and `src/` emits it without changing function signatures. Optionally accept a well-formed incoming `X-Request-ID`. Phase 14.0 depends on this request ID.
 2. **Per-stage timing and outcome:** for the stages rewrite, retrieve, rerank, sufficiency, generate and citation verification, record duration, token counts, prompt version, provider, retry/fallback and outcome. Write these to structured JSON logs, and to Prometheus through a `stage` label.
 3. **RAG quality metrics:** semantic-cache hits and misses, abstention / insufficient-context rate, citation-verification failures, empty retrievals.
+   - **Cached answers must keep their grounding (fix first).** Today a cache hit returns `sources=[]`, `citation_check=None` and `confidence=None` (`api/routers/query.py`). This turns a cited answer into an uncited one, and would make cache hits look like quality failures in these metrics. Store sources, citation check, confidence and sufficiency with the cache entry, and return them on a hit. Add an API test, and update the response contract if any field changes.
+   - Log the cache-hit similarity, and record whether the hit was an exact repeat. On a cache miss, log a hash of the rewritten query. Phase 15.3 uses these to decide on the exact-match (L1) and retrieval (L3) cache layers.
 4. **External tracing — decided 2026-10-26: Langfuse Cloud Hobby (free plan), using the Langfuse Python SDK v3, which is built on OpenTelemetry.** Jaeger was rejected: another container, and no LLM-specific views. Self-hosting Langfuse was rejected: it needs Postgres, ClickHouse, Redis and S3, which don't fit on the 2 GiB `t3.small`.
    - Use the request ID as the trace ID, or record it in trace metadata, so one ID connects the response, logs and trace.
    - **Verify the current Hobby plan's limits and terms before implementation.**
@@ -313,6 +315,7 @@ Decisions to record before building:
 - **API key handling.** The API uses one shared Bearer key; a static single-page app cannot hold a secret. For a single-user system the default is that the user enters the key in the UI and it is kept in memory or `sessionStorage` only; never bake it into the build. Revisit only if the authorization model changes.
 - **Hosting.** Preferred: build static files and serve them from the existing Caddy on the same origin (no CORS, no new service, negligible memory). Free static hosting is the alternative and requires CORS to be configured deliberately.
 - **Rendering.** Treat answers, citations and source text as untrusted: render as text or sanitised markdown only (document content can contain markup).
+- **Streaming (time-to-first-token).** `/query` returns only when the whole pipeline finishes, so the time to first token is the full latency. Add a streaming variant, for example SSE on a new route so the current `/query` contract stays unchanged. It streams generated tokens as they arrive, then sends citation verification, confidence, the caveat and the outcome as a final event. Cache hits are returned as a single event. Add contract tests for the stream format. The UI must handle an answer whose caveat or low-confidence flag arrives after the text.
 
 Quality bar: ESLint and type-check clean, component tests (Vitest or equivalent), and a minimal end-to-end test against a mocked API; a CI job that lints, tests and builds; no new paid service. Keep the UI small: its value is a usable demo of the pipeline and the feedback loop.
 
@@ -405,16 +408,37 @@ Use the harness on corpus `c2`. Retrieval metrics (Recall@K, MRR, NDCG) do not r
 
 1. **Chunking:** size (characters vs tokens), overlap, page-boundary merging (F-10), and the per-format strategies from 15.1.
 2. **Retrieval variants:** dense, keyword (old vs new tokenizer), fused, reranked, reranker alternatives, `TOP_K` and candidate-pool size, on the chosen store.
-3. **Stage ablations:** remove query rewriting, the sufficiency judge and citation verification one at a time; keep a stage only if it earns its latency, quota and quality (F-11).
+3. **Stage ablations:** remove query rewriting, the sufficiency judge and citation verification one at a time; keep a stage only if it earns its latency, quota and quality (F-11). Also test skipping the rewrite only for short, unambiguous queries; this saves one LLM call from the time to first token.
 4. **No-retrieval / long-context baseline** on `c1`, where the whole corpus fits in context.
 5. **Agentic vs deterministic pipeline** (Phase 3) on the same questions.
 6. **Embedding model:** only as a documented experiment; a change requires a full re-index.
 
 Use the test split once, at the end. Exit: a written report stating which variants are distinguishable and which are not, with the chosen configuration and rationale.
 
-### Phase 15.3 — Token optimization
+### Phase 15.3 — Token and cache optimization
 
 Evaluate each optimization against the 15.2 baseline. Report quality regressions as well as latency and cost improvements; do not trade answer quality for tokens without an explicit decision.
+
+**Cache layering (decided 2026-10-26).** Constraint: no extra CPU load on the 2 GiB `t3.small`, and no additional services.
+
+- **L1 — exact match. Build it only if the 13.4 logs show a meaningful share of exact repeats.**
+  - Key: hash of `namespace | normalised query` (lower-case, trimmed, whitespace collapsed). Check it with a Redis `GET` before the semantic lookup.
+  - A hit skips the query embedding and the vector search, so it saves CPU rather than adding load.
+  - Use the same TTL as L2, and make `clear_cache()` remove both layers on ingest and delete.
+- **L2 — semantic cache:** already in place (Phase 9).
+- **L3 — retrieval cache. Build it only if the 13.4 logs show distinct queries being rewritten to the same text.**
+  - Key: `namespace | rewritten query`. Value: the reranked chunk IDs.
+  - A hit skips hybrid search and cross-encoder reranking, the main CPU cost.
+  - `clear_cache()` must remove it on ingest and delete, and on the index rebuild from 15.0.
+- **Connection reuse:** done 2026-10-26. `src/llm/client.py` keeps one pooled `requests.Session` for all providers, so the up to four LLM calls per `/query` skip a TCP + TLS handshake each.
+- **Memory:** all layers stay in the existing Redis, under the 13.5 `maxmemory` with a `volatile-lru` eviction policy. No in-process cache, which would use memory the app needs on a 2 GiB host.
+- **Rejected:**
+  - Query-embedding cache: on a repeat, L1 already skips the embedding, and a paraphrase has to be embedded anyway.
+  - Per-stage LLM-response cache (rewrite, sufficiency): it saves Groq tokens, not CPU or time-to-first-token, has a low hit rate beyond what L1 covers, and adds stale-answer risk.
+
+  Revisit these only if 15.4 load testing shows a stage that caching would fix.
+
+**Speculative generation (time-to-first-token).** Start answer generation in parallel with the sufficiency check, and discard the answer if the check abstains. This takes one LLM round-trip out of the time to first token. It costs no CPU, only Groq tokens spent on abstained queries. Decide on it from the 13.4 abstention rate, and confirm Groq free-tier token limits allow the extra usage.
 
 ### Phase 15.4 — Final operational validation
 
