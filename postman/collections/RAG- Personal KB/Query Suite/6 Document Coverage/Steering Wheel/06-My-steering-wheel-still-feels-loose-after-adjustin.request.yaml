@@ -1,0 +1,23 @@
+$kind: http-request
+name: "06 My steering wheel still feels loose after adjusting it. What should I do?"
+description: "Expected: answer. Ground truth: Make sure the lever is locked; if it remains loose, have it inspected by a professional."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"My steering wheel still feels loose after adjusting it. What should I do?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      if (body.outcome !== "cached") pm.test("retrieves Adjusting the Steering Wheel.pdf", () => pm.expect(body.sources).to.include("Adjusting the Steering Wheel.pdf"));
+      console.log(pm.info.requestName, "|", body.outcome, "|", (body.sources || []).join(", "), "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 6000

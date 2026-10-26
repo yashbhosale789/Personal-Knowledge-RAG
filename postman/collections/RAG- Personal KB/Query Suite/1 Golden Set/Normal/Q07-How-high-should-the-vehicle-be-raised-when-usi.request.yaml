@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q07 How high should the vehicle be raised when using the jack?"
+description: "Expected: answer (medium). Ground truth: The vehicle should be raised until the flat tyre is about 6 inches above the ground."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"How high should the vehicle be raised when using the jack?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 6000

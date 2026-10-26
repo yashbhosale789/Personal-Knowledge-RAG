@@ -1,0 +1,21 @@
+$kind: http-request
+name: "Provider - ollama"
+description: "Local only. Prod has no Ollama, so expect 502 there and 200 against a local server running Ollama."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"What tools are needed for a tyre change?\",\n  \"provider\": \"ollama\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("200 locally or 502 on prod", () => pm.expect(pm.response.code).to.be.oneOf([200, 502]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 3000

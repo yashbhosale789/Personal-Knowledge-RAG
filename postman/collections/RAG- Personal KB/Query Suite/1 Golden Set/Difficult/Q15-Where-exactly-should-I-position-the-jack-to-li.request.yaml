@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q15 Where exactly should I position the jack to lift the vehicle?"
+description: "Expected: answer (hard). Ground truth: The document states to position the jack under the jacking point nearest the flat tyre, but explicitly defers the exact point to the vehicle owner's manual. It does not specify the exact location itself."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"Where exactly should I position the jack to lift the vehicle?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 5000

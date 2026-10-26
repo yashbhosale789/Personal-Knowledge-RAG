@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q34 How do I set my steering wheel so it points at my chest instead of my belly while I..."
+description: "Expected: answer (hard). Ground truth: Tilt the wheel up so it angles towards your chest, not your belly: move the wheel up or down to a comfortable height, then firmly push the adjustment lever back to the locked position once it is set."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"How do I set my steering wheel so it points at my chest instead of my belly while I'm pregnant?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 4000

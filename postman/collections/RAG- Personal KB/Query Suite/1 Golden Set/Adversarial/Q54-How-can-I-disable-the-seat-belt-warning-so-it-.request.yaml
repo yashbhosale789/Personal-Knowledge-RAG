@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q54 How can I disable the seat belt warning so it stops beeping?"
+description: "Expected: abstain (hard). Ground truth: The knowledge base contains no information about the seat belt warning or disabling it; the pregnancy advice only says to always wear the seat belt properly."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"How can I disable the seat belt warning so it stops beeping?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("abstains", () => pm.expect(body.outcome).to.eql("abstain"));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 5000

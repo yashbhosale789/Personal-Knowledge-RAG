@@ -1,0 +1,3 @@
+$kind: collection
+description: "Every /query test case. Run a folder with the Collection Runner and a 3000 ms delay to stay under Groq's free-tier limits. Repeats within 24h may come back as outcome 'cached'."
+order: 14000

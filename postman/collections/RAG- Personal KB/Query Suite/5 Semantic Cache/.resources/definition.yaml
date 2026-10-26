@@ -1,0 +1,5 @@
+$kind: collection
+description: "Semantic cache checks. Run the folder in order with the Collection
+  Runner. Seeds (01, 08, 12, 14) have no assertion: they may already be cached
+  if asked in the last 24h."
+order: 5000

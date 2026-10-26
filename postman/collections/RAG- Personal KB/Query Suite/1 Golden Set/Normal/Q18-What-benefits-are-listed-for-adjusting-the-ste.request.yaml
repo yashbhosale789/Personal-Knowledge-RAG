@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q18 What benefits are listed for adjusting the steering wheel?"
+description: "Expected: answer (medium). Ground truth: Comfort reduces fatigue during long drives; Control ensures effective steering and better handling; Safety ensures a clear view of the instrument cluster and optimal airbag positioning."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"What benefits are listed for adjusting the steering wheel?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 10000

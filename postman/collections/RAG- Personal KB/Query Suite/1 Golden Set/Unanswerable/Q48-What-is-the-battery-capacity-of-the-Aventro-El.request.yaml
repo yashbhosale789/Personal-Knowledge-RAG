@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q48 What is the battery capacity of the Aventro Electric models?"
+description: "Expected: abstain (medium). Ground truth: The knowledge base does not give battery or other technical specifications for any Aventro model."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"What is the battery capacity of the Aventro Electric models?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("abstains", () => pm.expect(body.outcome).to.eql("abstain"));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 7000

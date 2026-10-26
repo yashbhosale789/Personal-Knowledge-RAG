@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q43 Which service center should I contact for help with my car?"
+description: "Expected: answer (medium). Ground truth: Contact your nearest Aventro Service Center. The tyre guide lists centers by city, for example Mumbai (Andheri East) and Delhi (Okhla Industrial Area, Phase II)."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"Which service center should I contact for help with my car?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 5000

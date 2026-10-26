@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q14 What tools do I need and in what order should I use them to change a tyre on an Ave..."
+description: "Expected: answer (hard). Ground truth: The document lists the required tools (spare tyre, jack, lug wrench, wheel wedges/blocks, owner's manual) but does not specify a required order for using them beyond the general step sequence."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"What tools do I need and in what order should I use them to change a tyre on an Aventro Sedan?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 1000

@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q56 Since the spare tyre is mounted on the tailgate on every Aventro model, how do I ta..."
+description: "Expected: answer (hard). Ground truth: The premise is incorrect: the Hatchback and Sedan spare is under the boot floor, and the SUV spare is under the boot floor or mounted underneath the rear of the car, not on the tailgate."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"Since the spare tyre is mounted on the tailgate on every Aventro model, how do I take it off?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 7000
