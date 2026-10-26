@@ -79,10 +79,21 @@ def create_cache_index() -> None:
         logger.warning("Redis unavailable — cache index creation failed")
 
 
-def store_cache_entry(query: str, answer: str, provider: str) -> None:
+def cache_embedding(query: str) -> bytes:
+    """
+    Raw query, no BGE retrieval prefix: CACHE_SIMILARITY_THRESHOLD was tuned on this
+    form, so do not swap in embedder.embed_query. Computed once per request and passed
+    to both the lookup and the write.
+    """
+    return get_embedding_model().encode(query).astype("float32").tobytes()
+
+
+def store_cache_entry(
+    query: str, answer: str, provider: str, embedding: bytes | None = None
+) -> None:
     client = get_redis_client()
-    model = get_embedding_model()
-    embedding = model.encode(query)
+    if embedding is None:
+        embedding = cache_embedding(query)
     namespace = cache_namespace(provider)
 
     key_hash = hashlib.sha256(f"{namespace}|{query}".encode()).hexdigest()
@@ -95,7 +106,7 @@ def store_cache_entry(query: str, answer: str, provider: str) -> None:
             # ever needs retrieving (e.g. a debugging hgetall).
             key,
             mapping={
-                "embedding": embedding.astype("float32").tobytes(),
+                "embedding": embedding,
                 "query": query,
                 "answer": answer,
                 "provider": provider,
@@ -121,10 +132,12 @@ def entity_mismatch(query_a: str, query_b: str) -> bool:
     return False
 
 
-def find_cached_answer(query: str, provider: str | None = None) -> dict | None:
+def find_cached_answer(
+    query: str, provider: str | None = None, embedding: bytes | None = None
+) -> dict | None:
     client = get_redis_client()
-    model = get_embedding_model()
-    embedding = model.encode(query)
+    if embedding is None:
+        embedding = cache_embedding(query)
     namespace = cache_namespace(provider)
 
     knn_query = (
@@ -136,7 +149,7 @@ def find_cached_answer(query: str, provider: str | None = None) -> dict | None:
 
     try:
         results = client.ft(CACHE_INDEX_NAME).search(
-            knn_query, query_params={"vec": embedding.astype("float32").tobytes()}
+            knn_query, query_params={"vec": embedding}
         )
     except redis.RedisError:
         logger.warning("Redis unavailable — treating as cache miss")
