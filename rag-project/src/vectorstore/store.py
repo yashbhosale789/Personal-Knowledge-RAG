@@ -9,6 +9,7 @@ from config import (
     CHROMA_COLLECTION,
     STORAGE_DIR,
 )
+from src.observability import timed
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,9 @@ class BGEEmbeddingAdapter(Embeddings):
     def embed_query(self, text: str) -> list[float]:
         from src.embedding.embedder import embed_query
 
-        return embed_query(text)
+        # Nested inside advanced_rag's "dense_retrieve"; timed() keeps them disjoint.
+        with timed("dense_embed"):
+            return embed_query(text)
 
 
 def _chunk_id(chunk: Document) -> str:

@@ -34,9 +34,9 @@ async def call_with_retry(
     for attempt in range(max_retries + 1):
         attempt_start = time.monotonic()
         try:
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: fn(provider)
-            )
+            # to_thread copies contextvars (request ID, stage tracker) into the
+            # worker thread; loop.run_in_executor does not.
+            result = await asyncio.to_thread(fn, provider)
 
             provider_call_duration_seconds.labels(provider=provider).observe(
                 time.monotonic() - attempt_start

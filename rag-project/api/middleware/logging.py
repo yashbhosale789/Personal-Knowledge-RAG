@@ -8,6 +8,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from api.core.metrics import http_request_duration_seconds, http_requests_total
+from src import observability
 
 
 class StructuredLoggingMiddleware(BaseHTTPMiddleware):
@@ -16,6 +17,10 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
         start_time = time.monotonic()
 
         request.state.request_id = request_id
+        # Server-generated only: an incoming X-Request-ID is ignored, so query_id stays
+        # unique (Phase 14.0 feedback keys on it) and clients cannot inject log content.
+        # Each request runs in its own task context, so the value cannot leak to the next.
+        observability.request_id.set(request_id)
 
         response = await call_next(request)
         latency_ms = (time.monotonic() - start_time) * 1000

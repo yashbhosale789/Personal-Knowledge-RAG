@@ -12,6 +12,7 @@ from api.core.retry import call_with_fallback
 from api.models.requests import QueryRequest
 from api.models.responses import QueryResponse
 from api.routers.health import is_pipeline_ready
+from src import observability
 from src.llm.semantic_cache import (
     cache_embedding,
     find_cached_answer,
@@ -35,8 +36,12 @@ def _log_query(
     request_id: str,
     outcome: str | None,
     provider: str,
+    latency_ms: float,
+    stages: list[dict],
     llm_usage: dict | None = None,
 ) -> None:
+    stages_ms = observability.summarize(stages)
+    llm_ms = llm_usage["llm_ms"] if llm_usage else 0
     logger.info(
         json.dumps(
             {
@@ -47,6 +52,13 @@ def _log_query(
                 "prompt_version": config.PROMPT_VERSION,
                 # Per-stage tokens/latency of the successful attempt; none on a cache hit.
                 "llm_usage": llm_usage,
+                "latency_ms": round(latency_ms, 1),
+                # Non-LLM stage self-times, summed over pipeline attempts.
+                "stages_ms": stages_ms,
+                # Time in neither: failed provider attempts, backoff, thread hand-offs.
+                "unaccounted_ms": round(
+                    latency_ms - sum(stages_ms.values()) - llm_ms, 1
+                ),
             }
         )
     )
@@ -61,6 +73,13 @@ def _log_query(
 async def query_endpoint(
     request: Request, body: QueryRequest, api_key_hash: str = Depends(verify_api_key)
 ):
+    with observability.track() as stages:
+        return await _answer(request, body, api_key_hash, stages)
+
+
+async def _answer(
+    request: Request, body: QueryRequest, api_key_hash: str, stages: list[dict]
+) -> QueryResponse:
     if not is_pipeline_ready():
         raise PipelineNotReadyError()
 
@@ -74,14 +93,16 @@ async def query_endpoint(
     start_time = __import__("time").monotonic()
     preferred_provider = body.provider or config.PIPELINE_PROVIDER
 
-    embedding = await run_in_threadpool(cache_embedding, query)
-    cached = await run_in_threadpool(
-        find_cached_answer, query, preferred_provider, embedding
-    )
+    with observability.timed("cache_embed"):
+        embedding = await run_in_threadpool(cache_embedding, query)
+    with observability.timed("cache_lookup"):
+        cached = await run_in_threadpool(
+            find_cached_answer, query, preferred_provider, embedding
+        )
 
     if cached is not None:
         latency_ms = (__import__("time").monotonic() - start_time) * 1000
-        _log_query(request_id, "cached", cached["provider"])
+        _log_query(request_id, "cached", cached["provider"], latency_ms, stages)
         return QueryResponse(
             query_id=request_id,
             query=body.query,
@@ -119,13 +140,23 @@ async def query_endpoint(
         raise HTTPException(status_code=502, detail=e.message)
 
     if result.get("outcome") != "abstain":
-        await run_in_threadpool(
-            store_cache_entry, query, result.get("answer", ""), provider_used, embedding
-        )
+        with observability.timed("cache_store"):
+            await run_in_threadpool(
+                store_cache_entry,
+                query,
+                result.get("answer", ""),
+                provider_used,
+                embedding,
+            )
 
     latency_ms = (__import__("time").monotonic() - start_time) * 1000
     _log_query(
-        request_id, result.get("outcome"), provider_used, result.get("llm_usage")
+        request_id,
+        result.get("outcome"),
+        provider_used,
+        latency_ms,
+        stages,
+        result.get("llm_usage"),
     )
 
     return QueryResponse(
