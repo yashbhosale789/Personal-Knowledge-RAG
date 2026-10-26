@@ -14,6 +14,7 @@ from api.models.responses import QueryResponse
 from api.routers.health import is_pipeline_ready
 from src import observability
 from src.llm.semantic_cache import (
+    GROUNDING_FIELDS,
     cache_embedding,
     find_cached_answer,
     store_cache_entry,
@@ -103,19 +104,20 @@ async def _answer(
     if cached is not None:
         latency_ms = (__import__("time").monotonic() - start_time) * 1000
         _log_query(request_id, "cached", cached["provider"], latency_ms, stages)
+        grounding = cached.get("grounding") or {}
         return QueryResponse(
             query_id=request_id,
             query=body.query,
             rewritten_query=None,
             answer=cached["answer"],
-            sources=[],
-            chunks_used=0,
+            sources=grounding.get("sources") or [],
+            chunks_used=grounding.get("chunks_used") or 0,
             provider=cached["provider"],
             latency_ms=round(latency_ms, 2),
             timestamp=datetime.datetime.now(datetime.UTC).isoformat(),
-            sufficiency=None,
-            citation_check=None,
-            confidence=None,
+            sufficiency=grounding.get("sufficiency"),
+            citation_check=grounding.get("citation_check"),
+            confidence=grounding.get("confidence"),
             outcome="cached",
             prompt_version=config.PROMPT_VERSION,
         )
@@ -147,6 +149,7 @@ async def _answer(
                 result.get("answer", ""),
                 provider_used,
                 embedding,
+                {field: result.get(field) for field in GROUNDING_FIELDS},
             )
 
     latency_ms = (__import__("time").monotonic() - start_time) * 1000
