@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 import hashlib
 
-from redis.commands.search.field import TextField, VectorField
+from redis.commands.search.field import TagField, TextField, VectorField
 from redis.commands.search.index_definition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 
@@ -17,8 +17,11 @@ from config import (
     CACHE_TTL_SECONDS,
     EMBEDDING_DIAMENSION,
     ENTITY_GROUPS,
+    EVAL_PROVIDER,
+    PROMPT_VERSION,
 )
 from src.embedding.embedder import get_embedding_model
+from src.llm.client import model_name
 from src.llm.redis_client import get_redis_client
 
 # import sys
@@ -27,6 +30,17 @@ from src.llm.redis_client import get_redis_client
 # sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # from experiments.semantic_cache_threshold import entity_mismatch
+
+
+def cache_namespace(provider: str | None = None) -> str:
+    """
+    Everything that changes the answer for the same query: the prompt set, the answering
+    model, and the citation-verifier model (it can append a caveat). Entries are stored
+    and looked up within one namespace, so changing any of these misses old entries,
+    which then expire by TTL. Hex only, so it is safe inside a TAG query.
+    """
+    parts = f"{PROMPT_VERSION}|{model_name(provider)}|{model_name(EVAL_PROVIDER)}"
+    return hashlib.sha256(parts.encode()).hexdigest()[:16]
 
 
 def create_cache_index() -> None:
@@ -55,6 +69,7 @@ def create_cache_index() -> None:
                 TextField("query"),
                 TextField("answer"),
                 TextField("provider"),
+                TagField("namespace"),
             ],
             definition=IndexDefinition(
                 prefix=[CACHE_KEY_PREFIX], index_type=IndexType.HASH
@@ -68,8 +83,9 @@ def store_cache_entry(query: str, answer: str, provider: str) -> None:
     client = get_redis_client()
     model = get_embedding_model()
     embedding = model.encode(query)
+    namespace = cache_namespace(provider)
 
-    key_hash = hashlib.sha256(query.encode()).hexdigest()
+    key_hash = hashlib.sha256(f"{namespace}|{query}".encode()).hexdigest()
     key = f"{CACHE_KEY_PREFIX}{key_hash}"
 
     try:
@@ -83,6 +99,7 @@ def store_cache_entry(query: str, answer: str, provider: str) -> None:
                 "query": query,
                 "answer": answer,
                 "provider": provider,
+                "namespace": namespace,
             },
         )
         client.expire(key, CACHE_TTL_SECONDS)
@@ -104,13 +121,14 @@ def entity_mismatch(query_a: str, query_b: str) -> bool:
     return False
 
 
-def find_cached_answer(query: str) -> dict | None:
+def find_cached_answer(query: str, provider: str | None = None) -> dict | None:
     client = get_redis_client()
     model = get_embedding_model()
     embedding = model.encode(query)
+    namespace = cache_namespace(provider)
 
     knn_query = (
-        Query("*=>[KNN 1 @embedding $vec AS score]")
+        Query(f"(@namespace:{{{namespace}}})=>[KNN 1 @embedding $vec AS score]")
         .sort_by("score")
         .return_fields("query", "answer", "provider", "score")
         .dialect(2)

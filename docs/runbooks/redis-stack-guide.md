@@ -1,4 +1,18 @@
-# Redis + Docker Commands Reference — Phase 9 (Rate Limiting & Semantic Caching)
+# Redis + Docker Commands Reference — Rate Limiting & Semantic Caching
+
+Local and production both run Redis Stack (`redis/redis-stack`); only the way you reach the container differs:
+
+| | Local (dev) | Production (EC2) |
+| --- | --- | --- |
+| Started by | `docker run --name redis-stack ...` | Docker Compose, service `redis` |
+| Container name | `redis-stack` | `<project>-redis-1` (no `container_name` is set) |
+| Command prefix | `docker exec -it redis-stack redis-cli` | `docker compose -f docker-compose.prod.yml exec redis redis-cli` |
+
+The local sections below use the local prefix; see *Production* at the end for the EC2 equivalents.
+
+Current semantic-cache index: `semantic_cache_idx_v2` (Phase 13.2 added a `namespace` tag; see *Production*).
+
+# Local (dev)
 
 ## Container setup (one-time only)
 
@@ -53,16 +67,16 @@ docker exec -it redis-stack redis-cli FT._LIST
 Lists all RediSearch indexes that currently exist.
 
 ```bash
-docker exec -it redis-stack redis-cli FT.INFO semantic_cache_idx
+docker exec -it redis-stack redis-cli FT.INFO semantic_cache_idx_v2
 ```
 
 Shows the full schema and stats for a specific index.
 
 ```bash
-docker exec -it redis-stack redis-cli FT.DROPINDEX semantic_cache_idx
+docker exec -it redis-stack redis-cli FT.DROPINDEX semantic_cache_idx_v2
 ```
 
-Deletes an index. Use when you need to recreate an index from scratch (e.g. after a schema change).
+Deletes the index only; the `cache:*` entries stay (adding `DD` deletes them too). Use when you need to recreate an index from scratch (e.g. after a schema change).
 
 ```bash
 docker exec -it redis-stack redis-cli DEL cache:<key>
@@ -92,22 +106,53 @@ TTL cache:<key>
 
 ```bash
 FT._LIST
-FT.INFO semantic_cache_idx
-FT.DROPINDEX semantic_cache_idx
+FT.INFO semantic_cache_idx_v2
+FT.DROPINDEX semantic_cache_idx_v2
 ```
 
-## Current pending step (schema rename cleanup)
+Cache keys are `cache:<sha256(namespace|query)>`. The namespace is a hash of `config.PROMPT_VERSION` plus the answering and citation-verifier models, so a prompt or model change makes old entries miss; they expire by TTL (24 h).
 
-After renaming `query_text`/`answer_text` fields to `query`/`answer` in `semantic_cache.py`, the old index and test entry (created under the old field names) need to be cleared before re-testing:
+# Production (EC2)
+
+SSH to the instance, then work from the deploy directory (`APP_DIR` in `deploy/deploy.sh`):
 
 ```bash
-docker exec -it redis-stack redis-cli FT.DROPINDEX semantic_cache_idx
-docker exec -it redis-stack redis-cli KEYS cache:*
-docker exec -it redis-stack redis-cli DEL cache:<paste-the-key-from-above>
+cd /home/ubuntu/rag
+docker ps --format '{{.Names}}  {{.Image}}  {{.Status}}'
 ```
 
-Then rebuild fresh:
+Confirms the Redis container is up and shows its real name (needed only for the `docker exec` form).
+
+Pattern: `docker compose -f docker-compose.prod.yml exec redis redis-cli <command>`
 
 ```bash
-python -m src.llm.semantic_cache
+docker compose -f docker-compose.prod.yml exec redis redis-cli ping
+docker compose -f docker-compose.prod.yml exec redis redis-cli FT._LIST
+docker compose -f docker-compose.prod.yml exec redis redis-cli FT.INFO semantic_cache_idx_v2
+docker compose -f docker-compose.prod.yml exec redis redis-cli DBSIZE
 ```
+
+Health check (`PONG`), list indexes, inspect the cache index, count keys.
+
+```bash
+docker compose -f docker-compose.prod.yml exec redis redis-cli
+```
+
+Interactive prompt; the commands under *Commands used inside the interactive `redis-cli` prompt* work unchanged. Prefer `SCAN 0 MATCH cache:* COUNT 100` over `KEYS cache:*` here: `KEYS` blocks Redis while it walks every key.
+
+Equivalent without Compose: `docker exec -it <name-from-docker-ps> redis-cli <command>`.
+
+## One-time cleanup after the Phase 13.2 deploy
+
+Phase 13.2 replaced `semantic_cache_idx` with `semantic_cache_idx_v2`. The app creates the new index at startup; the old one is left behind. **After** the 13.2 deploy is live (dropping it earlier makes the running old app miss every lookup):
+
+```bash
+docker compose -f docker-compose.prod.yml exec redis redis-cli FT._LIST
+# expect: semantic_cache_idx and semantic_cache_idx_v2
+docker compose -f docker-compose.prod.yml exec redis redis-cli FT.DROPINDEX semantic_cache_idx
+# expect: OK
+docker compose -f docker-compose.prod.yml exec redis redis-cli FT._LIST
+# expect: semantic_cache_idx_v2 only
+```
+
+**Do not add `DD`.** Both indexes cover the same `cache:` prefix, so `FT.DROPINDEX semantic_cache_idx DD` would also delete the entries the v2 index serves. The pre-13.2 entries have no `namespace` tag, are never matched by v2 lookups, and expire within 24 h on their own.

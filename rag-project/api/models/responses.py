@@ -76,6 +76,10 @@ class QueryResponse(BaseModel):
         description="'abstain' | 'answer_low_confidence' | 'answer' — derived from sufficiency/citation_check/confidence.",
     )
 
+    prompt_version: str = Field(
+        description="Hash of the pipeline prompts in config.py that produced the answer."
+    )
+
 
 class IngestResponse(BaseModel):
     status: str = Field(description="'success'.")

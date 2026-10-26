@@ -1,4 +1,6 @@
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, Info
+
+from config import PROMPT_VERSION
 
 PROVIDER_LATENCY_BUCKETS = (0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 30)
 
@@ -34,3 +36,7 @@ provider_requests_total = Counter(
     "Total logical requests per provider, by final outcome.",
     ["provider", "outcome"],
 )
+
+# Constant per deploy: rag_prompt_info{version="..."} 1
+prompt_info = Info("rag_prompt", "Pipeline prompt version in use.")
+prompt_info.info({"version": PROMPT_VERSION})

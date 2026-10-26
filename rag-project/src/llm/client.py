@@ -59,6 +59,11 @@ def _resolve_provider(provider: str | None) -> tuple[str, str, str, str | None]:
     return active, model, url, key_env
 
 
+def model_name(provider: str | None = None) -> str:
+    """The model a call_llm(..., provider=provider) would use."""
+    return _resolve_provider(provider)[1]
+
+
 def _call_openai_compatible(
     messages: list, model: str, url: str, key_env: str | None
 ) -> str:

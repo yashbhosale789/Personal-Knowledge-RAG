@@ -11,6 +11,7 @@ from eval.harness import store
 from eval.harness.retrieval_eval import get_rewrite, load_rewrites
 from eval.paths import GEN_PATH as RESULTS_PATH
 from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
+from src.llm.client import model_name
 from src.pipeline.advanced_rag import (
     retrieve_context,
     run_advanced_rag_pipeline,
@@ -55,6 +56,8 @@ def to_record(
         "qid": item["id"],
         "fp": fp,
         "provider": config.PIPELINE_PROVIDER,
+        "model": model_name(config.PIPELINE_PROVIDER),
+        "prompt_version": config.PROMPT_VERSION,
         "question": item["question"],
         "rewritten": rewrite,
         "answer": out["answer"],

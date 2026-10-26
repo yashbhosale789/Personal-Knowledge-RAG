@@ -59,3 +59,18 @@ def test_clear_cache_removes_only_this_prefix(isolated_cache, client):
 def test_create_cache_index_is_idempotent(isolated_cache):
     isolated_cache.create_cache_index()
     isolated_cache.create_cache_index()
+
+
+def test_a_prompt_change_invalidates_existing_entries(isolated_cache, monkeypatch):
+    sc = isolated_cache
+    sc.store_cache_entry("Where is the jack?", "In the boot.", "groq")
+    assert sc.find_cached_answer("Where is the jack?", "groq") is not None
+
+    monkeypatch.setattr(sc, "PROMPT_VERSION", "edited-prompts")
+    assert sc.find_cached_answer("Where is the jack?", "groq") is None
+
+
+def test_entries_are_scoped_to_the_answering_model(isolated_cache):
+    sc = isolated_cache
+    sc.store_cache_entry("Where is the jack?", "In the boot.", "groq")
+    assert sc.find_cached_answer("Where is the jack?", "gemini") is None

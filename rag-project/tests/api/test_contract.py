@@ -24,6 +24,7 @@ REQUIRED_FIELDS = {
     "provider": str,
     "latency_ms": float,
     "timestamp": str,
+    "prompt_version": str,
 }
 OPTIONAL_FIELDS = {
     "rewritten_query": (str, type(None)),

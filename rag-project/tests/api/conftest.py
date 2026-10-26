@@ -52,7 +52,9 @@ def fakes(monkeypatch):
         return rec.result
 
     monkeypatch.setattr(query_router, "_run_pipeline", fake_pipeline)
-    monkeypatch.setattr(query_router, "find_cached_answer", lambda q: rec.cached)
+    monkeypatch.setattr(
+        query_router, "find_cached_answer", lambda q, provider: rec.cached
+    )
     monkeypatch.setattr(
         query_router, "store_cache_entry", lambda *args: rec.cache_writes.append(args)
     )

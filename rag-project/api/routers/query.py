@@ -1,9 +1,11 @@
 import datetime
+import json
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.concurrency import run_in_threadpool
 
+import config
 from api.core.auth import verify_api_key
 from api.core.exceptions import PipelineNotReadyError, ProviderError
 from api.core.retry import call_with_fallback
@@ -25,6 +27,20 @@ def _run_pipeline(query: str, provider: str, return_contexts: bool) -> dict:
     )
 
 
+def _log_query(request_id: str, outcome: str | None, provider: str) -> None:
+    logger.info(
+        json.dumps(
+            {
+                "event": "query",
+                "request_id": request_id,
+                "outcome": outcome,
+                "provider": provider,
+                "prompt_version": config.PROMPT_VERSION,
+            }
+        )
+    )
+
+
 @router.post(
     "/query",
     response_model=QueryResponse,
@@ -34,8 +50,6 @@ def _run_pipeline(query: str, provider: str, return_contexts: bool) -> dict:
 async def query_endpoint(
     request: Request, body: QueryRequest, api_key_hash: str = Depends(verify_api_key)
 ):
-    import config
-
     if not is_pipeline_ready():
         raise PipelineNotReadyError()
 
@@ -47,11 +61,13 @@ async def query_endpoint(
 
     request_id = getattr(request.state, "request_id", "unknown")
     start_time = __import__("time").monotonic()
+    preferred_provider = body.provider or config.PIPELINE_PROVIDER
 
-    cached = await run_in_threadpool(find_cached_answer, query)
+    cached = await run_in_threadpool(find_cached_answer, query, preferred_provider)
 
     if cached is not None:
         latency_ms = (__import__("time").monotonic() - start_time) * 1000
+        _log_query(request_id, "cached", cached["provider"])
         return QueryResponse(
             query_id=request_id,
             query=body.query,
@@ -66,6 +82,7 @@ async def query_endpoint(
             citation_check=None,
             confidence=None,
             outcome="cached",
+            prompt_version=config.PROMPT_VERSION,
         )
 
     try:
@@ -75,7 +92,7 @@ async def query_endpoint(
 
         result, provider_used = await call_with_fallback(
             make_pipeline_call,
-            preferred_provider=body.provider or config.PIPELINE_PROVIDER,
+            preferred_provider=preferred_provider,
             max_retries=1,
             api_key_hash=api_key_hash,
         )
@@ -93,6 +110,7 @@ async def query_endpoint(
         )
 
     latency_ms = (__import__("time").monotonic() - start_time) * 1000
+    _log_query(request_id, result.get("outcome"), provider_used)
 
     return QueryResponse(
         query_id=request_id,
@@ -108,4 +126,5 @@ async def query_endpoint(
         citation_check=result.get("citation_check"),
         confidence=result.get("confidence"),
         outcome=result.get("outcome"),
+        prompt_version=config.PROMPT_VERSION,
     )
