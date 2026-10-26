@@ -240,7 +240,7 @@ Track token usage and estimated cost by pipeline stage where provider data permi
 
 Exit: for a sample of queries, per-stage tokens and latency are visible; estimated vs reported usage is labeled.
 
-**Status (2026-10-26): implemented; exit met locally, pending PR CI.**
+**Status: CLOSED 2026-10-26.** Merged as PR #72 (`0bb6fb6`) and deployed by the same run (build and deploy jobs green). CI: 227 passed / 6 strict xfail, coverage 71.55% (floor 65); eval gate PASS (fingerprint `70a77e38f9`, 4 CI items: faithfulness 1.000, relevancy 0.902). The eval output now carries tokens per query: mean 2844, p50 3657, 0/4 estimated. Eval uses cached rewrites, so it has no `rewrite` stage.
 - `call_llm(..., stage=)` keeps the provider usage block. OpenAI-compatible `usage.prompt_tokens/completion_tokens` is used for Groq, OpenRouter and Gemini; Ollama uses `prompt_eval_count/eval_count`. Any missing count is estimated (chars/4) and labelled `source="estimated"`.
 - Prometheus metrics: `llm_tokens_total{stage,provider,model,type,source}` and `llm_call_duration_seconds{stage,provider,model}`. The pipeline result carries `llm_usage`, which goes into the `event=query` log and eval generation records. The eval summary prints tokens per query and the mean per stage.
 - **Cost = free-tier quota consumption, not money.** Nothing is billed, and OpenRouter `:free` reports `cost: 0`. Limits were checked on 2026-10-26 and are not hard-coded, because they vary per account. Groq `gpt-oss-120b`: 30 RPM / 1K RPD / 8K TPM / 200K TPD. OpenRouter `:free`: 20 RPM / 50 RPD (1000 RPD after $10 of credits). Gemini: limits are per project and shown in AI Studio only.
@@ -482,7 +482,7 @@ Status as of 2026-10-23. Gap items name the owning phase.
 | Reproducible builds (pinned dependencies) | Lock built in 13.1; confirm with a CI/Docker build | F-06 → 13.1 |
 | Dependency / image vulnerability scanning | pip-audit + Dependabot built in 13.1; image scan still a gap | F-22 → 13.1 |
 | Prompt / model versioning | Done — `config.PROMPT_VERSION` in responses, logs, metrics, cache namespace and eval records | 13.2, PR #67 |
-| Per-stage cost and latency visibility | **Gap** | 13.3, 13.4 |
+| Per-stage cost and latency visibility | Partial — LLM stages done (tokens + latency, reported vs estimated); retrieval stages not timed | 13.3 PR #72, 13.4 |
 | Request correlation and tracing | Partial — request ID in the `api/` layer only | 13.4 |
 | Alerting and SLOs | **Gap** | F-20 → 13.5 (final numbers 15.4) |
 | External uptime monitoring | **Gap** | 13.5 |

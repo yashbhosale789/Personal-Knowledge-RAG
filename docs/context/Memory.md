@@ -52,7 +52,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
  
 **Phase plan**
 - **13.0 Evaluation foundation:** Grow validated golden dataset to roughly 50–60 questions spanning normal, difficult, ambiguous, multi-hop, unanswerable, and adversarial cases; synthetic questions must be validated by Yash. Add retrieval-relevance labels. Build a harness that compares two variants on the same questions and reports a confidence interval.
-- **13.1 Token/cost accounting:** Account for tokens/cost by pipeline stage.
+- **13.1 Token/cost accounting:** CLOSED 2026-10-26 as new-numbering 13.3 (see the 13.3 entry in §3), PR #72.
 - **13.2 Prompt versioning:** CLOSED 2026-10-26 (see the 13.2 entry in §3). Prompts stay in `config.py`; `config.PROMPT_VERSION` (content hash) in every response/log/metric/cache namespace/eval record. No external prompt platform.
 - **13.3 Reranker/model benchmark:** Compare candidates through evaluation harness. Retrieval metrics (Recall@K, MRR, NDCG) do not require LLM judge calls.
 - **13.4 Tracing:** Add Langfuse tracing, fail-open and non-blocking. Langfuse Cloud Hobby proposed—confirm with Yash before taking this step and verify free-tier terms. Self-hosting impractical on current hardware.
@@ -89,11 +89,12 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - Where it appears: `/query` response field `prompt_version` (API contract v2), `event=query` and `event=prompts_loaded` JSON logs, Prometheus `rag_prompt_info{version=...}`, the semantic-cache namespace (prompt version + answering model + verifier model; index `semantic_cache_idx_v2`, TAG filter on `namespace`), and eval generation/judge/retrieval records.
 - Not covered: the judge/verifier `Question:/Context:` framings (in code; eval code hash only). F-14 entity guard unchanged (15.1).
 
-**Phase 13.3 (new numbering — "Token and cost accounting") — IMPLEMENTED 2026-10-26, pending PR CI**
+**Phase 13.3 (new numbering — "Token and cost accounting") — CLOSED 2026-10-26**
+- Merged as PR #72 (`0bb6fb6`), deployed by the same run. CI: 227 passed / 6 strict xfail, coverage 71.55% (floor 65); eval gate PASS (faithfulness 1.000, relevancy 0.902, 4 CI items); CI eval tokens/query mean 2844, p50 3657, 0/4 estimated (no `rewrite` stage in eval: cached rewrites).
 - New `src/llm/usage.py`. `call_llm(..., stage=)` records `llm_tokens_total{stage,provider,model,type,source}` and `llm_call_duration_seconds{stage,provider,model}`. The four stages are `rewrite | sufficiency | generate | citation_verify`, and the default is `other`. `source` is `reported` (provider usage) or `estimated` (chars/4, only when the provider omits a count).
 - `run_advanced_rag_pipeline` wraps its body in `usage.track()` (a ContextVar inside the one executor thread) and returns `llm_usage`. That value goes into the `event=query` log and eval generation records, and `generate.py` summary prints tokens per query. The API response contract is unchanged.
 - Decision: under $0, cost means free-tier quota consumption (tokens and calls per provider/model), not a list price. Limits are recorded in roadmap §13.3 with the check date and are not hard-coded.
-- Live sample on 2026-10-26 (corpus `c1`): about 3.2–3.4K tokens per answered query, about 1.2K per abstain; all counts provider-reported, including Gemini through its OpenAI-compatible endpoint. Local suite: 227 passed / 6 strict xfail, coverage 71.55%.
+- Live sample on 2026-10-26 (corpus `c1`): about 3.2–3.4K tokens per answered query, about 1.2K per abstain; all counts provider-reported, including Gemini through its OpenAI-compatible endpoint. First local `/query` after merge: 12.97 s total, `llm_ms` 6.5 s (rewrite 2.3 s, verifier 2.3 s), two query-embedding passes ~3.5 s, ~3 s unaccounted. Retrieval timing is 13.4 step 2.
 - Editing `src/pipeline` and `src/llm` changes the eval fingerprint, so local `eval/runs/` entries no longer match (CI deletes runs anyway).
 
 ## 4. Open issues and carryovers
