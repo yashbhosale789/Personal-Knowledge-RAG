@@ -18,11 +18,11 @@ body:
 
     \    // \"query\": \"Where is the spare tyre located in an Aventro SUV?\"    // Q03\r
 
-    \    // // \"query\": \"What steps should I take to safely park before changing a tyre?\"  // Q04\r
+    \    // \"query\": \"What steps should I take to safely park before changing a tyre?\"  // Q04\r
 
     \    // \"query\": \"Why should lug nuts be loosened before using the jack?\"    // Q05\r
 
-    \    \"query\": \"What is the correct way to tighten lug nuts after fitting the spare tyre?\" // Q06\r
+    \    // \"query\": \"What is the correct way to tighten lug nuts after fitting the spare tyre?\" // Q06\r
 
     \    // \"query\": \"How high should the vehicle be raised when using the jack?\"    // Q07\r
 
@@ -35,6 +35,68 @@ body:
     \    // \"query\": \"Which Aventro service center should I visit if I am in Hyderabad?\"  // Q11 - unanswerable (fabricated location detail)\r
 
     \    // \"query\": \"What is the recommended tyre pressure for an Aventro Hatchback spare tyre?\"  // Q12 - trap, unanswerable\r
+
+    \r
+
+    \r
+
+    \    // \"query\":\"What is the difference between traditional cruise control and adaptive cruise control?\"\r
+
+    \    // \"query\":\"What does ADAS stand for?\"\r
+
+    \    // \"query\":\"Can adaptive cruise control help with fuel economy?\"\r
+
+    \    // \"query\":\"What can stop ACC sensors from working reliably?\"\r
+
+    \    // \"query\":\"Does traditional cruise control brake automatically?\"\r
+
+    \    // \"query\":\"How high should my headrest be set?\"\r
+
+    \    // \"query\":\"What is the lumbar support adjustment for?\"\r
+
+    \    // \"query\":\"My electronic seat controls stopped working. What should I check?\"\r
+
+    \    // \"query\":\"Should I adjust my seat with the engine running?\"\r
+
+    \    // \"query\":\"What does telescopic steering adjustment mean?\"\r
+
+    \    // \"query\":\"How can I check my arms are at the right reach from the wheel?\"\r
+
+    \    // \"query\":\"My steering wheel feels loose after adjusting it. What should I do?\"\r
+
+    \    // \"query\":\"What time of day is best for a car trip during pregnancy?\"\r
+
+    \    // \"query\":\"When should a pregnant woman not drive at all?\"\r
+
+    \    // \"query\":\"Do I need to see a doctor after a minor car accident while pregnant?\"\r
+
+    \    // \"query\":\"How do I take off the wheel cover before changing a tyre?\"\r
+
+    \    // \"query\":\"What should I do with the flat tyre and tools once the spare is on?\"\r
+
+    \    // \"query\":\"How do I pair my phone with Bluetooth in an Aventro car?\"\r
+
+    \    // \"query\":\"How often should I change the engine oil?\"\r
+
+    \    // \"query\":\"What is the fuel tank capacity of the Aventro SUV?\"\r
+
+    \    // \"query\":\"Can I install a child seat in the front passenger seat?\"\r
+
+    \r
+
+    \r
+
+    \    // \"query\":\"Why should the backrest be locked before driving?\"\r
+
+    \    // \"query\":\"Why should the backrest be locked before driving?\"\r
+
+    \    // \"query\":\"Why must the seat backrest be locked before I drive?\"\r
+
+    \    // \"query\":\"How do I pair my phone with Bluetooth in an Aventro car?\"\r
+
+    \    // \"query\":\"How do I pair my phone with Bluetooth in an Aventro car?\"\r
+
+    \r
 
     \r
 

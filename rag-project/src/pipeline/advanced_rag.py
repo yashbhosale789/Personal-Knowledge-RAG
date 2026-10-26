@@ -133,6 +133,7 @@ def _run(
             "chunks_used": 0,
             "query": query,
             "rewritten_query": rewritten,
+            "outcome": "empty",
         }
 
     # Stage 4.5: Context sufficiency gate
