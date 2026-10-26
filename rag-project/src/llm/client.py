@@ -39,6 +39,10 @@ if PIPELINE_PROVIDER not in _PROVIDERS:
 
 logger.info(f"Pipeline LLM configured: {PIPELINE_PROVIDER}")
 
+# One pooled session for every provider: a /query makes up to four sequential LLM
+# calls, and reusing the connection skips a TCP + TLS handshake on each of them.
+_session = requests.Session()
+
 
 def _resolve_provider(provider: str | None) -> tuple[str, str, str, str | None]:
     """
@@ -83,7 +87,7 @@ def _call_openai_compatible(
         headers["Authorization"] = f"Bearer {os.getenv(key_env)}"
         headers["HTTP-Referer"] = "https://github.com/personal-kb-rag"
 
-    response = requests.post(url, headers=headers, json=payload, timeout=30)
+    response = _session.post(url, headers=headers, json=payload, timeout=30)
     response.raise_for_status()
 
     response_json = response.json()
@@ -109,7 +113,7 @@ def _call_ollama(messages: list, model, url) -> str:
     }
     # Local inference is slower than hosted APIs, especially cold start
     # when the model has to load into VRAM.
-    response = requests.post(url, json=payload, timeout=300)
+    response = _session.post(url, json=payload, timeout=300)
     response.raise_for_status()
     return response.json()["message"]["content"].strip()
 

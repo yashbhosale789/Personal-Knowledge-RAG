@@ -12,7 +12,11 @@ from api.core.retry import call_with_fallback
 from api.models.requests import QueryRequest
 from api.models.responses import QueryResponse
 from api.routers.health import is_pipeline_ready
-from src.llm.semantic_cache import find_cached_answer, store_cache_entry
+from src.llm.semantic_cache import (
+    cache_embedding,
+    find_cached_answer,
+    store_cache_entry,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +67,10 @@ async def query_endpoint(
     start_time = __import__("time").monotonic()
     preferred_provider = body.provider or config.PIPELINE_PROVIDER
 
-    cached = await run_in_threadpool(find_cached_answer, query, preferred_provider)
+    embedding = await run_in_threadpool(cache_embedding, query)
+    cached = await run_in_threadpool(
+        find_cached_answer, query, preferred_provider, embedding
+    )
 
     if cached is not None:
         latency_ms = (__import__("time").monotonic() - start_time) * 1000
@@ -106,7 +113,7 @@ async def query_endpoint(
 
     if result.get("outcome") != "abstain":
         await run_in_threadpool(
-            store_cache_entry, query, result.get("answer", ""), provider_used
+            store_cache_entry, query, result.get("answer", ""), provider_used, embedding
         )
 
     latency_ms = (__import__("time").monotonic() - start_time) * 1000

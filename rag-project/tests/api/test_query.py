@@ -114,6 +114,12 @@ def test_answers_are_cached(client, fakes, ready, auth_headers):
     assert fakes.cache_writes[0][1] == "Use the lug wrench [SOURCE 1]."
 
 
+def test_cache_miss_embeds_the_query_once(client, fakes, ready, auth_headers):
+    post(client, auth_headers)
+    assert fakes.embeddings == ["How do I tighten the lug nuts?"]
+    assert fakes.cache_writes[0][3] == b"emb:How do I tighten the lug nuts?"
+
+
 # --- abstention ------------------------------------------------------------
 
 
@@ -237,7 +243,9 @@ def test_cache_lookup_is_scoped_to_the_requested_provider(
 ):
     lookups = []
     monkeypatch.setattr(
-        query_router, "find_cached_answer", lambda q, provider: lookups.append(provider)
+        query_router,
+        "find_cached_answer",
+        lambda q, provider, emb: lookups.append(provider),
     )
     post(client, auth_headers, provider="gemini")
     assert lookups == ["gemini"]

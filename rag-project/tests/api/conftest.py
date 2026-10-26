@@ -34,9 +34,14 @@ class Recorder:
     def __init__(self):
         self.pipeline_calls: list[dict] = []
         self.cache_writes: list[tuple] = []
+        self.embeddings: list[str] = []
         self.result = pipeline_result()
         self.cached = None
         self.error: Exception | None = None
+
+    def embed(self, query: str) -> bytes:
+        self.embeddings.append(query)
+        return f"emb:{query}".encode()
 
 
 @pytest.fixture
@@ -52,8 +57,9 @@ def fakes(monkeypatch):
         return rec.result
 
     monkeypatch.setattr(query_router, "_run_pipeline", fake_pipeline)
+    monkeypatch.setattr(query_router, "cache_embedding", lambda q: rec.embed(q))
     monkeypatch.setattr(
-        query_router, "find_cached_answer", lambda q, provider: rec.cached
+        query_router, "find_cached_answer", lambda q, provider, emb: rec.cached
     )
     monkeypatch.setattr(
         query_router, "store_cache_entry", lambda *args: rec.cache_writes.append(args)
