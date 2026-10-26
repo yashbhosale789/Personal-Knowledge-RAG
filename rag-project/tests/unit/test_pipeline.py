@@ -185,7 +185,7 @@ def wired(monkeypatch):
         ar, "check_sufficiency", lambda q, chunks, provider=None: w.sufficiency
     )
 
-    def llm(prompt, system=None, provider=None):
+    def llm(prompt, system=None, provider=None, stage=None):
         w.llm_calls.append({"prompt": prompt, "provider": provider})
         return w.answer
 
@@ -271,3 +271,72 @@ def test_sources_are_deduplicated_and_reduced_to_basenames(wired):
         _chunk("c", "/x/n.pdf"),
     ]
     assert ar.run_advanced_rag_pipeline("how?")["sources"] == ["m.pdf", "n.pdf"]
+
+
+# --- token and latency accounting (Phase 13.3) -----------------------------
+
+
+def test_every_llm_stage_reports_tokens_and_latency(monkeypatch):
+    """Real rewrite/judge/generate/verify code; only retrieval and HTTP are faked."""
+    from prometheus_client import REGISTRY
+
+    from src.llm import client
+
+    for name in ("groq", "openrouter", "gemini"):
+        monkeypatch.setenv(client._resolve_provider(name)[3], "test-key")
+    chunk = {**_chunk("Use the lug wrench."), "ce_score": 5.0}
+    monkeypatch.setattr(
+        ar, "retrieve_context", lambda q, top_k=5, reranker=None: {"reranked": [chunk]}
+    )
+
+    replies = {
+        config.REWRITE_SYSTEM: "lug nuts",
+        config.SUFFICIENCY_JUDGE_SYSTEM: '{"sufficient": true, "reason": "ok"}',
+        config.SYSTEM_PROMPT: "Use the lug wrench [SOURCE 1].",
+        config.CITATION_VERIFIER_SYSTEM: '{"grounded": true, "unsupported_claims": [], "reason": "ok"}',
+    }
+
+    class Reply:
+        def __init__(self, content):
+            self.content = content
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {
+                "choices": [{"message": {"content": self.content}}],
+                "usage": {"prompt_tokens": 100, "completion_tokens": 7},
+            }
+
+    monkeypatch.setattr(
+        client._session,
+        "post",
+        lambda url, json, **kw: Reply(replies[json["messages"][0]["content"]]),
+    )
+
+    model = client.model_name("groq")
+    labels = {"stage": "generate", "provider": "groq", "model": model}
+
+    def sample(name, **extra):
+        return REGISTRY.get_sample_value(name, {**labels, **extra}) or 0.0
+
+    tokens_before = sample("llm_tokens_total", type="prompt", source="reported")
+    calls_before = sample("llm_call_duration_seconds_count")
+
+    result = ar.run_advanced_rag_pipeline("how do I tighten?", provider="groq")
+
+    usage = result["llm_usage"]
+    assert [c["stage"] for c in usage["calls"]] == [
+        "rewrite",
+        "sufficiency",
+        "generate",
+        "citation_verify",
+    ]
+    assert all(c["prompt_tokens"] == 100 and c["ms"] >= 0 for c in usage["calls"])
+    assert usage["prompt_tokens"] == 400 and usage["completion_tokens"] == 28
+    assert usage["estimated"] is False
+    assert sample("llm_tokens_total", type="prompt", source="reported") == (
+        tokens_before + 100
+    )
+    assert sample("llm_call_duration_seconds_count") == calls_before + 1

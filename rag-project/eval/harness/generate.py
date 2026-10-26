@@ -69,6 +69,7 @@ def to_record(
         "sufficiency": out.get("sufficiency"),
         "citation_check": out.get("citation_check"),
         "latency_ms": latency_ms,
+        "llm_usage": out.get("llm_usage"),
         "ts": datetime.now(UTC).isoformat(timespec="seconds"),
     }
 
@@ -110,6 +111,28 @@ def summarize(items: list[dict], variants: list[str], fp: str) -> None:
         print(
             f"  latency ms         : p50={latencies[len(latencies) // 2]} max={latencies[-1]}"
         )
+        usages = [r["llm_usage"] for _, r in rows if r.get("llm_usage")]
+        if usages:
+            print(f"  {token_summary(usages)}")
+
+
+def token_summary(usages: list[dict]) -> str:
+    """Tokens per query, and per stage, over the records that carry llm_usage."""
+    totals = sorted(u["prompt_tokens"] + u["completion_tokens"] for u in usages)
+    by_stage: dict[str, int] = {}
+    for u in usages:
+        for c in u["calls"]:
+            by_stage[c["stage"]] = (
+                by_stage.get(c["stage"], 0)
+                + c["prompt_tokens"]
+                + c["completion_tokens"]
+            )
+    stages = " ".join(f"{s}={t // len(usages)}" for s, t in sorted(by_stage.items()))
+    estimated = sum(u["estimated"] for u in usages)
+    return (
+        f"tokens/query       : mean={sum(totals) // len(totals)} p50={totals[len(totals) // 2]}"
+        f" max={totals[-1]} | per stage mean: {stages} | {estimated}/{len(usages)} include estimates"
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -201,9 +224,7 @@ def main() -> int:
 
 
 def _selfcheck() -> None:
-    assert is_refusal(
-        {"outcome": "abstain", "contexts": ["c"], "answer": "x"}
-    )  # nosec B101
+    assert is_refusal({"outcome": "abstain", "contexts": ["c"], "answer": "x"})  # nosec B101
     assert is_refusal(
         {
             "outcome": "answer",

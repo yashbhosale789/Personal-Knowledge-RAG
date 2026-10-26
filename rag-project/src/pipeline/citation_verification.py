@@ -48,7 +48,12 @@ def verify_citation(answer: str, reranked_chunks: list[dict]) -> dict:
 
     # Tier 2: LLM judge — answer has citations, check if they're actually supported
     prompt = _build_verifier_prompt(answer, reranked_chunks)
-    raw = call_llm(prompt, system=CITATION_VERIFIER_SYSTEM, provider=EVAL_PROVIDER)
+    raw = call_llm(
+        prompt,
+        system=CITATION_VERIFIER_SYSTEM,
+        provider=EVAL_PROVIDER,
+        stage="citation_verify",
+    )
 
     try:
         verdict = parse_json_reply(raw)

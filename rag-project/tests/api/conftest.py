@@ -23,6 +23,24 @@ def pipeline_result(**over) -> dict:
         },
         "confidence": "high",
         "outcome": "answer",
+        "llm_usage": {
+            "calls": [
+                {
+                    "stage": "generate",
+                    "provider": "groq",
+                    "model": "m",
+                    "ms": 420,
+                    "prompt_tokens": 900,
+                    "prompt_source": "reported",
+                    "completion_tokens": 40,
+                    "completion_source": "reported",
+                }
+            ],
+            "prompt_tokens": 900,
+            "completion_tokens": 40,
+            "llm_ms": 420,
+            "estimated": False,
+        },
     }
     result.update(over)
     return result

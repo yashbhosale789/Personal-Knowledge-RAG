@@ -31,7 +31,12 @@ def _run_pipeline(query: str, provider: str, return_contexts: bool) -> dict:
     )
 
 
-def _log_query(request_id: str, outcome: str | None, provider: str) -> None:
+def _log_query(
+    request_id: str,
+    outcome: str | None,
+    provider: str,
+    llm_usage: dict | None = None,
+) -> None:
     logger.info(
         json.dumps(
             {
@@ -40,6 +45,8 @@ def _log_query(request_id: str, outcome: str | None, provider: str) -> None:
                 "outcome": outcome,
                 "provider": provider,
                 "prompt_version": config.PROMPT_VERSION,
+                # Per-stage tokens/latency of the successful attempt; none on a cache hit.
+                "llm_usage": llm_usage,
             }
         )
     )
@@ -117,7 +124,9 @@ async def query_endpoint(
         )
 
     latency_ms = (__import__("time").monotonic() - start_time) * 1000
-    _log_query(request_id, result.get("outcome"), provider_used)
+    _log_query(
+        request_id, result.get("outcome"), provider_used, result.get("llm_usage")
+    )
 
     return QueryResponse(
         query_id=request_id,
