@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 from pathlib import Path
 
 import requests
@@ -21,6 +22,7 @@ from config import (
     OPENROUTER_MODEL,
     PIPELINE_PROVIDER,
 )
+from src.llm import usage
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +72,7 @@ def model_name(provider: str | None = None) -> str:
 
 def _call_openai_compatible(
     messages: list, model: str, url: str, key_env: str | None
-) -> str:
+) -> tuple[str, dict]:
     """OpenRouter, Groq, Gemini — all speak the same OpenAI-compatible shape."""
     payload = {
         "model": model,
@@ -92,13 +94,14 @@ def _call_openai_compatible(
 
     response_json = response.json()
     try:
-        return response_json["choices"][0]["message"]["content"].strip()
+        text = response_json["choices"][0]["message"]["content"].strip()
     except KeyError:
         logger.error(f"{url} returned unexpected shape: {response_json}")
         raise
+    return text, response_json.get("usage") or {}
 
 
-def _call_ollama(messages: list, model, url) -> str:
+def _call_ollama(messages: list, model, url) -> tuple[str, dict]:
     """
     Ollama native /api/chat — NOT /v1/chat/completions.
     The OpenAI-compatible route silently ignores options.num_ctx and defaults
@@ -115,13 +118,22 @@ def _call_ollama(messages: list, model, url) -> str:
     # when the model has to load into VRAM.
     response = _session.post(url, json=payload, timeout=300)
     response.raise_for_status()
-    return response.json()["message"]["content"].strip()
+    body = response.json()
+    # Ollama omits prompt_eval_count when the whole prompt was served from its KV cache.
+    reported = {
+        "prompt_tokens": body.get("prompt_eval_count"),
+        "completion_tokens": body.get("eval_count"),
+    }
+    return body["message"]["content"].strip(), reported
 
 
-def call_llm(prompt: str, system: str = "", provider: str | None = None) -> str:
+def call_llm(
+    prompt: str, system: str = "", provider: str | None = None, stage: str = "other"
+) -> str:
     """
     Send a prompt to the active pipeline LLM and return the response text.
-    Provider is controlled by PIPELINE_PROVIDER in config.py.
+    Provider is controlled by PIPELINE_PROVIDER in config.py. `stage` labels the
+    token and latency metrics (rewrite | sufficiency | generate | citation_verify).
     """
     active, model, url, key_env = _resolve_provider(provider)
 
@@ -130,10 +142,12 @@ def call_llm(prompt: str, system: str = "", provider: str | None = None) -> str:
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
 
+    started = time.monotonic()
     try:
         if active == "ollama":
-            return _call_ollama(messages, model, url)
-        return _call_openai_compatible(messages, model, url, key_env)
+            text, reported = _call_ollama(messages, model, url)
+        else:
+            text, reported = _call_openai_compatible(messages, model, url, key_env)
 
     except requests.exceptions.Timeout:
         logger.error(f"{active} request timeout")
@@ -148,3 +162,14 @@ def call_llm(prompt: str, system: str = "", provider: str | None = None) -> str:
     except KeyError as e:
         logger.error(f"{active} unexpected response format: {e}")
         raise
+
+    usage.record(
+        stage,
+        active,
+        model,
+        time.monotonic() - started,
+        reported,
+        system + prompt,
+        text,
+    )
+    return text

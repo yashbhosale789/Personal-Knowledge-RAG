@@ -175,6 +175,13 @@ Invoke-WebRequest http://127.0.0.1:8000/metrics
 
 The endpoint returns Prometheus exposition data. The service also includes Redis and Grafana services in the Compose configuration.
 
+LLM token and latency accounting (Phase 13.3), one series per pipeline stage (`rewrite`, `sufficiency`, `generate`, `citation_verify`):
+
+- `llm_tokens_total{stage,provider,model,type,source}`: `type` is `prompt` or `completion`. `source="reported"` is the provider's own count. `source="estimated"` is a ~4 chars/token approximation, used only when the provider omits a count (for example, Ollama on a prompt KV-cache hit).
+- `llm_call_duration_seconds{stage,provider,model}`: latency of each successful call. Its `_count` is the number of calls.
+
+Under the $0 budget, "cost" means free-tier quota consumption, not money. For example, `sum by (provider, model) (increase(llm_tokens_total[1d]))` gives tokens per day, and `increase(llm_call_duration_seconds_count[1d])` gives requests per day. Compare these with the provider's daily limits; limits vary per account, so they are not hard-coded. Each `/query` `event=query` log line carries the same per-stage breakdown as `llm_usage`. Cache hits make no LLM calls and log `llm_usage: null`.
+
 ## CLI Querying
 
 For a direct local pipeline query without starting FastAPI:

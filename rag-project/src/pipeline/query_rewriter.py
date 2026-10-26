@@ -21,7 +21,9 @@ def rewrite_query(query: str, provider: str | None = None) -> str:
     """
 
     try:
-        rewritten = call_llm(prompt=query, system=REWRITE_SYSTEM, provider=provider)
+        rewritten = call_llm(
+            prompt=query, system=REWRITE_SYSTEM, provider=provider, stage="rewrite"
+        )
         logger.info(f"Query rewrite: {query} -> {rewritten}")
         return rewritten
 

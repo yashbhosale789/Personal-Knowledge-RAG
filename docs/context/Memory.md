@@ -89,6 +89,13 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - Where it appears: `/query` response field `prompt_version` (API contract v2), `event=query` and `event=prompts_loaded` JSON logs, Prometheus `rag_prompt_info{version=...}`, the semantic-cache namespace (prompt version + answering model + verifier model; index `semantic_cache_idx_v2`, TAG filter on `namespace`), and eval generation/judge/retrieval records.
 - Not covered: the judge/verifier `Question:/Context:` framings (in code; eval code hash only). F-14 entity guard unchanged (15.1).
 
+**Phase 13.3 (new numbering — "Token and cost accounting") — IMPLEMENTED 2026-10-26, pending PR CI**
+- New `src/llm/usage.py`. `call_llm(..., stage=)` records `llm_tokens_total{stage,provider,model,type,source}` and `llm_call_duration_seconds{stage,provider,model}`. The four stages are `rewrite | sufficiency | generate | citation_verify`, and the default is `other`. `source` is `reported` (provider usage) or `estimated` (chars/4, only when the provider omits a count).
+- `run_advanced_rag_pipeline` wraps its body in `usage.track()` (a ContextVar inside the one executor thread) and returns `llm_usage`. That value goes into the `event=query` log and eval generation records, and `generate.py` summary prints tokens per query. The API response contract is unchanged.
+- Decision: under $0, cost means free-tier quota consumption (tokens and calls per provider/model), not a list price. Limits are recorded in roadmap §13.3 with the check date and are not hard-coded.
+- Live sample on 2026-10-26 (corpus `c1`): about 3.2–3.4K tokens per answered query, about 1.2K per abstain; all counts provider-reported, including Gemini through its OpenAI-compatible endpoint. Local suite: 227 passed / 6 strict xfail, coverage 71.55%.
+- Editing `src/pipeline` and `src/llm` changes the eval fingerprint, so local `eval/runs/` entries no longer match (CI deletes runs anyway).
+
 ## 4. Open issues and carryovers
  
 ### Security / repository hygiene

@@ -11,7 +11,7 @@ def llm(monkeypatch):
     def install(reply):
         calls = []
 
-        def fake(prompt, system=None, provider=None):
+        def fake(prompt, system=None, provider=None, stage=None):
             calls.append({"prompt": prompt, "provider": provider})
             return reply
 

@@ -291,3 +291,38 @@ def test_golden_dataset_structure():
         assert (item["expected_outcome"] == "abstain") == (not item["relevant"])
     assert any(i["ci"] and i["expected_outcome"] == "abstain" for i in dataset)
     assert {i["split"] for i in dataset} <= {"dev", "test"}
+
+
+# --- token accounting (Phase 13.3) -----------------------------------------
+
+
+def test_eval_summary_reports_tokens_per_query_and_estimates():
+    from eval.harness.generate import token_summary
+
+    def call(stage, p, c, source="reported"):
+        return {
+            "stage": stage,
+            "prompt_tokens": p,
+            "completion_tokens": c,
+            "prompt_source": source,
+            "completion_source": "reported",
+        }
+
+    usages = [
+        {
+            "calls": [call("sufficiency", 300, 20), call("generate", 900, 80)],
+            "prompt_tokens": 1200,
+            "completion_tokens": 100,
+            "estimated": False,
+        },
+        {
+            "calls": [call("sufficiency", 280, 20, source="estimated")],
+            "prompt_tokens": 280,
+            "completion_tokens": 20,
+            "estimated": True,
+        },
+    ]
+    line = token_summary(usages)
+    assert "mean=800 p50=1300 max=1300" in line
+    assert "generate=490 sufficiency=310" in line
+    assert "1/2 include estimates" in line

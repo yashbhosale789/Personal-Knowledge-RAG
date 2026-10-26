@@ -38,7 +38,9 @@ def check_sufficiency(
 
     # Tier 2: LLM judge on the ambigous middle
     prompt = _build_judge_prompt(query, reranked_chunks)
-    raw = call_llm(prompt, system=SUFFICIENCY_JUDGE_SYSTEM, provider=provider)
+    raw = call_llm(
+        prompt, system=SUFFICIENCY_JUDGE_SYSTEM, provider=provider, stage="sufficiency"
+    )
 
     try:
         verdict = parse_json_reply(raw)

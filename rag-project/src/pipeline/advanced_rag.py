@@ -5,6 +5,7 @@ import secrets
 from langchain_core.documents import Document
 
 from config import ABSTAIN_MESSAGE, ANSWER_TEMPLATE, SYSTEM_PROMPT, TOP_K
+from src.llm import usage
 from src.llm.client import call_llm
 from src.pipeline.citation_verification import verify_citation
 from src.pipeline.confidence import score_confidence
@@ -95,7 +96,22 @@ def run_advanced_rag_pipeline(
     """
     Advanced RAG pipeline:
     query → rewrite → dense + BM25 → RRF fusion → rerank → prompt → LLM
+
+    The result carries `llm_usage`: tokens and latency of every LLM call it made.
     """
+    with usage.track() as calls:
+        result = _run(query, top_k, return_contexts, provider, rewritten)
+    result["llm_usage"] = usage.summarize(calls)
+    return result
+
+
+def _run(
+    query: str,
+    top_k: int,
+    return_contexts: bool,
+    provider: str | None,
+    rewritten: str | None,
+) -> dict:
 
     logger.info(f"Advanced RAG pipeline started for : {query[:60]}")
 
@@ -142,7 +158,7 @@ def run_advanced_rag_pipeline(
 
     # Stage 5: Prompt + LLM
     prompt = _build_prompt(rewritten, reranked)
-    answer = call_llm(prompt, system=SYSTEM_PROMPT, provider=provider)
+    answer = call_llm(prompt, system=SYSTEM_PROMPT, provider=provider, stage="generate")
     answer = answer.replace("【", "[").replace("】", "]")
 
     # Stage 5.5: Citation Verification

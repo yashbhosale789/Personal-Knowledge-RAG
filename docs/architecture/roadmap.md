@@ -240,6 +240,13 @@ Track token usage and estimated cost by pipeline stage where provider data permi
 
 Exit: for a sample of queries, per-stage tokens and latency are visible; estimated vs reported usage is labeled.
 
+**Status (2026-10-26): implemented; exit met locally, pending PR CI.**
+- `call_llm(..., stage=)` keeps the provider usage block. OpenAI-compatible `usage.prompt_tokens/completion_tokens` is used for Groq, OpenRouter and Gemini; Ollama uses `prompt_eval_count/eval_count`. Any missing count is estimated (chars/4) and labelled `source="estimated"`.
+- Prometheus metrics: `llm_tokens_total{stage,provider,model,type,source}` and `llm_call_duration_seconds{stage,provider,model}`. The pipeline result carries `llm_usage`, which goes into the `event=query` log and eval generation records. The eval summary prints tokens per query and the mean per stage.
+- **Cost = free-tier quota consumption, not money.** Nothing is billed, and OpenRouter `:free` reports `cost: 0`. Limits were checked on 2026-10-26 and are not hard-coded, because they vary per account. Groq `gpt-oss-120b`: 30 RPM / 1K RPD / 8K TPM / 200K TPD. OpenRouter `:free`: 20 RPM / 50 RPD (1000 RPD after $10 of credits). Gemini: limits are per project and shown in AI Studio only.
+- Live sample (corpus `c1`, Groq pipeline, Gemini verifier, all counts `reported`): Q01 2967+456 tokens, Q31 2650+515, Q12 (abstain) 948+239. An answered query uses about 3.2–3.4K tokens, so Groq's 8K TPM allows about 2 answered queries per minute. The rewrite stage uses about 100 completion tokens for a one-line rewrite (gpt-oss reasoning), which is a candidate for 15.3 token optimization.
+- Not covered: retrieve/rerank timing (13.4). The per-query log covers only the successful pipeline attempt; Prometheus also counts calls made inside attempts that were retried.
+
 ### Phase 13.4 — Observability: request tracing
 
 Starting point (2026-10-26): logs and metrics are in place. The request ID is created in `api/middleware/logging.py` and returned as `X-Request-ID` and `query_id`, but only the `api/` layer logs it; `src/` and `api/core/retry.py` do not. No spans or per-stage timing exist.

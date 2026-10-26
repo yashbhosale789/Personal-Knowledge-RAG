@@ -202,7 +202,7 @@ def test_get_on_a_post_route_is_405(client):
 # --- prompt version (Phase 13.2) ------------------------------------------
 
 
-def test_prompt_version_is_in_the_response_and_the_query_log(
+def test_prompt_version_and_llm_usage_are_in_the_query_log(
     client, fakes, ready, auth_headers, caplog
 ):
     import json
@@ -225,6 +225,7 @@ def test_prompt_version_is_in_the_response_and_the_query_log(
             "outcome": "answer",
             "provider": "groq",
             "prompt_version": PROMPT_VERSION,
+            "llm_usage": fakes.result["llm_usage"],  # Phase 13.3: per-stage usage
         }
     ]
 
