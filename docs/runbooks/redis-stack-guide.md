@@ -118,10 +118,13 @@ SSH to the instance, then work from the deploy directory (`APP_DIR` in `deploy/d
 
 ```bash
 cd /home/ubuntu/rag
+export IMAGE_TAG="$(cat .image_tag)"
 docker ps --format '{{.Names}}  {{.Image}}  {{.Status}}'
 ```
 
-Confirms the Redis container is up and shows its real name (needed only for the `docker exec` form).
+`docker-compose.prod.yml` requires `IMAGE_TAG` (`${IMAGE_TAG:?set IMAGE_TAG}`), and only `deploy/deploy.sh` exports it. Without the `export`, every `docker compose -f docker-compose.prod.yml ...` command fails with `required variable IMAGE_TAG is missing a value`. Take the value from `.image_tag` (the running deploy), never a made-up tag: a later `up` would otherwise swap the app image. The export lasts for the current SSH session only.
+
+`docker ps` confirms the Redis container is up and shows its real name (needed only for the `docker exec` form).
 
 Pattern: `docker compose -f docker-compose.prod.yml exec redis redis-cli <command>`
 
@@ -143,6 +146,8 @@ Interactive prompt; the commands under *Commands used inside the interactive `re
 Equivalent without Compose: `docker exec -it <name-from-docker-ps> redis-cli <command>`.
 
 ## One-time cleanup after the Phase 13.2 deploy
+
+**Done 2026-10-26** on production after deploy `49eb33f`; `FT._LIST` now shows only `semantic_cache_idx_v2`. Kept for reference.
 
 Phase 13.2 replaced `semantic_cache_idx` with `semantic_cache_idx_v2`. The app creates the new index at startup; the old one is left behind. **After** the 13.2 deploy is live (dropping it earlier makes the running old app miss every lookup):
 
