@@ -1,6 +1,6 @@
 # Personal Knowledge OS — Detailed Roadmap (working plan)
 
-Last reconciled: 2026-10-23
+Last reconciled: 2026-10-26
 
 Current phase: **Phase 13 — LLMOps foundations**
 
@@ -213,12 +213,14 @@ Exit: CI runs the suite on every PR and it is green; coverage floor recorded in 
 
 ### Phase 13.2 — Prompt versioning
 
-- Store prompts in the repository (one file per prompt, explicit version string).
+**Status: implemented locally 2026-10-26; NOT closed — CI (incl. the Redis cache tests) not yet run on a PR.** Decision: prompts stay in `rag-project/config.py` (the generation user template moved there as `ANSWER_TEMPLATE`); separate prompt files and a manual version string were tried and rejected as ceremony for a single-developer repo. `config.PROMPT_VERSION` is a 12-hex hash of all five pipeline prompts, so any edit changes it. It appears in the `/query` response (`prompt_version`, contract v2), a structured `event=query` log line, the `event=prompts_loaded` startup log, the Prometheus `rag_prompt_info` metric, the semantic-cache namespace (prompt version + answering model + verifier model; index renamed `semantic_cache_idx_v2`), and every generation, judge and retrieval-baseline eval record (prompts were already in the eval fingerprint). Prompt text verified byte-identical before/after. The judge/verifier `Question:/Context:` framings stay in code: covered by the eval code hash, not by the cache namespace. Initial `PROMPT_VERSION`: `938331ced9a6`.
+
+- Store prompts in the repository (`config.py`); the version is a hash of their text.
 - Include the prompt-version identifier in relevant responses, logs, metrics, **and the semantic-cache key** (F-14), together with the model name.
 - Record prompt versions in every eval run.
 - Do not introduce an external prompt-management platform unless explicitly approved and justified.
 
-Exit: changing a prompt file changes the version, invalidates cache entries, and shows up in logs and eval output; one test proves each.
+Exit: changing a prompt changes the version, invalidates cache entries, and shows up in logs and eval output; one test proves each.
 
 ### Phase 13.3 — Token and cost accounting
 
@@ -228,26 +230,52 @@ Exit: for a sample of queries, per-stage tokens and latency are visible; estimat
 
 ### Phase 13.4 — Observability: request tracing
 
+Starting point (2026-10-26): logs and metrics are in place. The request ID is created in `api/middleware/logging.py` and returned as `X-Request-ID` and `query_id`, but only the `api/` layer logs it; `src/` and `api/core/retry.py` do not. No spans or per-stage timing exist.
+
 Order of work:
 
-1. **Free and local first:** a request ID returned in the `/query` response and propagated through every stage, with per-stage duration, token counts, prompt version, provider, retry/fallback, and abstention outcome in structured JSON logs and Prometheus metrics. Phase 14.0 depends on the request ID.
-2. **Optional external backend:** Langfuse Cloud Hobby was proposed over LangSmith on cost grounds; OpenTelemetry is the more portable alternative. **Confirm the choice and verify current free-tier terms with the user before implementation.** Self-hosting is not practical on the current hardware. Do not send document text to a third party before the privacy decision in Phase 15.1 (F-21); the 5-PDF corpus `c1` is the only content until then.
-3. Tracing must be non-blocking and fail-open: an observability outage must not break query serving. One test must prove it.
+1. **Full correlation first (free, local):** store the request ID in a `contextvars` variable set by the middleware, and add a logging filter so every logger in `api/` and `src/` emits it without changing function signatures. Optionally accept a well-formed incoming `X-Request-ID`. Phase 14.0 depends on this request ID.
+2. **Per-stage timing and outcome:** for the stages rewrite, retrieve, rerank, sufficiency, generate and citation verification, record duration, token counts, prompt version, provider, retry/fallback and outcome. Write these to structured JSON logs, and to Prometheus through a `stage` label.
+3. **RAG quality metrics:** semantic-cache hits and misses, abstention / insufficient-context rate, citation-verification failures, empty retrievals.
+4. **External tracing — decided 2026-10-26: Langfuse Cloud Hobby (free plan), using the Langfuse Python SDK v3, which is built on OpenTelemetry.** Jaeger was rejected: another container, and no LLM-specific views. Self-hosting Langfuse was rejected: it needs Postgres, ClickHouse, Redis and S3, which don't fit on the 2 GiB `t3.small`.
+   - Use the request ID as the trace ID, or record it in trace metadata, so one ID connects the response, logs and trace.
+   - **Verify the current Hobby plan's limits and terms before implementation.**
+   - Tracing is disabled when Langfuse keys are unset.
+   - Add `opentelemetry-sdk` to `requirements.in` directly instead of relying on chromadb pulling it in. Pin it to the version already resolved in the lock file.
+   - Privacy (F-21): mask retrieved chunk text and answers in traces by default. Send full content only after the Phase 15.1 privacy decision.
+5. **Cardinality rules:** request IDs, query text, document and chunk IDs, and user input never become Prometheus labels; they belong in logs and traces. Metric labels use only values from a small, fixed set (route template, provider, stage, outcome).
+6. Tracing must be non-blocking and fail-open: an observability outage must not break query serving. Use short flush timeouts. One test must prove it.
 
-Exit: any `/query` can be followed by request ID through logs and metrics; the fail-open test passes.
+Exit: any `/query` can be followed by one request ID through the response, logs from every stage, metrics and its Langfuse trace. Per-stage and RAG quality metrics appear on the Grafana dashboard. The fail-open test passes.
 
 ### Phase 13.5 — Operational readiness
 
 Addresses F-16 (limits), F-18, F-19 (authorization decision), F-20 (alerting), F-21 (logging policy).
 
-- Prometheus alert rules for error rate, p95 latency, health failures, LLM-provider failures and fallback rate, with a free notification channel (webhook or email via Alertmanager). Draft SLO targets from `c1` measurements and mark them provisional; they are finalised in Phase 15.4.
+- **SLOs (provisional):** define them from `c1` measurements and document them with a 28-day window and an error budget. Starting points:
+  - availability: 99% of `/query` requests return a non-5xx response
+  - latency: p95 of `/query` stays under a target set from measured p95
+
+  Calculate both from the existing `http_requests_total` and `http_request_duration_seconds`, using Prometheus recording rules. Mark the targets provisional; they are finalised in Phase 15.4. Add an SLO / error-budget panel to the Grafana dashboard.
+- **Alerts:** use Grafana alerting (already deployed), not a separate Alertmanager. Send notifications to a free channel (Telegram, Discord or email). Rules:
+  - fast and slow error-budget burn rate for each SLO
+  - health-check failures
+  - LLM-provider failures and fallback rate
+- **External uptime monitoring:** Prometheus runs on the same host, so it cannot report the host being down. Use a free external check on `/health`, such as UptimeRobot or a scheduled GitHub Actions workflow.
+- **Docker log rotation:** add `json-file` rotation (`max-size`, `max-file`) to every service in `docker-compose.prod.yml`. Logs currently grow without limit on the instance disk.
+- Pin the Prometheus and Grafana image versions in `docker-compose.yml`, which currently uses `latest`, to match prod.
 - Replace long-lived AWS keys in GitHub Actions with GitHub OIDC to an IAM role (F-18); re-run the rollback drill afterwards.
 - Add `mem_limit` to services and `maxmemory` to Redis in `docker-compose.prod.yml`, sized from current measurements (~0.9 GiB used on a 2 GiB host); confirm with a deploy and a warm-up query.
 - Decide and document the **authorization model**: a single shared key is acceptable for a single-user system if stated as such; otherwise per-user keys with per-user cache and document filtering. If the system stays single-user, amend the "retrieve only authorized evidence" line in `Architecture.md`.
 - Log retention and what is logged (queries can contain sensitive text); applies to feedback comments in Phase 14 as well.
 - Document the rebuild procedure for the index from source documents. It will be revised in Phase 15.0 when ingestion changes.
 
-Exit: alerts fire in a test; OIDC deploy works; limits are active; authorization and logging decisions recorded in `Memory.md`.
+Exit:
+- Provisional SLOs are documented and shown in Grafana.
+- A burn-rate alert and the external uptime check each fire in a test and reach the notification channel.
+- Log rotation is active.
+- The OIDC deploy works, and the container limits are active.
+- The authorization and logging decisions are recorded in `Memory.md`.
 
 ### Closing Phase 13
 
@@ -412,10 +440,12 @@ Status as of 2026-10-23. Gap items name the owning phase.
 | Dependency / image vulnerability scanning | pip-audit + Dependabot built in 13.1; image scan still a gap | F-22 → 13.1 |
 | Prompt / model versioning | **Gap** | 13.2 |
 | Per-stage cost and latency visibility | **Gap** | 13.3, 13.4 |
+| Request correlation and tracing | Partial — request ID in the `api/` layer only | 13.4 |
 | Alerting and SLOs | **Gap** | F-20 → 13.5 (final numbers 15.4) |
+| External uptime monitoring | **Gap** | 13.5 |
 | Resource limits on containers | **Gap** | F-16 → 13.5 |
 | Secrets without long-lived keys | **Gap** | F-18 → 13.5 |
-| Logging / retention policy | **Gap** | F-21 → 13.5 |
+| Logging / retention policy and log rotation | **Gap** | F-21 → 13.5 |
 | User feedback loop | **Gap** | 14.0 |
 | Usable front end | **Gap** | 14.1 |
 | Storage architecture fit for production | **Gap, deferred** | F-27 → 15.0 |
