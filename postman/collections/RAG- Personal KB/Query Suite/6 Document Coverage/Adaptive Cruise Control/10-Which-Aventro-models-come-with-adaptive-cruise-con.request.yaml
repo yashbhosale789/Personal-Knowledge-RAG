@@ -1,0 +1,22 @@
+$kind: http-request
+name: "10 Which Aventro models come with adaptive cruise control as standard?"
+description: "Expected: abstain. Ground truth: Not in the documents: the ACC guide is generic and does not mention Aventro models."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"Which Aventro models come with adaptive cruise control as standard?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("abstains", () => pm.expect(body.outcome).to.eql("abstain"));
+      console.log(pm.info.requestName, "|", body.outcome, "|", (body.sources || []).join(", "), "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 10000

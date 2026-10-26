@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q29 What should a pregnant woman bring to help with motion sickness while traveling by ..."
+description: "Expected: answer (easy). Ground truth: She should bring ginger candies, anti\u2011nausea wristbands, or any other doctor\u2011recommended remedies."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"What should a pregnant woman bring to help with motion sickness while traveling by car?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 8000

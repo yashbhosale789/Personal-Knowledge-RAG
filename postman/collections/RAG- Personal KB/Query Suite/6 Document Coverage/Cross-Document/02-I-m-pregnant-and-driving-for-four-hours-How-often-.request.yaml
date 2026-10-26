@@ -1,0 +1,23 @@
+$kind: http-request
+name: "02 I'm pregnant and driving for four hours. How often should I stop, and where should the lap belt go?"
+description: "Expected: answer. Ground truth: Stop every 60-90 minutes; the lap belt goes under the belly, low on the hips and across the upper thighs."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"I'm pregnant and driving for four hours. How often should I stop, and where should the lap belt go?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      if (body.outcome !== "cached") pm.test("retrieves Advice for Pregnant Women While in a Car.pdf", () => pm.expect(body.sources).to.include("Advice for Pregnant Women While in a Car.pdf"));
+      console.log(pm.info.requestName, "|", body.outcome, "|", (body.sources || []).join(", "), "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 2000

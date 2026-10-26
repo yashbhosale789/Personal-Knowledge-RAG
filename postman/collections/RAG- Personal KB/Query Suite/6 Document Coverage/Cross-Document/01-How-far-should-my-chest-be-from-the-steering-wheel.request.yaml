@@ -1,0 +1,24 @@
+$kind: http-request
+name: "01 How far should my chest be from the steering wheel, and who do I call if my seat won't lock?"
+description: "Expected: answer. Ground truth: At least 25 cm (10 inches); re-engage the lever or contact the service center / customer support on +91 124 1234567."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"How far should my chest be from the steering wheel, and who do I call if my seat won't lock?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      if (body.outcome !== "cached") pm.test("retrieves Adjusting the Seat Positions.pdf", () => pm.expect(body.sources).to.include("Adjusting the Seat Positions.pdf"));
+      if (body.outcome !== "cached") pm.test("retrieves Adjusting the Steering Wheel.pdf", () => pm.expect(body.sources).to.include("Adjusting the Steering Wheel.pdf"));
+      console.log(pm.info.requestName, "|", body.outcome, "|", (body.sources || []).join(", "), "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 1000

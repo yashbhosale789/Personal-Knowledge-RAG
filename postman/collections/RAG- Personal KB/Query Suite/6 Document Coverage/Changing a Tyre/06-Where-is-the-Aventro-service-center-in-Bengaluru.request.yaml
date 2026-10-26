@@ -1,0 +1,23 @@
+$kind: http-request
+name: "06 Where is the Aventro service center in Bengaluru?"
+description: "Expected: answer. Ground truth: Electronic City."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"Where is the Aventro service center in Bengaluru?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      if (body.outcome !== "cached") pm.test("retrieves _Aventro Motors- How to Change a Tyre.pdf", () => pm.expect(body.sources).to.include("_Aventro Motors- How to Change a Tyre.pdf"));
+      console.log(pm.info.requestName, "|", body.outcome, "|", (body.sources || []).join(", "), "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 6000

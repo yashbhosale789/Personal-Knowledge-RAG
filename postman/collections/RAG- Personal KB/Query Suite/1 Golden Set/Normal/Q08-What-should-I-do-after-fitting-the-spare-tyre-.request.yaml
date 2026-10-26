@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q08 What should I do after fitting the spare tyre before resuming normal driving?"
+description: "Expected: answer (medium). Ground truth: After fitting the spare tyre, you should drive slowly and get the spare tyre pressure checked at the nearest Aventro Service Center."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"What should I do after fitting the spare tyre before resuming normal driving?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 7000

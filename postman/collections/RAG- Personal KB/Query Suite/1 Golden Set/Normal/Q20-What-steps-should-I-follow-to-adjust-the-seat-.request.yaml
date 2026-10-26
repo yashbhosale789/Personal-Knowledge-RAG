@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q20 What steps should I follow to adjust the seat distance from the pedals?"
+description: "Expected: answer (easy). Ground truth: First, locate the seat adjustment lever under the front edge of the seat. Pull the lever up to unlock the seat. Slide the seat forward or backward until your feet reach the pedals comfortably with a slight knee bend. Release the lever to lock the seat, then gently rock the seat to confirm it is securely locked."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"What steps should I follow to adjust the seat distance from the pedals?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 12000

@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q35 If a slower car merges in front of me while ACC is on, what does the system do, and..."
+description: "Expected: answer (medium). Ground truth: ACC detects the vehicle and smoothly reduces your speed to maintain a safe gap, but the driver must remain alert and ready to take control at all times."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"If a slower car merges in front of me while ACC is on, what does the system do, and what is still my responsibility?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 5000

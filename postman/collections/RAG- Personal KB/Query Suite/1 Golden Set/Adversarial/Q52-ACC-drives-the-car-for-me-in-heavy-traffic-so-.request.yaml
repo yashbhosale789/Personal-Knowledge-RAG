@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q52 ACC drives the car for me in heavy traffic, so can I stop paying attention to the r..."
+description: "Expected: answer (hard). Ground truth: No. ACC is not a substitute for attention: the driver must remain alert and ready to take control at all times."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"ACC drives the car for me in heavy traffic, so can I stop paying attention to the road?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 3000

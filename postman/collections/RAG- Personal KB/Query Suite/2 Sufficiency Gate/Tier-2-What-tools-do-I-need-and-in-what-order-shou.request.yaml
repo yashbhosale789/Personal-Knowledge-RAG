@@ -1,0 +1,23 @@
+$kind: http-request
+name: "Tier 2 - What tools do I need and in what order should I use them to change a tyre on an Aventro Sedan?"
+description: "Expected: abstain, sufficiency.tier = llm_judge."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"What tools do I need and in what order should I use them to change a tyre on an Aventro Sedan?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("abstains", () => pm.expect(body.outcome).to.eql("abstain"));
+      pm.test("rejected by llm_judge", () => pm.expect(body.sufficiency && body.sufficiency.tier).to.eql("llm_judge"));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 8000

@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q37 Should I deactivate my airbag when I'm pregnant, and how much room should be betwee..."
+description: "Expected: answer (hard). Ground truth: No. Airbags are important for safety, so keep them on. Keep at least 25 cm (10 inches) between your chest and the wheel."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"Should I deactivate my airbag when I'm pregnant, and how much room should be between my chest and the steering wheel?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 7000

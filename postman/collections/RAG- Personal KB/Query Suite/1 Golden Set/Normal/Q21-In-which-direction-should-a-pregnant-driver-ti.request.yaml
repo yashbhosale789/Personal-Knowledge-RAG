@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q21 In which direction should a pregnant driver tilt the steering wheel for safety?"
+description: "Expected: answer (easy). Ground truth: The steering wheel should be angled toward the driver\u2019s chest rather than the belly."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"In which direction should a pregnant driver tilt the steering wheel for safety?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 13000

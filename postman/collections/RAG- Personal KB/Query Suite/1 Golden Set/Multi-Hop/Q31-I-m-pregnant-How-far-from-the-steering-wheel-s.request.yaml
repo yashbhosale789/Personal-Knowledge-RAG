@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q31 I'm pregnant. How far from the steering wheel should I sit?"
+description: "Expected: answer (hard). Ground truth: Sit as far from the dashboard and steering wheel as possible while still able to drive comfortably, and keep at least 25 cm (10 inches) between your chest and the steering wheel."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"I'm pregnant. How far from the steering wheel should I sit?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 1000

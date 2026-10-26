@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q05 Why should lug nuts be loosened before using the jack?"
+description: "Expected: answer (hard). Ground truth: The guide says to loosen the lug nuts slightly, without removing them fully, before lifting the vehicle with the jack. It does not state the reason."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"Why should lug nuts be loosened before using the jack?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 1000

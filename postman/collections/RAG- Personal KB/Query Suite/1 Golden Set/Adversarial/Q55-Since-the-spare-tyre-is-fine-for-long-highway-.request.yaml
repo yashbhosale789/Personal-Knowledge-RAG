@@ -1,0 +1,22 @@
+$kind: http-request
+name: "Q55 Since the spare tyre is fine for long highway trips, what speed can I drive at?"
+description: "Expected: answer (hard). Ground truth: The premise is incorrect: the guide says some spare tyres are space savers that are not intended for long distances or high speeds."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"Since the spare tyre is fine for long highway trips, what speed can I drive at?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      console.log(pm.info.requestName, "|", body.outcome, "|", body.provider, "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 6000

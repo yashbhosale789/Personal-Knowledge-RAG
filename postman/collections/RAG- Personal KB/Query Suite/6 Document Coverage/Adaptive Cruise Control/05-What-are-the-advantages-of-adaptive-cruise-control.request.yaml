@@ -1,0 +1,23 @@
+$kind: http-request
+name: "05 What are the advantages of adaptive cruise control?"
+description: "Expected: answer. Ground truth: Safety (fewer rear-end collisions), convenience (less fatigue on long trips and in jams) and efficiency (can improve fuel economy)."
+url: https://yash-pkb-rag.duckdns.org/query
+method: POST
+body:
+  type: json
+  content: "{\n  \"query\": \"What are the advantages of adaptive cruise control?\"\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:PROD_API_KEY}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("answers", () => pm.expect(body.outcome).to.be.oneOf(["answer", "answer_low_confidence", "cached"]));
+      if (body.outcome !== "cached") pm.test("retrieves Adaptive Cruise Control (ACC).pdf", () => pm.expect(body.sources).to.include("Adaptive Cruise Control (ACC).pdf"));
+      console.log(pm.info.requestName, "|", body.outcome, "|", (body.sources || []).join(", "), "|", Math.round(body.latency_ms || 0) + " ms");
+settings: {}
+order: 5000

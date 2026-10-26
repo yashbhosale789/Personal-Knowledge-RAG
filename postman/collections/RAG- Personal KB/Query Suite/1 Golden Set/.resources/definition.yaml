@@ -1,0 +1,3 @@
+$kind: collection
+description: "eval/data/golden_dataset.json. Each request checks outcome against the item's expected_outcome."
+order: 1000

@@ -1,0 +1,3 @@
+$kind: collection
+description: "Questions the gate should reject before generation. Tier 1 = retrieval score floor, Tier 2 = LLM judge."
+order: 2000

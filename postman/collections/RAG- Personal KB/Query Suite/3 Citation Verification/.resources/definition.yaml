@@ -1,0 +1,3 @@
+$kind: collection
+description: "Instruction-like queries whose answers tend to be ungrounded. Model-dependent: a failure is worth reading, not necessarily a bug."
+order: 3000
