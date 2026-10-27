@@ -32,7 +32,8 @@ class BGEEmbeddingAdapter(Embeddings):
         from src.embedding.embedder import embed_query
 
         # Nested inside advanced_rag's "dense_retrieve"; timed() keeps them disjoint.
-        with timed("dense_embed"):
+        with timed("dense_embed") as obs:
+            obs.update(input=text)
             return embed_query(text)
 
 

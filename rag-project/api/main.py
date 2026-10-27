@@ -114,6 +114,10 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down RAG API.")
     health.set_pipeline_ready(False)
 
+    from src import tracing
+
+    tracing.shutdown()  # flush buffered spans; bounded by LANGFUSE_TIMEOUT
+
 
 app = FastAPI(
     title="RAG API",

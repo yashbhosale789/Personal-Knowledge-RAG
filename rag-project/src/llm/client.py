@@ -22,6 +22,7 @@ from config import (
     OPENROUTER_MODEL,
     PIPELINE_PROVIDER,
 )
+from src import tracing
 from src.llm import usage
 
 logger = logging.getLogger(__name__)
@@ -143,33 +144,50 @@ def call_llm(
     messages.append({"role": "user", "content": prompt})
 
     started = time.monotonic()
-    try:
-        if active == "ollama":
-            text, reported = _call_ollama(messages, model, url)
-        else:
-            text, reported = _call_openai_compatible(messages, model, url, key_env)
+    # A Langfuse generation inside a /query trace; a failed call ends it as an ERROR.
+    with tracing.observe_generation(
+        stage, model=model, input=messages, metadata={"provider": active}
+    ) as generation:
+        try:
+            if active == "ollama":
+                text, reported = _call_ollama(messages, model, url)
+            else:
+                text, reported = _call_openai_compatible(messages, model, url, key_env)
 
-    except requests.exceptions.Timeout:
-        logger.error(f"{active} request timeout")
-        raise
+        except requests.exceptions.Timeout:
+            logger.error(f"{active} request timeout")
+            raise
 
-    except requests.exceptions.HTTPError as e:
-        logger.error(
-            f"{active} HTTP error: {e.response.status_code} — {e.response.text}"
+        except requests.exceptions.HTTPError as e:
+            logger.error(
+                f"{active} HTTP error: {e.response.status_code} — {e.response.text}"
+            )
+            raise
+
+        except KeyError as e:
+            logger.error(f"{active} unexpected response format: {e}")
+            raise
+
+        call = usage.record(
+            stage,
+            active,
+            model,
+            time.monotonic() - started,
+            reported,
+            system + prompt,
+            text,
         )
-        raise
-
-    except KeyError as e:
-        logger.error(f"{active} unexpected response format: {e}")
-        raise
-
-    usage.record(
-        stage,
-        active,
-        model,
-        time.monotonic() - started,
-        reported,
-        system + prompt,
-        text,
-    )
+        generation.update(
+            output=text,
+            usage_details={
+                "input": call["prompt_tokens"],
+                "output": call["completion_tokens"],
+            },
+            metadata={
+                "provider": active,
+                "token_source": "estimated"
+                if "estimated" in (call["prompt_source"], call["completion_source"])
+                else "reported",
+            },
+        )
     return text

@@ -76,18 +76,41 @@ def _build_prompt(query: str, chunks: list[dict]) -> str:
     return ANSWER_TEMPLATE.format(boundary=boundary, context=context, query=query)
 
 
+def _chunk_refs(chunks: list[dict], score_key: str) -> list[dict]:
+    """How a trace identifies retrieved chunks: source, position and the stage's score."""
+    return [
+        {
+            "source": os.path.basename(c["metadata"].get("filename", "unknown")),
+            "chunk_index": c["metadata"].get("chunk_index"),
+            score_key: c.get(score_key),
+        }
+        for c in chunks
+    ]
+
+
 def retrieve_context(
     query: str, top_k: int = TOP_K, reranker: CrossEncoderReranker | None = None
 ) -> dict[str, list[dict]]:
     """Stages 2-4: dense + BM25 -> RRF -> rerank. Returns every stage so eval can inspect them."""
-    with timed("dense_retrieve"):
+    with timed("dense_retrieve") as obs:
         dense = _dense_to_dicts(retrieve(query, top_k=top_k * 4), top_k * 4)
-    with timed("bm25"):
+        obs.update(input=query, output=_chunk_refs(dense, "rank"))
+    with timed("bm25") as obs:
         bm25 = get_bm25().retrieve(query, top_k=top_k * 4)
-    with timed("fusion"):
+        obs.update(input=query, output=_chunk_refs(bm25, "score"))
+    with timed("fusion") as obs:
         fused = reciprocal_rank_fusion(ranked_lists=[dense, bm25], top_k=top_k * 2)
-    with timed("rerank"):
+        obs.update(output=_chunk_refs(fused, "rrf_scores"))
+    with timed("rerank") as obs:
         reranked = (reranker or get_reranker()).rerank(query, candidates=fused)
+        # The final context handed to generation, so it carries the chunk text too.
+        obs.update(
+            input=query,
+            output=[
+                {**ref, "text": c["text"]}
+                for ref, c in zip(_chunk_refs(reranked, "ce_score"), reranked)
+            ],
+        )
     return {"dense": dense, "bm25": bm25, "fused": fused, "reranked": reranked}
 
 

@@ -8,7 +8,8 @@ asyncio.to_thread); a bare loop.run_in_executor does not copy it.
 
 timed(stage) records a stage's self-time: time spent in a nested timed() block is
 subtracted from its parent, so recorded stages never overlap and can be summed.
-LLM calls are timed by src/llm/usage.py, not here.
+LLM calls are timed by src/llm/usage.py, not here. Inside a /query trace each timed()
+stage is also a Langfuse observation (src/tracing.py).
 """
 
 import json
@@ -19,6 +20,8 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 
 from prometheus_client import Histogram
+
+from src import tracing
 
 STAGE_LATENCY_BUCKETS = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10)
 
@@ -71,12 +74,14 @@ class JsonFormatter(logging.Formatter):
 
 
 @contextmanager
-def timed(stage: str) -> Iterator[None]:
+def timed(stage: str) -> Iterator[tracing.Observation]:
+    """Also a Langfuse observation inside a /query trace; yields it for input/output."""
     children = [0.0]
     token = _children.set(children)
     start = time.perf_counter()
     try:
-        yield
+        with tracing.observe_stage(stage) as observation:
+            yield observation
     finally:
         elapsed = time.perf_counter() - start
         _children.reset(token)
