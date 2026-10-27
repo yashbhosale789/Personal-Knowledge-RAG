@@ -40,6 +40,10 @@ pydantic
 
 # Observability
 prometheus_client
+# Langfuse tracing (Phase 13.4) runs on OpenTelemetry. opentelemetry-sdk is pinned to the
+# version chromadb already resolves, so adding Langfuse does not move it.
+langfuse==5.0.4
+opentelemetry-sdk==1.45.1
 
 # Redis
 redis

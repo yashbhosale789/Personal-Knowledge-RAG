@@ -17,6 +17,8 @@ Populate this table from the current code/configuration. Do not assume the examp
 | `GROQ_API_KEY` | Provider authentication | If the configured provider requires it | Yes |
 | `LANGFUSE_SECRET_KEY` | Tracing authentication | If tracing is enabled | Yes |
 | `LANGFUSE_PUBLIC_KEY` | Tracing client identifier | If tracing is enabled | Treat according to provider guidance |
+| `LANGFUSE_BASE_URL` | Langfuse region endpoint (must match the project's region) | If tracing is enabled | No |
+| `LANGFUSE_TRACING_ENVIRONMENT` | Tags traces by environment (`development` locally, `production` on the prod host); same keys for both | If tracing is enabled | No |
 | `DATABASE_URL` | Database connection | If the application uses a database URL | May contain credentials |
 
 ## Repository hygiene

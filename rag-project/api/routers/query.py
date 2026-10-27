@@ -14,7 +14,7 @@ from api.core.retry import call_with_fallback
 from api.models.requests import QueryRequest
 from api.models.responses import QueryResponse
 from api.routers.health import is_pipeline_ready
-from src import observability
+from src import observability, tracing
 from src.llm.semantic_cache import (
     GROUNDING_FIELDS,
     cache_embedding,
@@ -80,12 +80,20 @@ def _log_query(
 async def query_endpoint(
     request: Request, body: QueryRequest, api_key_hash: str = Depends(verify_api_key)
 ):
-    with observability.track() as stages:
-        return await _answer(request, body, api_key_hash, stages)
+    request_id = getattr(request.state, "request_id", "unknown")
+    with (
+        observability.track() as stages,
+        tracing.request_trace(request_id, body.query.strip()) as trace,
+    ):
+        return await _answer(request, body, api_key_hash, stages, trace)
 
 
 async def _answer(
-    request: Request, body: QueryRequest, api_key_hash: str, stages: list[dict]
+    request: Request,
+    body: QueryRequest,
+    api_key_hash: str,
+    stages: list[dict],
+    trace: tracing.Observation,
 ) -> QueryResponse:
     if not is_pipeline_ready():
         raise PipelineNotReadyError()
@@ -100,12 +108,21 @@ async def _answer(
     start_time = __import__("time").monotonic()
     preferred_provider = body.provider or config.PIPELINE_PROVIDER
 
-    with observability.timed("cache_embed"):
+    with observability.timed("cache_embed") as obs:
+        obs.update(input=query)
         embedding = await run_in_threadpool(cache_embedding, query)
-    with observability.timed("cache_lookup"):
+    with observability.timed("cache_lookup") as obs:
         cached = await run_in_threadpool(
             find_cached_answer, query, preferred_provider, embedding
         )
+        hit = {"hit": False}
+        if cached is not None:
+            hit = {
+                "hit": True,
+                "similarity": round(cached["similarity"], 4),
+                "cached_query": cached["query"],
+            }
+        obs.update(input=query, output=hit)
 
     if cached is not None:
         latency_ms = (__import__("time").monotonic() - start_time) * 1000
@@ -121,6 +138,14 @@ async def _answer(
             cache_exact_repeat=cached["query"] == query,
         )
         grounding = cached.get("grounding") or {}
+        trace.update(
+            output={
+                "answer": cached["answer"],
+                "outcome": "cached",
+                "sources": grounding.get("sources") or [],
+            },
+            metadata={"provider": cached["provider"]},
+        )
         return QueryResponse(
             query_id=request_id,
             query=body.query,
@@ -141,7 +166,21 @@ async def _answer(
     try:
 
         def make_pipeline_call(provider: str):
-            return _run_pipeline(query, provider, body.return_contexts)
+            # One span per provider attempt, so retries and fallbacks show in the trace.
+            with tracing.observe(
+                "run-rag-pipeline",
+                "chain",
+                input={"query": query},
+                metadata={"provider": provider},
+            ) as attempt:
+                result = _run_pipeline(query, provider, body.return_contexts)
+                attempt.update(
+                    output={
+                        "answer": result.get("answer"),
+                        "outcome": result.get("outcome"),
+                    }
+                )
+                return result
 
         result, provider_used = await call_with_fallback(
             make_pipeline_call,
@@ -160,7 +199,8 @@ async def _answer(
     # Not cached: an abstain, or an empty retrieval, which must not outlive the
     # ingest that would answer it.
     if result.get("outcome") not in ("abstain", "empty"):
-        with observability.timed("cache_store"):
+        with observability.timed("cache_store") as obs:
+            obs.update(input={"query": query, "outcome": result.get("outcome")})
             await run_in_threadpool(
                 store_cache_entry,
                 query,
@@ -185,6 +225,15 @@ async def _answer(
         ),
     )
 
+    trace.update(
+        output={
+            "answer": result.get("answer", ""),
+            "outcome": result.get("outcome"),
+            "sources": result.get("sources", []),
+            "confidence": result.get("confidence"),
+        },
+        metadata={"provider": provider_used},
+    )
     return QueryResponse(
         query_id=request_id,
         query=body.query,

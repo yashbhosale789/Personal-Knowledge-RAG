@@ -46,6 +46,16 @@ class FakeReranker:
         return scored[: config.TOP_K]
 
 
+@pytest.fixture(autouse=True)
+def no_langfuse(monkeypatch):
+    """No test sends traces: the app loads .env, which may hold real Langfuse keys.
+    tests/api/test_tracing.py installs an in-memory client where it needs one."""
+    from src import tracing
+
+    monkeypatch.setattr(tracing, "_client", None)
+    monkeypatch.setattr(tracing, "_initialised", True)
+
+
 @pytest.fixture
 def api_key(monkeypatch):
     monkeypatch.setenv(config.API_KEY, TEST_API_KEY)
