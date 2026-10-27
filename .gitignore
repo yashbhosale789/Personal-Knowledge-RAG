@@ -10,6 +10,8 @@ dataset/
 **/venv/
 /.claude
 *.py[cod]
+.vscode/
+.dvc/
 
 # ==========================================
 # Environments & Secrets
