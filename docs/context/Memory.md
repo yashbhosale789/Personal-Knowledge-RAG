@@ -17,7 +17,7 @@
     - `docs/archive/`: Historical Word reports (`.docx`) and learning journals.
     - `docs/context/`: Core AI project context files (`Architecture.md`, `Roadmap.md`, `Memory.md`, `Ponytail.md`).
   - `prompts/`: Standardized AI collaboration workflows (`session-startup.md`, `session-memory-update.md`, `production-readiness-review.md`).
-  - `deploy/`: Production deployment scripts (`deploy.sh`).
+  - `rag-project/deploy.sh`: Production deployment script (ships in the image with prod config).
   - `postman/`: API test collections, environments, and Postman CLI specs.
   - `.github/workflows/`: CI/CD automation (`eval-gate.yml`, `code-review.yml`, `build-push.yml`).
   - *Historical Note:* Earlier standalone snapshot folders (`naive-rag/`, `advanced-rag/`, `agentic-rag/`, `rag-eval/`) were removed from the root to eliminate clutter and consolidate development.
@@ -40,7 +40,7 @@
 - Live performance: Three live `/query` calls measured ~3.5 s, 3.8 s, and 4.6 s. Memory used was ~890 MiB (~1.0 GiB available), swap ~416 MiB (app ~329 MiB, Redis ~83 MiB, Prometheus ~33 MiB, Caddy ~24 MiB). CPU peak ~28%.
 - GitHub Actions auto-deploy to EC2 via AWS SSM Run Command is operational:
   - Custom SSM document `rag-deploy` restricts SHA parameter to 40 hex chars and executes zero-downtime updates.
-  - Deployment script `deploy/deploy.sh` verifies image pull, starts container, runs health check, flushes Redis semantic cache, and executes a warm-up query before finalizing.
+  - Deployment script `rag-project/deploy.sh` verifies image pull, starts container, runs health check, flushes Redis semantic cache, and executes a warm-up query before finalizing.
   - Rollback verified: tested rolling back to `.prev_image_tag` on container failure.
   - GitHub path filtering tested: markdown/docs pushes do not trigger unwanted Docker builds.
 - Grafana made optional via Docker Compose profile; on-demand access via SSH tunnel without loading VM resources continuously.
@@ -143,7 +143,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - Ollama requires native `/api/chat` with `stream: false`; its OpenAI-compatible endpoint allocates excessive KV cache.
 - `create_cache_index()` must run on startup because fresh ephemeral Redis instances lack the RediSearch schema.
 - A new field in the cache index needs a new index name (`create_cache_index()` returns early if the name exists); drop the old index afterwards **without** `DD`, because both indexes cover the `cache:` prefix.
-- `deploy/deploy.sh` deletes `cache:*` on every deploy, so prompt edits shipped by deploy were already invalidated in prod; the cache namespace matters for model scoping (`provider` override) and non-deploy restarts.
+- `rag-project/deploy.sh` deletes `cache:*` on every deploy, so prompt edits shipped by deploy were already invalidated in prod; the cache namespace matters for model scoping (`provider` override) and non-deploy restarts.
 - Ingestion must use deterministic chunk IDs (SHA-256 of `source::chunk_index`) and delete previous source chunks only after successful validation.
 
 ## 7. Working style and collaboration rules

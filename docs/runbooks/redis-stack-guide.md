@@ -114,7 +114,7 @@ Cache keys are `cache:<sha256(namespace|query)>`. The namespace is a hash of `co
 
 # Production (EC2)
 
-SSH to the instance, then work from the deploy directory (`APP_DIR` in `deploy/deploy.sh`):
+SSH to the instance, then work from the deploy directory (`APP_DIR` in `rag-project/deploy.sh`):
 
 ```bash
 cd /home/ubuntu/rag
@@ -122,7 +122,7 @@ export IMAGE_TAG="$(cat .image_tag)"
 docker ps --format '{{.Names}}  {{.Image}}  {{.Status}}'
 ```
 
-`docker-compose.prod.yml` requires `IMAGE_TAG` (`${IMAGE_TAG:?set IMAGE_TAG}`), and only `deploy/deploy.sh` exports it. Without the `export`, every `docker compose -f docker-compose.prod.yml ...` command fails with `required variable IMAGE_TAG is missing a value`. Take the value from `.image_tag` (the running deploy), never a made-up tag: a later `up` would otherwise swap the app image. The export lasts for the current SSH session only.
+`docker-compose.prod.yml` requires `IMAGE_TAG` (`${IMAGE_TAG:?set IMAGE_TAG}`), and only `rag-project/deploy.sh` exports it. Without the `export`, every `docker compose -f docker-compose.prod.yml ...` command fails with `required variable IMAGE_TAG is missing a value`. Take the value from `.image_tag` (the running deploy), never a made-up tag: a later `up` would otherwise swap the app image. The export lasts for the current SSH session only.
 
 `docker ps` confirms the Redis container is up and shows its real name (needed only for the `docker exec` form).
 
