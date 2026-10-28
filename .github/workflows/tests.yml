@@ -11,6 +11,9 @@ on:
   workflow_dispatch:
 
 # Deterministic, $0, no LLM calls. Required check: job `pytest`.
+permissions:
+  contents: read
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -20,7 +23,7 @@ jobs:
         working-directory: rag-project
     services:
       redis:
-        image: redis/redis-stack:latest
+        image: redis/redis-stack@sha256:5d5154123426693540ea6c1d9e638eae2bf2024879c839db6fcfdd7717e817c7  # same digest as docker-compose.prod.yml
         ports:
           - 6379:6379
         options: >-
