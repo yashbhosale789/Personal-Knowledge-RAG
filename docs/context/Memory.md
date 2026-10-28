@@ -95,6 +95,11 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - Where it appears: `/query` response field `prompt_version` (API contract v2), `event=query` and `event=prompts_loaded` JSON logs, Prometheus `rag_prompt_info{version=...}`, the semantic-cache namespace (prompt version + answering model + verifier model; index `semantic_cache_idx_v2`, TAG filter on `namespace`), and eval generation/judge/retrieval records.
 - Not covered: the judge/verifier `Question:/Context:` framings (in code; eval code hash only). F-14 entity guard unchanged (15.1).
 
+**Phase 13.4 (Observability: request tracing) — CLOSED 2026-10-28**
+- PRs #75–#79: request-ID correlation and per-stage timing, cache hits keep grounding, RAG quality signals, Langfuse tracing (fail-open, masked content), Grafana panels.
+- Fail-open test: `tests/api/test_tracing.py::test_tracing_failures_never_fail_or_slow_a_query`.
+- Panels verified on dev; prod Grafana stopped on purpose. Moving panels to prod is part of 13.5 alerting (decision pending: run prod Grafana with a memory limit vs alternatives).
+
 **Phase 13.3 (new numbering — "Token and cost accounting") — CLOSED 2026-10-26**
 - Merged as PR #72 (`0bb6fb6`), deployed by the same run. CI: 227 passed / 6 strict xfail, coverage 71.55% (floor 65); eval gate PASS (faithfulness 1.000, relevancy 0.902, 4 CI items); CI eval tokens/query mean 2844, p50 3657, 0/4 estimated (no `rewrite` stage in eval: cached rewrites).
 - New `src/llm/usage.py`. `call_llm(..., stage=)` records `llm_tokens_total{stage,provider,model,type,source}` and `llm_call_duration_seconds{stage,provider,model}`. The four stages are `rewrite | sufficiency | generate | citation_verify`, and the default is `other`. `source` is `reported` (provider usage) or `estimated` (chars/4, only when the provider omits a count).
@@ -128,7 +133,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - **Hybrid retrieval:** Dense + BM25 → Reciprocal Rank Fusion (RRF) → Cross-Encoder Reranker (`ms-marco-MiniLM-L-6-v2`).
 - **LLMs:** Groq primary; OpenRouter & Gemini fallback; Ollama local-dev-only.
 - **Cache/Rate Limit:** Redis Stack (`redis/redis-stack:latest`) with RediSearch vector KNN cosine distance; ephemeral by design.
-- **Observability:** Prometheus metrics (`/metrics`) and structured JSON logging. Grafana profile on demand. Langfuse planned for Phase 13.
+- **Observability:** Prometheus metrics (`/metrics`) and structured JSON logging. Grafana on demand (stopped in prod by choice). Langfuse Cloud Hobby tracing (Phase 13.4).
 - **Deployment:** Docker Compose on AWS EC2 (`t3.small`); Caddy automated TLS; GitHub Actions GHCR build & SSM Run Command auto-deploy.
 - **CI:** GitHub Actions eval regression gate, Ruff linting, Bandit security scanning, CodeRabbit review.
 

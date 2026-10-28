@@ -256,6 +256,11 @@ Exit: for a sample of queries, per-stage tokens and latency are visible; estimat
 
 ### Phase 13.4 — Observability: request tracing
 
+**Status: CLOSED 2026-10-28** (confirmed by the owner). Delivered in PRs #75 (request-ID correlation, per-stage timing), #76 (cache hits keep their grounding), #77 (RAG quality signals), #78 (Langfuse tracing: fail-open, content masked by default) and #79 (Grafana panels for stage latency, LLM usage and RAG quality).
+
+- Fail-open: `tests/api/test_tracing.py::test_tracing_failures_never_fail_or_slow_a_query` covers an exporter that raises, an SDK that raises and an unreachable Langfuse host; `/query` still returns 200 in under 1 s. Runs in the default CI suite.
+- Grafana panels are verified on dev only. Production Grafana is stopped on purpose (on demand, 2 GiB host) and loads no dashboards from files; moving the panels to production goes with the 13.5 alerting work.
+
 Starting point (2026-10-26): logs and metrics are in place. The request ID is created in `api/middleware/logging.py` and returned as `X-Request-ID` and `query_id`, but only the `api/` layer logs it; `src/` and `api/core/retry.py` do not. No spans or per-stage timing exist.
 
 Order of work:
