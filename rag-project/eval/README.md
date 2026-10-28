@@ -26,6 +26,8 @@ Retrieval only:
 - `python -m eval.harness.retrieval_eval` reads the golden dataset and `runs/rewrites.json`, writes `runs/retrieval_baseline.json`.
 - `python -m eval.tools.probe Q11 "query text"` prints the rank of Q11's evidence at each stage.
 
+Every generation, judgment and retrieval record carries `dataset` and `corpus` ids (`store.run_ids()`). Dataset `v1` = `51bcd1e330` on corpus `c1` = `9fc4650202`. The 12-question test split is frozen: final reporting only.
+
 Comparing two runs: `python -m eval.harness.compare gen:baseline gen:other faithfulness`.
 
 ## Dataset authoring

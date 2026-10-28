@@ -4,6 +4,7 @@ import time
 from hashlib import sha256
 
 import config
+from eval.harness import store
 from eval.paths import BASELINE_PATH as RESULTS_PATH
 from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
 from eval.paths import REWRITES_PATH
@@ -117,6 +118,7 @@ def main() -> None:
         )
 
     cache = load_rewrites()
+    ids = store.run_ids()
     rows = []
     for n, item in enumerate(items, 1):
         query = get_rewrite(item["question"], cache)
@@ -135,6 +137,7 @@ def main() -> None:
                 "brand": "aventro" in item["question"].lower(),
                 "query": query,
                 "prompt_version": config.PROMPT_VERSION,
+                **ids,
                 "metrics": metrics,
             }
         )

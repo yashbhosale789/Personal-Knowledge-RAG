@@ -326,3 +326,19 @@ def test_eval_summary_reports_tokens_per_query_and_estimates():
     assert "mean=800 p50=1300 max=1300" in line
     assert "generate=490 sufficiency=310" in line
     assert "1/2 include estimates" in line
+
+
+def test_run_ids_ignore_formatting_but_track_content(tmp_path):
+    golden, chunks = tmp_path / "g.json", tmp_path / "c.json"
+    golden.write_text('[{"id": "Q01", "q": "a"}]', encoding="utf-8")
+    chunks.write_text('[{"text": "x"}]', encoding="utf-8")
+    ids = store.run_ids(golden, chunks)
+    assert set(ids) == {"dataset", "corpus"} and all(len(v) == 10 for v in ids.values())
+
+    golden.write_bytes(
+        b'[\r\n  {"q": "a",\r\n   "id": "Q01"}\r\n]'
+    )  # CRLF, reordered keys
+    assert store.run_ids(golden, chunks) == ids
+
+    golden.write_text('[{"id": "Q01", "q": "b"}]', encoding="utf-8")
+    assert store.run_ids(golden, chunks)["dataset"] != ids["dataset"]

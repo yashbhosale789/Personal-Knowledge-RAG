@@ -58,6 +58,7 @@ def to_record(
         "provider": config.PIPELINE_PROVIDER,
         "model": model_name(config.PIPELINE_PROVIDER),
         "prompt_version": config.PROMPT_VERSION,
+        **store.run_ids(),
         "question": item["question"],
         "rewritten": rewrite,
         "answer": out["answer"],

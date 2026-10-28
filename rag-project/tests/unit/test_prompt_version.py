@@ -52,11 +52,15 @@ def test_eval_fingerprint_changes_when_a_prompt_changes(monkeypatch, tmp_path):
     assert store.fingerprint() != before
 
 
-def test_every_eval_generation_record_carries_the_prompt_version():
+def test_every_eval_generation_record_carries_the_prompt_version(tmp_path, monkeypatch):
     from eval.harness import generate
 
+    chunks = tmp_path / "chunks.json"  # storage/ is not in git; CI builds it after pytest
+    chunks.write_text('[{"text": "x"}]', encoding="utf-8")
+    monkeypatch.setattr(config, "CHUNKS_PATH", chunks)
     item = {"id": "Q01", "question": "q"}
     out = {"answer": "a", "contexts": ["c"], "outcome": "answer"}
     record = generate.to_record("baseline", item, "fp", "q", out, 10)
     assert record["prompt_version"] == config.PROMPT_VERSION
     assert record["model"]
+    assert len(record["dataset"]) == len(record["corpus"]) == 10
