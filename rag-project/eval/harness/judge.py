@@ -311,6 +311,8 @@ def judge_generations(args: argparse.Namespace) -> None:
             "qid": gen["qid"],
             "fp": gen["fp"],
             "prompt_version": gen.get("prompt_version"),
+            "dataset": gen.get("dataset"),
+            "corpus": gen.get("corpus"),
             "metric": metric,
             "score": score,
             "detail": detail,

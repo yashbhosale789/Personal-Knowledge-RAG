@@ -154,7 +154,14 @@ Sub-phases are numbered in execution order. Prefer one substantial sub-phase per
 
 ### Phase 13.0 — Evaluation foundation (close-out)
 
-**Status: substantially built per repo evidence (2026-10-23); formal closure pending.**
+**Status: close-out done 2026-10-28 except item 1 (partly evidenced).** Dataset `v1` = id `51bcd1e330`, corpus `c1` = id `9fc4650202`.
+
+- Item 1: 15 manual + 42 synthetic questions. `eval/runs/candidates_reviewed.jsonl` records 29 review decisions (15 accepted, 14 rejected), which covers 15 synthetic questions. **The other 27 synthetic questions have no review record**, and the owner does not recall how they were checked. Treat their labels as unverified until spot-checked; Q17's label is already suspect (see the failure analysis).
+- Item 2: judge `gemini-3.5-flash-lite`, `eval/data/judge_calibration.json`: 10 good + 10 bad answers per metric (n = 20 each). AUC 1.0 for faithfulness, correctness and relevancy, 0 failed calls. Mean score good/bad: faithfulness 0.82/0.00, correctness 1.00/0.00, relevancy 0.83/0.54. Relevancy separates least.
+- Item 3: the 12-question test split is **frozen**: final reporting only, never for tuning. `eval/tools/assign_split` refuses to run once a test split exists.
+- Item 4: `validate_dataset` runs in `tests.yml`.
+- Item 5: every generation, judgment and retrieval record carries `dataset` and `corpus` ids (`store.run_ids()`: hash of the parsed JSON, so CRLF checkouts match CI). They sit beside the fingerprint, not in it, so adding a question does not invalidate stored runs.
+- Item 6: `docs/architecture/eval-failure-analysis-2026-10-28.md`. 34/45 dev clean; largest bucket is over-abstention (5), then ranking (2), retrieval miss (2), incomplete generation (2), one label to review. No hallucinated answers on the 8 expected-abstain questions.
 
 Repo evidence: `eval/data/golden_dataset.json` has 57 questions (normal 19, difficult 9, unanswerable 9, multi-hop 8, adversarial 7, ambiguous 5), `split` (45 dev / 12 test), `relevant` labels, `origin`, and a `ci` flag; `eval/harness/` has retrieval, generate, judge and gate modules; `eval/runs/compare_report.txt` reports paired differences with 98.3% confidence intervals; `eval/data/judge_calibration.json` exists. The earlier "Q01 v2 only" snapshot is obsolete.
 

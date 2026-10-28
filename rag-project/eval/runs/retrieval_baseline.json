@@ -6,6 +6,9 @@
     "split": "dev",
     "brand": true,
     "query": "Aventro Sedan spare tyre location",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -61,6 +64,9 @@
     "split": "dev",
     "brand": true,
     "query": "Aventro vehicles toolkit storage location",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -116,6 +122,9 @@
     "split": "dev",
     "brand": true,
     "query": "spare tyre location in Aventro SUV",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -171,6 +180,9 @@
     "split": "test",
     "brand": false,
     "query": "steps to safely park before changing tyre",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.6666666666666666,
@@ -226,6 +238,9 @@
     "split": "dev",
     "brand": false,
     "query": "why loosen lug nuts before using jack",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -281,6 +296,9 @@
     "split": "dev",
     "brand": false,
     "query": "correct way tighten lug nuts after fitting spare tyre",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -336,6 +354,9 @@
     "split": "dev",
     "brand": false,
     "query": "how high vehicle raised using jack",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -391,6 +412,9 @@
     "split": "dev",
     "brand": false,
     "query": "after fitting spare tyre before resuming driving",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -446,6 +470,9 @@
     "split": "dev",
     "brand": false,
     "query": "safe to drive spare tyre highway speeds long distance",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.5,
@@ -501,6 +528,9 @@
     "split": "dev",
     "brand": true,
     "query": "spare tyre location petrol electric Aventro variants",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -556,6 +586,9 @@
     "split": "test",
     "brand": true,
     "query": "Aventro service center in Hyderabad",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -611,6 +644,9 @@
     "split": "dev",
     "brand": true,
     "query": "Aventro Sedan tyre change tools order",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -666,6 +702,9 @@
     "split": "dev",
     "brand": false,
     "query": "jack position to lift vehicle",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -721,6 +760,9 @@
     "split": "test",
     "brand": false,
     "query": "Adaptive Cruise Control vehicle speed control in traffic",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -776,6 +818,9 @@
     "split": "dev",
     "brand": false,
     "query": "initial action to take adjusting seat",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -831,6 +876,9 @@
     "split": "dev",
     "brand": false,
     "query": "benefits of adjusting steering wheel",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -886,6 +934,9 @@
     "split": "dev",
     "brand": false,
     "query": "pregnant driver lap portion seat belt placement",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -941,6 +992,9 @@
     "split": "test",
     "brand": false,
     "query": "steps to adjust seat distance pedals",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -996,6 +1050,9 @@
     "split": "dev",
     "brand": false,
     "query": "pregnant driver tilt steering wheel direction safety",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -1051,6 +1108,9 @@
     "split": "dev",
     "brand": false,
     "query": "radar sensors adaptive cruise control installation location",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -1106,6 +1166,9 @@
     "split": "dev",
     "brand": false,
     "query": "free seat backrest for adjustment",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -1161,6 +1224,9 @@
     "split": "test",
     "brand": false,
     "query": "how to change steering wheel tilt",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -1216,6 +1282,9 @@
     "split": "dev",
     "brand": false,
     "query": "pregnant driver pause frequency stretch long journey",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -1271,6 +1340,9 @@
     "split": "dev",
     "brand": false,
     "query": "adaptive cruise control sensors object detection lane tracking",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -1326,6 +1398,9 @@
     "split": "dev",
     "brand": false,
     "query": "maximum angle backrest reclined from upright",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -1381,6 +1456,9 @@
     "split": "dev",
     "brand": false,
     "query": "steering wheel hide gauges while driving",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -1436,6 +1514,9 @@
     "split": "test",
     "brand": false,
     "query": "pregnant woman motion sickness car travel items",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -1491,6 +1572,9 @@
     "split": "dev",
     "brand": false,
     "query": "electronic control unit function Adaptive Cruise Control",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -1546,6 +1630,9 @@
     "split": "dev",
     "brand": false,
     "query": "pregnant how far from steering wheel sit",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -1601,6 +1688,9 @@
     "split": "dev",
     "brand": false,
     "query": "pregnant driver backrest position",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -1656,6 +1746,9 @@
     "split": "dev",
     "brand": false,
     "query": "adjust steering wheel or seat first seat distance pedals",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -1711,6 +1804,9 @@
     "split": "test",
     "brand": false,
     "query": "set steering wheel chest instead of belly pregnant",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.3333333333333333,
@@ -1766,6 +1862,9 @@
     "split": "dev",
     "brand": false,
     "query": "ACC response to slower car merging front responsibility",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.5,
@@ -1821,6 +1920,9 @@
     "split": "dev",
     "brand": false,
     "query": "safety precautions apply adjusting steering wheel",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -1876,6 +1978,9 @@
     "split": "dev",
     "brand": false,
     "query": "deactivate airbag pregnant chest distance steering wheel",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.5,
@@ -1931,6 +2036,9 @@
     "split": "test",
     "brand": false,
     "query": "steering wheel lever stuck Pune check nearest service center",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.5,
@@ -1986,6 +2094,9 @@
     "split": "dev",
     "brand": false,
     "query": "how far should I sit steering wheel",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -2041,6 +2152,9 @@
     "split": "dev",
     "brand": false,
     "query": "lever stuck what to do",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -2096,6 +2210,9 @@
     "split": "dev",
     "brand": false,
     "query": "How should I sit while driving",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -2151,6 +2268,9 @@
     "split": "test",
     "brand": false,
     "query": "how often take a break long drive",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -2206,6 +2326,9 @@
     "split": "dev",
     "brand": false,
     "query": "service center to contact for car help",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -2261,6 +2384,9 @@
     "split": "dev",
     "brand": false,
     "query": "set seat backrest recline 45 degrees while driving",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -2316,6 +2442,9 @@
     "split": "dev",
     "brand": false,
     "query": "ACC heavy traffic stop paying attention road",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,
@@ -2371,6 +2500,9 @@
     "split": "dev",
     "brand": false,
     "query": "spare tyre speed for long highway trips",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 1.0,
@@ -2426,6 +2558,9 @@
     "split": "dev",
     "brand": true,
     "query": "Aventro spare tyre tailgate removal",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.5,
@@ -2481,6 +2616,9 @@
     "split": "dev",
     "brand": true,
     "query": "Aventro Motors support phone number call",
+    "prompt_version": "938331ced9a6",
+    "dataset": "51bcd1e330",
+    "corpus": "9fc4650202",
     "metrics": {
       "dense": {
         "recall@1": 0.0,

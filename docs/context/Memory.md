@@ -60,6 +60,12 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - **13.6 Human feedback endpoint:** Deferred to Phase 16 unless priorities change.
 - **Operating constraints:** Hard $0 budget. Groq free-tier TPM limits apply. Evaluation runs must be batchable, resumable, and offline paired comparisons (no online traffic split).
  
+**Phase 13.0 (Evaluation foundation) — close-out 2026-10-28; item 1 partly evidenced**
+- Dataset `v1` = `51bcd1e330`, corpus `c1` = `9fc4650202` (`store.run_ids()`, written into every eval record beside the fingerprint). Test split (12) frozen.
+- Judge calibration: n = 20 per metric (10 good / 10 bad), AUC 1.0 on all three metrics.
+- 27 of 42 synthetic questions have no review record; labels unverified until spot-checked.
+- Failure analysis: `docs/architecture/eval-failure-analysis-2026-10-28.md` (saved `c83fff9ba7` answers + fresh retrieval run, $0).
+
 **13.0a Status:**
 - `eval/tools/validate_dataset.py` validates schema and evidence spans against `storage/chunks.json` using alphanumeric-only normalization. Exits 0 on `eval/data/golden_dataset.json` with Q01 in v2 format.
 - Corpus rebuilt: 40 chunks across 5 PDFs in both Chroma and `storage/chunks.json`.

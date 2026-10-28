@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import config
-from eval.paths import ROOT
+from eval.paths import GOLDEN_PATH, ROOT
 
 CODE_DIRS = ("src/pipeline", "src/retrieval", "src/llm")
 CONFIG_KEYS = (
@@ -49,6 +49,20 @@ def fingerprint(overrides: dict | None = None) -> str:
         "overrides": overrides or {},
     }
     return hashlib.sha256(json.dumps(parts, sort_keys=True).encode()).hexdigest()[:10]
+
+
+def content_id(path: Path) -> str:
+    # parsed, not raw bytes: CRLF checkouts on Windows must give the same id as CI
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()[:10]
+
+
+def run_ids(golden: Path = GOLDEN_PATH, chunks: Path | None = None) -> dict[str, str]:
+    """Dataset and corpus identifiers written into every eval record (not into the key)."""
+    return {
+        "dataset": content_id(golden),
+        "corpus": content_id(chunks or config.CHUNKS_PATH),
+    }
 
 
 def context_hash(contexts: list[str]) -> str:
