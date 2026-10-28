@@ -37,7 +37,8 @@ for img in $(docker images --format '{{.Repository}}:{{.Tag}}' "$IMAGE_REPO"); d
 done
 docker image prune -f >/dev/null
 FREE_KB="$(df --output=avail -k / | tail -1 | tr -d ' ')"
-(( FREE_KB > 3000000 )) || { echo "only $((FREE_KB / 1024)) MB free on /; aborting before pull" >&2; exit 1; }
+# a pull stores the ~4 GB image twice (compressed + unpacked); below this it fills the disk and crashes the SSM agent
+(( FREE_KB > 6000000 )) || { echo "only $((FREE_KB / 1024)) MB free on /; aborting before pull" >&2; exit 1; }
 
 echo "deploying $NEW (previous: ${PREV:-none})"
 export IMAGE_TAG="$NEW"
