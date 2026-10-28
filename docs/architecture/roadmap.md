@@ -129,7 +129,7 @@ Verified deployment work includes:
 - Caddy reverse proxy providing automated HTTPS.
 - GitHub Actions build/push and deployment workflow.
 - AWS Systems Manager (SSM) Run Command automated deployment (`rag-deploy` document).
-- Deployment script validation (`deploy/deploy.sh`), warm-up, pull-failure handling, and rollback drill tested.
+- Deployment script validation (`rag-project/deploy.sh`), warm-up, pull-failure handling, and rollback drill tested.
 - GitHub Actions path filtering (`rag-project/**`, workflow files) and optional Grafana profile.
 - Deployment and rollback behavior verified live.
 
@@ -221,7 +221,7 @@ What was built: prompts stay in `rag-project/config.py` (the generation user tem
 
 Decisions:
 - Separate prompt files with a registry and a manual version string were built, then rejected as ceremony for a single-developer repo: a content hash in `config.py` meets every exit criterion with less code.
-- `deploy/deploy.sh` already deletes `cache:*` on every deploy, so in production a prompt edit was already invalidated by the deploy. The namespace's production value is model scoping (a `provider` override no longer receives another model's cached answer) and not depending on the deploy script (local runs, restarts, config changes).
+- `rag-project/deploy.sh` already deletes `cache:*` on every deploy, so in production a prompt edit was already invalidated by the deploy. The namespace's production value is model scoping (a `provider` override no longer receives another model's cached answer) and not depending on the deploy script (local runs, restarts, config changes).
 
 Unresolved (not fixed by 13.2):
 - The judge/verifier user-turn framings (`Question:/Context:`) stay in code: covered by the eval code hash, not by the cache namespace.

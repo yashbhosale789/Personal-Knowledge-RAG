@@ -89,6 +89,7 @@ Personal Knowledge OS (RAG System)/
 │   ├── scripts/                  # CLI utilities (ingest, interactive query, inspect embeddings)
 │   ├── tests/                    # Unit, component, and pipeline integration test suites
 │   ├── docker-compose.yml        # Multi-container orchestration (App, Redis, Prometheus, Grafana)
+│   ├── deploy.sh                 # AWS SSM pull-and-deploy script; ships in the image with prod config
 │   └── Dockerfile                # Production container specification
 │
 ├── docs/                         # Centralized Documentation & Architecture Hub
@@ -113,9 +114,6 @@ Personal Knowledge OS (RAG System)/
 ├── prompts/                      # Developer & AI Assistant Collaboration Workflows
 │   ├── README.md                 # Workflow guidelines & context usage
 │   └── workflows/                # Standardized prompts (Session Startup, Memory Update, Review)
-│
-├── deploy/                       # Cloud VM Deployment
-│   └── deploy.sh                 # AWS SSM automated pull-and-deploy script
 │
 ├── postman/ & .postman/          # API Testing & Postman CLI Configuration
 │   ├── collections/              # Dev and Prod query/ingest test collections
@@ -272,7 +270,7 @@ The system is deployed live to AWS infrastructure following strict $0-budget and
 * **Automated Reverse Proxy & TLS:** Caddy automatically issues and renews Let's Encrypt SSL/TLS certificates.
 * **Zero-Downtime Continuous Deployment (CD):**
   * Qualifying merges to `main` trigger `.github/workflows/build-push.yml`, which builds and pushes the container image to GitHub Container Registry (GHCR).
-  * AWS Systems Manager (SSM) Run Command executes `deploy/deploy.sh` remotely on the instance without requiring open public SSH ports.
+  * AWS Systems Manager (SSM) Run Command executes `rag-project/deploy.sh` remotely on the instance without requiring open public SSH ports.
   * The deployment script verifies the image pull, switches the container, flushes the Redis semantic cache, executes a warm-up `/query`, and verifies health.
   * **Automated Rollback:** If the new image fails health verification, the script automatically rolls back to the previous stable `.prev_image_tag`.
 

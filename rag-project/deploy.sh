@@ -4,6 +4,9 @@ set -euo pipefail
 APP_DIR=/home/ubuntu/rag
 COMPOSE="docker compose -f docker-compose.prod.yml"
 IMAGE_REPO=ghcr.io/yashbhosale789/personal-knowledge-rag
+# Shipped in the image at /app and copied out on deploy, so the server matches the deployed commit.
+SYNCED=(deploy.sh docker-compose.prod.yml Caddyfile prometheus.yml)
+CHANGED=()
 
 NEW="${1:-}"
 [[ "$NEW" =~ ^[0-9a-f]{40}$ ]] || { echo "usage: deploy.sh <40-char commit sha>" >&2; exit 2; }
@@ -26,6 +29,40 @@ wait_healthy() {
   return 1
 }
 
+# Images built before config shipped in the image carry none of these files; missing ones are skipped.
+sync_files() {
+  local cid f
+  cid="$(docker create "$IMAGE_REPO:$1")" || return 1
+  for f in "${SYNCED[@]}"; do
+    docker cp "$cid:/app/$f" "$f.new" 2>/dev/null || continue
+    if cmp -s "$f" "$f.new"; then rm -f "$f.new"; continue; fi
+    cp -p "$f" "$f.prev" 2>/dev/null || true
+    chmod --reference="$f" "$f.new" 2>/dev/null || chmod 644 "$f.new"
+    mv "$f.new" "$f"  # mv, not cp: this running script keeps reading its old inode
+    CHANGED+=("$f")
+    echo "updated $f"
+  done
+  docker rm "$cid" >/dev/null
+}
+
+restore_files() {
+  local f
+  for f in "${CHANGED[@]}"; do
+    if [[ -f "$f.prev" ]]; then mv "$f.prev" "$f"; echo "restored $f"; fi
+  done
+}
+
+# shortcut: compose edits to services other than app apply on their next manual `up`, not here; automate if those change often.
+restart_changed() {
+  local f
+  for f in "${CHANGED[@]}"; do
+    case "$f" in
+      Caddyfile) $COMPOSE restart caddy || echo "caddy restart failed" >&2 ;;
+      prometheus.yml) $COMPOSE restart prometheus || echo "prometheus restart failed" >&2 ;;
+    esac
+  done
+}
+
 deploy() {
   export IMAGE_TAG="$1"
   $COMPOSE up -d app || return 1
@@ -43,9 +80,11 @@ FREE_KB="$(df --output=avail -k / | tail -1 | tr -d ' ')"
 echo "deploying $NEW (previous: ${PREV:-none})"
 export IMAGE_TAG="$NEW"
 $COMPOSE pull --quiet app || { echo "pull failed; nothing changed" >&2; exit 1; }
+sync_files "$NEW" || echo "config sync failed (non-fatal); keeping current files" >&2
 
 if deploy "$NEW"; then
   echo "$NEW" > .image_tag
+  restart_changed
   if [[ -n "$PREV" && "$PREV" != "$NEW" ]]; then echo "$PREV" > .prev_image_tag; fi
   KEEP="$(cat .prev_image_tag 2>/dev/null || true)"
   for img in $(docker images --format '{{.Repository}}:{{.Tag}}' "$IMAGE_REPO"); do
@@ -67,6 +106,7 @@ PY
 else
   echo "new version unhealthy; rolling back to ${PREV:-none}" >&2
   $COMPOSE logs --tail 40 app >&2 || true
+  restore_files
   if [[ -n "$PREV" ]]; then deploy "$PREV" || echo "rollback also failed" >&2; fi
   exit 1
 fi
