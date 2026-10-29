@@ -399,6 +399,24 @@ def test_each_outcome_is_counted_and_only_answers_are_cached(
     assert bool(fakes.cache_writes) is cached
 
 
+def test_answer_is_served_but_not_cached_when_the_verifier_was_unavailable(
+    client, fakes, ready, auth_headers
+):
+    check = {
+        "grounded": False,
+        "unsupported_claims": [],
+        "reason": "x",
+        "tier": "verifier_error",
+    }
+    fakes.result = pipeline_result(
+        outcome="answer_low_confidence", confidence="low", citation_check=check
+    )
+    body = post(client, auth_headers).json()
+    assert body["outcome"] == "answer_low_confidence"
+    assert body["citation_check"]["tier"] == "verifier_error"
+    assert fakes.cache_writes == []
+
+
 def test_query_log_records_cache_similarity_on_a_hit_and_a_rewrite_hash_on_a_miss(
     client, fakes, ready, auth_headers, caplog
 ):

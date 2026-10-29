@@ -80,7 +80,8 @@ Thumbs.db
 # ==========================================
 # API Testing Secrets
 # ==========================================
-postman/environments/
+**/postman/environments/
+**/*.postman_environment.json
 
 # ==========================================
 # Knowledge Graph Artifacts (Graphify)

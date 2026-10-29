@@ -2,6 +2,8 @@ import json
 import logging
 import re
 
+import requests
+
 from config import CITATION_VERIFIER_SYSTEM, EVAL_PROVIDER
 from src.llm.client import call_llm
 from src.pipeline.json_reply import parse_json_reply
@@ -48,12 +50,22 @@ def verify_citation(answer: str, reranked_chunks: list[dict]) -> dict:
 
     # Tier 2: LLM judge — answer has citations, check if they're actually supported
     prompt = _build_verifier_prompt(answer, reranked_chunks)
-    raw = call_llm(
-        prompt,
-        system=CITATION_VERIFIER_SYSTEM,
-        provider=EVAL_PROVIDER,
-        stage="citation_verify",
-    )
+    try:
+        raw = call_llm(
+            prompt,
+            system=CITATION_VERIFIER_SYSTEM,
+            provider=EVAL_PROVIDER,
+            stage="citation_verify",
+        )
+    except (requests.exceptions.RequestException, ValueError, KeyError) as e:
+        # Degrade, don't fail: an EVAL_PROVIDER outage must not turn every answer into a 502.
+        logger.warning(f"Citation verifier unavailable ({EVAL_PROVIDER}): {e}")
+        return {
+            "grounded": False,
+            "unsupported_claims": [],
+            "reason": "Citation verifier unavailable.",
+            "tier": "verifier_error",
+        }
 
     try:
         verdict = parse_json_reply(raw)
