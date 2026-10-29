@@ -1,0 +1,141 @@
+# Provisional thresholds (Phase 13.5). Each rule: A = PromQL instant query, C = threshold on A.
+# Burn-rate rules use the multiwindow pattern on the slo:* recording rules (prometheus-rules.yml):
+# fast = 14.4x budget over 1h and 5m (2% of a 28-day budget in 1h), slow = 6x over 6h and 30m.
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: rag
+    folder: RAG alerts
+    interval: 1m
+    rules:
+      - uid: query-availability-fast-burn
+        title: /query availability fast burn
+        condition: C
+        data:
+          - &query
+            refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: (slo:query_errors:ratio_rate1h > bool 0.144) * (slo:query_errors:ratio_rate5m > bool 0.144) * slo:query_errors:ratio_rate1h
+          - &threshold-above-zero
+            refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+        for: 2m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: page}
+        annotations:
+          summary: "/query 5xx ratio is {{ $values.A.Value | humanizePercentage }} over 1h: burning the 1% error budget at 14.4x or more."
+
+      - uid: query-availability-slow-burn
+        title: /query availability slow burn
+        condition: C
+        data:
+          - <<: *query
+            model:
+              refId: A
+              instant: true
+              expr: (slo:query_errors:ratio_rate6h > bool 0.06) * (slo:query_errors:ratio_rate30m > bool 0.06) * slo:query_errors:ratio_rate6h
+          - *threshold-above-zero
+        for: 15m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: ticket}
+        annotations:
+          summary: "/query 5xx ratio is {{ $values.A.Value | humanizePercentage }} over 6h: burning the 1% error budget at 6x or more."
+
+      - uid: query-latency-fast-burn
+        title: /query latency fast burn
+        condition: C
+        data:
+          - <<: *query
+            model:
+              refId: A
+              instant: true
+              expr: (slo:query_slow:ratio_rate1h > bool 0.72) * (slo:query_slow:ratio_rate5m > bool 0.72) * slo:query_slow:ratio_rate1h
+          - *threshold-above-zero
+        for: 2m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: page}
+        annotations:
+          summary: "{{ $values.A.Value | humanizePercentage }} of /query requests took over 10 s in the last 1h: burning the 5% latency budget at 14.4x or more."
+
+      - uid: query-latency-slow-burn
+        title: /query latency slow burn
+        condition: C
+        data:
+          - <<: *query
+            model:
+              refId: A
+              instant: true
+              expr: (slo:query_slow:ratio_rate6h > bool 0.3) * (slo:query_slow:ratio_rate30m > bool 0.3) * slo:query_slow:ratio_rate6h
+          - *threshold-above-zero
+        for: 15m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: ticket}
+        annotations:
+          summary: "{{ $values.A.Value | humanizePercentage }} of /query requests took over 10 s in the last 6h: burning the 5% latency budget at 6x or more."
+
+      - uid: app-down
+        title: App down (Prometheus cannot scrape it)
+        condition: C
+        data:
+          - <<: *query
+            model:
+              refId: A
+              instant: true
+              expr: (max(up{job="rag-app"}) < bool 1) or absent(up{job="rag-app"})
+          - *threshold-above-zero
+        for: 2m
+        # No data means the up series vanished, which is also down.
+        noDataState: Alerting
+        execErrState: Error
+        labels: {severity: page}
+        annotations:
+          summary: "Prometheus has not scraped rag-app for 2 minutes. The external Uptime workflow covers the host itself being down."
+
+      - uid: llm-provider-failures
+        title: LLM provider failures
+        condition: C
+        data:
+          - <<: *query
+            model:
+              refId: A
+              instant: true
+              expr: sum by (provider) (increase(provider_call_errors_total[30m])) >= 3
+          - *threshold-above-zero
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: ticket}
+        annotations:
+          summary: "{{ $labels.provider }} had {{ $values.A.Value }} failed call attempts in 30 minutes."
+
+      - uid: llm-fallback-rate
+        title: LLM provider fallback rate
+        condition: C
+        data:
+          - <<: *query
+            model:
+              refId: A
+              instant: true
+              # A provider that is exhausted or rate-limited hands the request to the next one in PROVIDER_FALLBACK_ORDER.
+              expr: (sum(increase(provider_requests_total{outcome=~"exhausted|rate_limited"}[1h])) / sum(increase(provider_requests_total{outcome="success"}[1h]))) > 0.25
+          - *threshold-above-zero
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: ticket}
+        annotations:
+          summary: "{{ $values.A.Value | humanizePercentage }} of LLM requests fell back to another provider in the last hour (threshold 25%)."

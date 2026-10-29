@@ -2,7 +2,8 @@ from prometheus_client import Counter, Histogram, Info
 
 from config import PROMPT_VERSION
 
-PROVIDER_LATENCY_BUCKETS = (0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 30)
+# Past 10 s so the /query p95 is measurable above the 10 s latency SLO (default buckets stop at 10).
+LATENCY_BUCKETS = (0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 30)
 
 http_requests_total = Counter(
     "http_requests_total", "Total HTTP Requests", ["method", "path", "status_code"]
@@ -12,13 +13,14 @@ http_request_duration_seconds = Histogram(
     "http_request_duration_seconds",
     "HTTP requests latency in seconds",
     ["method", "path"],
+    buckets=LATENCY_BUCKETS,
 )
 
 provider_call_duration_seconds = Histogram(
     "provider_call_duration_seconds",
     "Latency of a single successful provider call attempt",
     ["provider"],
-    buckets=PROVIDER_LATENCY_BUCKETS,
+    buckets=LATENCY_BUCKETS,
 )
 
 provider_call_errors_total = Counter(

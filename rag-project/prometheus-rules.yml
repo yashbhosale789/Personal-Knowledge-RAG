@@ -1,0 +1,31 @@
+# Provisional /query SLOs (Phase 13.5; finalised in 15.4): availability and latency. 28-day window, documented in docs/templates/engineering/Observability.md.
+# Ratios are "bad / all" over each window; burn rate = ratio / (1 - target). Windows match the Grafana burn-rate alerts.
+# No /query traffic in a window gives no sample (0/0), so idle periods never alert.
+groups:
+  - name: slo-query-availability
+    rules:
+      # Target 99% non-5xx, error budget 1%.
+      - record: slo:query_errors:ratio_rate5m
+        expr: (sum(rate(http_requests_total{path="/query",status_code=~"5.."}[5m])) or vector(0)) / sum(rate(http_requests_total{path="/query"}[5m]))
+      - record: slo:query_errors:ratio_rate30m
+        expr: (sum(rate(http_requests_total{path="/query",status_code=~"5.."}[30m])) or vector(0)) / sum(rate(http_requests_total{path="/query"}[30m]))
+      - record: slo:query_errors:ratio_rate1h
+        expr: (sum(rate(http_requests_total{path="/query",status_code=~"5.."}[1h])) or vector(0)) / sum(rate(http_requests_total{path="/query"}[1h]))
+      - record: slo:query_errors:ratio_rate6h
+        expr: (sum(rate(http_requests_total{path="/query",status_code=~"5.."}[6h])) or vector(0)) / sum(rate(http_requests_total{path="/query"}[6h]))
+      - record: slo:query_errors:ratio_rate28d
+        expr: (sum(increase(http_requests_total{path="/query",status_code=~"5.."}[28d])) or vector(0)) / sum(increase(http_requests_total{path="/query"}[28d]))
+
+  - name: slo-query-latency
+    rules:
+      # Target 95% of /query within 10 s (p95 < 10 s), error budget 5%. le="10.0": prometheus_client renders bucket bounds as floats.
+      - record: slo:query_slow:ratio_rate5m
+        expr: 1 - sum(rate(http_request_duration_seconds_bucket{path="/query",le="10.0"}[5m])) / sum(rate(http_request_duration_seconds_count{path="/query"}[5m]))
+      - record: slo:query_slow:ratio_rate30m
+        expr: 1 - sum(rate(http_request_duration_seconds_bucket{path="/query",le="10.0"}[30m])) / sum(rate(http_request_duration_seconds_count{path="/query"}[30m]))
+      - record: slo:query_slow:ratio_rate1h
+        expr: 1 - sum(rate(http_request_duration_seconds_bucket{path="/query",le="10.0"}[1h])) / sum(rate(http_request_duration_seconds_count{path="/query"}[1h]))
+      - record: slo:query_slow:ratio_rate6h
+        expr: 1 - sum(rate(http_request_duration_seconds_bucket{path="/query",le="10.0"}[6h])) / sum(rate(http_request_duration_seconds_count{path="/query"}[6h]))
+      - record: slo:query_slow:ratio_rate28d
+        expr: 1 - sum(increase(http_request_duration_seconds_bucket{path="/query",le="10.0"}[28d])) / sum(increase(http_request_duration_seconds_count{path="/query"}[28d]))
