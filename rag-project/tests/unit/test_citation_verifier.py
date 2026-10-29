@@ -12,8 +12,8 @@ def llm(monkeypatch):
     def install(reply):
         calls = []
 
-        def fake(prompt, system=None, provider=None, stage=None):
-            calls.append({"prompt": prompt, "provider": provider})
+        def fake(prompt, system=None, provider=None, stage=None, model=None):
+            calls.append({"prompt": prompt, "provider": provider, "model": model})
             return reply
 
         monkeypatch.setattr(cv, "call_llm", fake)
@@ -72,6 +72,7 @@ def test_verifier_uses_eval_provider_not_pipeline_provider(llm):
     calls = llm('{"grounded": true, "reason": "ok"}')
     cv.verify_citation("x [SOURCE 1]", CHUNKS)
     assert calls[0]["provider"] == config.EVAL_PROVIDER
+    assert calls[0]["model"] == config.CITATION_VERIFIER_MODEL
 
 
 @pytest.mark.parametrize("reply", ["not json", '{"reason": "missing grounded"}', "{}"])
