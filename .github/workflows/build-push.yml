@@ -8,7 +8,6 @@ on:
       - "!rag-project/**/*.md"
       - "!rag-project/docker-compose.yml"
       - "!rag-project/eval/**"
-      - "!rag-project/grafana/**"
       - "!rag-project/tests/**"
       - ".github/workflows/build-push.yml"
   # PRs build the image without pushing, so a broken Dockerfile fails before merge.
@@ -19,7 +18,6 @@ on:
       - "!rag-project/**/*.md"
       - "!rag-project/docker-compose.yml"
       - "!rag-project/eval/**"
-      - "!rag-project/grafana/**"
       - "!rag-project/tests/**"
       - ".github/workflows/build-push.yml"
   workflow_dispatch:

@@ -266,6 +266,17 @@ def test_metrics_expose_the_prompt_version(client):
     assert f'version="{PROMPT_VERSION}"' in client.get("/metrics").text
 
 
+def test_query_latency_has_the_10s_bucket_the_latency_slo_reads(
+    client, fakes, ready, auth_headers
+):
+    """prometheus-rules.yml selects le="10.0"; renaming or dropping that bucket silently empties the SLO."""
+    post(client, auth_headers)
+    assert (
+        'http_request_duration_seconds_bucket{le="10.0",method="POST",path="/query"}'
+        in client.get("/metrics").text
+    )
+
+
 # --- request tracing (Phase 13.4) ------------------------------------------
 
 

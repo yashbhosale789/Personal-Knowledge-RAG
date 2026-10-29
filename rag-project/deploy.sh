@@ -5,7 +5,10 @@ APP_DIR=/home/ubuntu/rag
 COMPOSE="docker compose -f docker-compose.prod.yml"
 IMAGE_REPO=ghcr.io/yashbhosale789/personal-knowledge-rag
 # Shipped in the image at /app and copied out on deploy, so the server matches the deployed commit.
-SYNCED=(deploy.sh docker-compose.prod.yml Caddyfile prometheus.yml)
+SYNCED=(deploy.sh docker-compose.prod.yml Caddyfile prometheus.yml prometheus-rules.yml
+  grafana/rag-pipeline-overview.json grafana/provisioning/datasources/prometheus.yml
+  grafana/provisioning/dashboards/rag.yml grafana/provisioning/alerting/rules.yml
+  grafana/provisioning/alerting/contact-points.yml)
 CHANGED=()
 
 NEW="${1:-}"
@@ -34,6 +37,7 @@ sync_files() {
   local cid f
   cid="$(docker create "$IMAGE_REPO:$1")" || return 1
   for f in "${SYNCED[@]}"; do
+    mkdir -p "$(dirname "$f")"
     docker cp "$cid:/app/$f" "$f.new" 2>/dev/null || continue
     if cmp -s "$f" "$f.new"; then rm -f "$f.new"; continue; fi
     cp -p "$f" "$f.prev" 2>/dev/null || true
@@ -58,7 +62,9 @@ restart_changed() {
   for f in "${CHANGED[@]}"; do
     case "$f" in
       Caddyfile) $COMPOSE restart caddy || echo "caddy restart failed" >&2 ;;
-      prometheus.yml) $COMPOSE restart prometheus || echo "prometheus restart failed" >&2 ;;
+      prometheus.yml|prometheus-rules.yml) $COMPOSE restart prometheus || echo "prometheus restart failed" >&2 ;;
+      # Grafana stays stopped until started by hand (it needs the SMTP lines in .env first).
+      grafana/*) if [[ -n "$($COMPOSE ps -q grafana)" ]]; then $COMPOSE restart grafana || echo "grafana restart failed" >&2; fi ;;
     esac
   done
 }

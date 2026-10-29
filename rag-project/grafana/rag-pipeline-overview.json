@@ -64,7 +64,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -178,7 +178,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -292,7 +292,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -406,7 +406,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -520,7 +520,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -634,7 +634,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -748,7 +748,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -899,7 +899,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -1015,7 +1015,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -1168,7 +1168,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -1284,7 +1284,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -1402,7 +1402,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -1518,7 +1518,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -1599,7 +1599,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -1680,7 +1680,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -1761,7 +1761,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "efzf84jvw15vka"
+                        "name": "prometheus"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -1822,6 +1822,330 @@
             }
           }
         }
+      },
+      "panel-20": {
+        "kind": "Panel",
+        "spec": {
+          "id": 20,
+          "title": "/query availability (28d SLO: 99%)",
+          "description": "Share of /query responses that were not 5xx over the 28-day SLO window (provisional).",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "prometheus"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "1 - slo:query_errors:ratio_rate28d",
+                        "legendFormat": "__auto",
+                        "range": false,
+                        "instant": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.2",
+            "spec": {
+              "options": {
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percentunit",
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-21": {
+        "kind": "Panel",
+        "spec": {
+          "id": 21,
+          "title": "Availability error budget remaining (28d)",
+          "description": "1 - (5xx ratio / 1% budget). Below 0 means the budget is spent.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "prometheus"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "1 - slo:query_errors:ratio_rate28d / 0.01",
+                        "legendFormat": "__auto",
+                        "range": false,
+                        "instant": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.2",
+            "spec": {
+              "options": {
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percentunit",
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-22": {
+        "kind": "Panel",
+        "spec": {
+          "id": 22,
+          "title": "/query latency (28d SLO: 95% within 10 s)",
+          "description": "Share of /query requests that completed within 10 s over the 28-day SLO window (provisional).",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "prometheus"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "1 - slo:query_slow:ratio_rate28d",
+                        "legendFormat": "__auto",
+                        "range": false,
+                        "instant": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.2",
+            "spec": {
+              "options": {
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percentunit",
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-23": {
+        "kind": "Panel",
+        "spec": {
+          "id": 23,
+          "title": "Latency error budget remaining (28d)",
+          "description": "1 - (share over 10 s / 5% budget). Below 0 means the budget is spent.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "prometheus"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "1 - slo:query_slow:ratio_rate28d / 0.05",
+                        "legendFormat": "__auto",
+                        "range": false,
+                        "instant": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.2",
+            "spec": {
+              "options": {
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percentunit",
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -1833,6 +2157,58 @@
             "spec": {
               "x": 0,
               "y": 0,
+              "width": 6,
+              "height": 5,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-20"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 5,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-21"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 6,
+              "height": 5,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-22"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 18,
+              "y": 0,
+              "width": 6,
+              "height": 5,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-23"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 5,
               "width": 12,
               "height": 8,
               "element": {
@@ -1845,7 +2221,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 8,
+              "y": 13,
               "width": 12,
               "height": 8,
               "element": {
@@ -1858,7 +2234,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 16,
+              "y": 21,
               "width": 12,
               "height": 8,
               "element": {
@@ -1871,7 +2247,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 24,
+              "y": 29,
               "width": 12,
               "height": 8,
               "element": {
@@ -1884,7 +2260,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 32,
+              "y": 37,
               "width": 12,
               "height": 8,
               "element": {
@@ -1897,7 +2273,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 40,
+              "y": 45,
               "width": 12,
               "height": 8,
               "element": {
@@ -1910,7 +2286,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 48,
+              "y": 53,
               "width": 12,
               "height": 8,
               "element": {
@@ -1923,7 +2299,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 56,
+              "y": 61,
               "width": 24,
               "height": 2,
               "element": {
@@ -1936,7 +2312,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 58,
+              "y": 63,
               "width": 12,
               "height": 8,
               "element": {
@@ -1949,7 +2325,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 12,
-              "y": 58,
+              "y": 63,
               "width": 12,
               "height": 8,
               "element": {
@@ -1962,7 +2338,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 66,
+              "y": 71,
               "width": 24,
               "height": 2,
               "element": {
@@ -1975,7 +2351,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 68,
+              "y": 73,
               "width": 16,
               "height": 8,
               "element": {
@@ -1988,7 +2364,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 16,
-              "y": 68,
+              "y": 73,
               "width": 8,
               "height": 8,
               "element": {
@@ -2001,7 +2377,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 76,
+              "y": 81,
               "width": 24,
               "height": 2,
               "element": {
@@ -2014,7 +2390,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 78,
+              "y": 83,
               "width": 12,
               "height": 8,
               "element": {
@@ -2027,7 +2403,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 12,
-              "y": 78,
+              "y": 83,
               "width": 6,
               "height": 4,
               "element": {
@@ -2040,7 +2416,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 18,
-              "y": 78,
+              "y": 83,
               "width": 6,
               "height": 4,
               "element": {
@@ -2053,7 +2429,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 12,
-              "y": 82,
+              "y": 87,
               "width": 6,
               "height": 4,
               "element": {
@@ -2066,7 +2442,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 18,
-              "y": 82,
+              "y": 87,
               "width": 6,
               "height": 4,
               "element": {
