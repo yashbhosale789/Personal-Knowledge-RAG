@@ -1,0 +1,29 @@
+name: Uptime
+
+# External /health check: Prometheus runs on the same host, so it cannot report the host being down.
+# A failed scheduled run emails whoever last edited the cron line (GitHub notification settings).
+# GitHub disables scheduled workflows after 60 days without repo activity; re-enable from the Actions tab.
+on:
+  schedule:
+    - cron: "7-59/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "URL to check (point it at a bad path to test the failure email)"
+        default: "https://yash-pkb-rag.duckdns.org/health"
+
+permissions: {}
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check /health
+        env:
+          URL: ${{ inputs.url || 'https://yash-pkb-rag.duckdns.org/health' }}
+        run: |
+          body=$(curl -fsS --retry 3 --retry-delay 10 --retry-all-errors -m 15 "$URL")
+          echo "$body"
+          # "degraded" means the API is up but the pipeline is not ready, which is also an outage.
+          jq -e '.status == "ok"' <<<"$body" >/dev/null
