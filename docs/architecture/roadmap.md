@@ -505,6 +505,8 @@ Evaluate each optimization against the 15.2 baseline. Report quality regressions
 - Load test with a free tool (k6 or Locust) at the intended concurrency on the real instance; record p50/p95 and the failure point.
 - Finalise SLO numbers and alert thresholds from measurements; re-check memory limits against `c2` and the chosen store.
 - Run `prompts/workflows/production-readiness-review.md` and file the result.
+- **Upgrade torch from 2.6.0 and audit it.** Dependabot has 8 open torch advisories (memory corruption or DoS in `torch.jit.script`, `lstm_cell`, `pad_packed_sequence`, `unpack_sequence`, …; left open on purpose 2026-10-29). We call none of those functions directly, so the risk is low. Dependabot only reads `requirements-local.txt`; the prod `Dockerfile` installs `torch==2.6.0` from the CPU index on its own line, which neither Dependabot nor `pip-audit` sees. Upgrade both, and put the prod torch version where `audit.yml` checks it. The upgrade can shift embedding and reranker scores, so re-run the retrieval baseline and the eval gate on `c2` before and after.
+- Add a container image scan (F-22), for example a free Trivy step in `build-push.yml`.
 
 Exit: the *Production-readiness checklist* has no open gaps, or each remaining one is accepted and recorded with a reason.
 
@@ -521,7 +523,7 @@ Status as of 2026-10-29 (Phase 13 closed). Gap items name the owning phase.
 | Regression evaluation in CI | Partial — LLM-judge gate on 4 items, path-filtered and advisory; `c1` cannot discriminate variants | F-07, F-08 → 15.1, 15.2 |
 | Unit / API / integration tests in CI | Done — required `pytest` check, 250 passed, coverage 74.56% (PR #92) | 13.1 |
 | Reproducible builds (pinned dependencies) | Done — lock files; image built on every pipeline PR | 13.1 |
-| Dependency / image vulnerability scanning | Partial — pip-audit, Dependabot and CodeQL done; no container image scan | F-22 → 15.4 |
+| Dependency / image vulnerability scanning | Partial — pip-audit, Dependabot and CodeQL done; no container image scan; prod torch 2.6.0 not audited (8 open advisories) | F-22, torch upgrade → 15.4 |
 | Prompt / model versioning | Done — `config.PROMPT_VERSION` in responses, logs, metrics, cache namespace and eval records | 13.2, PR #67 |
 | Per-stage cost and latency visibility | Done — LLM stages (tokens, latency, reported vs estimated) and retrieval stages | 13.3, 13.4 |
 | Request correlation and tracing | Done — one request ID across response, logs and Langfuse trace | 13.4 |

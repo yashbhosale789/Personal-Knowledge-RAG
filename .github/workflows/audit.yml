@@ -44,6 +44,11 @@ jobs:
       # SQLite ReadWriteLock (CVE-2026-112940 Linux, CVE-2026-112913 Windows) and Windows soft
       # locks (CVE-2026-112907); all need another local account on the same host. We call none of
       # these lock types, and chromadb's ReadWriteLock is its own thread-based class.
+      # Reviewed 2026-10-29: ten more filelock 3.32.7 advisories (CVE-2026-112908..112912, 112915,
+      # 112935, 112936, 112938, 112939), same blocker. Each needs another local account, or write
+      # access to the lock files, to plant symlinks, hard links, markers or a crafted lock database.
+      # The one lock type we do use is UnixFileLock (CVE-2026-112909), through huggingface-hub's model
+      # cache; inside the single-user app container no other account can reach that directory.
       # Drop these flags once unstructured allows filelock>=4.2.1.
       - name: Audit runtime and dev locks
         run: |
@@ -55,4 +60,14 @@ jobs:
             --ignore-vuln PYSEC-2026-3815 \
             --ignore-vuln CVE-2026-112940 \
             --ignore-vuln CVE-2026-112913 \
-            --ignore-vuln CVE-2026-112907
+            --ignore-vuln CVE-2026-112907 \
+            --ignore-vuln CVE-2026-112908 \
+            --ignore-vuln CVE-2026-112909 \
+            --ignore-vuln CVE-2026-112910 \
+            --ignore-vuln CVE-2026-112911 \
+            --ignore-vuln CVE-2026-112912 \
+            --ignore-vuln CVE-2026-112915 \
+            --ignore-vuln CVE-2026-112935 \
+            --ignore-vuln CVE-2026-112936 \
+            --ignore-vuln CVE-2026-112938 \
+            --ignore-vuln CVE-2026-112939
