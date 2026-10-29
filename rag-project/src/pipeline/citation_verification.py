@@ -30,9 +30,9 @@ def verify_citation(answer: str, reranked_chunks: list[dict]) -> dict:
     Post-generation check: does the answer's content actually follow from
     the chunks it was generated against?
 
-    Uses EVAL_PROVIDER with CITATION_VERIFIER_MODEL, not the generator's model —
-    the model that generated the answer should not also grade its own citations
-    (self-grading bias).
+    Uses EVAL_PROVIDER with CITATION_VERIFIER_MODEL when it is set. Outside Groq,
+    CITATION_VERIFIER_MODEL is None and the verifier uses EVAL_PROVIDER's pipeline
+    model, which matches the generator's model when both use the same provider.
 
     Returns:
         {"grounded": bool, "unsupported_claims": list[str], "reason": str}
