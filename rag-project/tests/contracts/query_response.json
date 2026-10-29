@@ -1,5 +1,5 @@
 {
-  "contract_version": 3,
+  "contract_version": 4,
   "schema": {
     "$defs": {
       "CitationVerificationInfo": {
@@ -23,7 +23,7 @@
             "type": "string"
           },
           "tier": {
-            "description": "Which gate produced the verdict: 'no_citation' or 'llm_judge'.",
+            "description": "Which gate produced the verdict: 'no_citations', 'llm_judge', or 'verifier_error' (verifier provider failed; answer served unverified, not cached).",
             "title": "Tier",
             "type": "string"
           }

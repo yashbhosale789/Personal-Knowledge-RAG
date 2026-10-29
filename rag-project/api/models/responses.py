@@ -26,7 +26,7 @@ class CitationVerificationInfo(BaseModel):
     reason: str = Field(description="Short explaination of the verification verdict.")
 
     tier: str = Field(
-        description="Which gate produced the verdict: 'no_citation' or 'llm_judge'."
+        description="Which gate produced the verdict: 'no_citations', 'llm_judge', or 'verifier_error' (verifier provider failed; answer served unverified, not cached)."
     )
 
 

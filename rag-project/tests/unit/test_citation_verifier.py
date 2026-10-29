@@ -1,4 +1,5 @@
 import pytest
+import requests
 
 import config
 from src.pipeline import citation_verification as cv
@@ -87,3 +88,23 @@ def test_prompt_numbers_the_sources(llm):
     cv.verify_citation("x [SOURCE 1]", two)
     assert "[SOURCE 2]" in calls[0]["prompt"]
     assert "second chunk" in calls[0]["prompt"]
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        requests.exceptions.HTTPError("401 Client Error: Unauthorized"),
+        requests.exceptions.Timeout(),
+        ValueError("GEMINI_API_KEY is not set - cannot call the provider."),
+    ],
+)
+def test_verifier_provider_failure_degrades_instead_of_raising(monkeypatch, error):
+    """A revoked EVAL_PROVIDER key once turned every /query into a 502 (2026-10-29)."""
+
+    def failing(*args, **kwargs):
+        raise error
+
+    monkeypatch.setattr(cv, "call_llm", failing)
+    result = cv.verify_citation("Jack under the point [SOURCE 1].", CHUNKS)
+    assert result["grounded"] is False
+    assert result["tier"] == "verifier_error"

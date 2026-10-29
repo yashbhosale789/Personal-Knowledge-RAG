@@ -197,8 +197,9 @@ async def _answer(
         raise HTTPException(status_code=502, detail=e.message)
 
     # Not cached: an abstain, or an empty retrieval, which must not outlive the
-    # ingest that would answer it.
-    if result.get("outcome") not in ("abstain", "empty"):
+    # ingest that would answer it; nor an unverified answer, which must not outlive the verifier outage.
+    unverified = (result.get("citation_check") or {}).get("tier") == "verifier_error"
+    if result.get("outcome") not in ("abstain", "empty") and not unverified:
         with observability.timed("cache_store") as obs:
             obs.update(input={"query": query, "outcome": result.get("outcome")})
             await run_in_threadpool(
