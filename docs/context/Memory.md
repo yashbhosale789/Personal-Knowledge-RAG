@@ -1,5 +1,5 @@
 # Personal Knowledge OS — Claude Project Memory
-**Last consolidated:** 2026-10-22  
+**Last consolidated:** 2026-10-29  
 **Purpose:** Persistent project context for Claude and AI engineering assistants. This file supersedes older memory notes where they conflict. Dates in the source notes are "last updated" dates for the corresponding entries.
  
 ## 1. Project identity and goals
@@ -46,7 +46,7 @@
 - Grafana made optional via Docker Compose profile; on-demand access via SSH tunnel without loading VM resources continuously.
 - Do not reimplement or revisit completed deployment work without a specific bug or explicit request.
 
-### Phase 13: LLMOps — CURRENT ACTIVE PHASE (started 2026-10-17)
+### Phase 13: LLMOps — CLOSED 2026-10-29 (started 2026-10-17). Current phase: 14 (Human feedback and React frontend)
  
 Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
  
@@ -69,6 +69,17 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 **13.0a Status:**
 - `eval/tools/validate_dataset.py` validates schema and evidence spans against `storage/chunks.json` using alphanumeric-only normalization. Exits 0 on `eval/data/golden_dataset.json` with Q01 in v2 format.
 - Corpus rebuilt: 40 chunks across 5 PDFs in both Chroma and `storage/chunks.json`.
+
+**Phase 13.5 (Operational readiness) — CLOSED 2026-10-29; Phase 13 CLOSED the same day**
+- PRs #87, #88, #90, #92 (merge `81ed641`, deployed). CI on #92: 250 passed / 6 strict xfail, coverage 74.56%. Full evidence and open items: roadmap §13.5.
+- **Authorization (F-19):** single-user system, one shared Bearer key; every key holder sees the whole corpus; one shared semantic cache. A second user needs per-user keys, a per-user cache namespace and retrieval-time document filtering first (`docs/templates/security/Security.md`).
+- **Logging policy (F-21):** app logs keep at most 60 chars of query text and never secrets; container logs rotate 3 × 10 MB and are deleted on container recreation; Langfuse Hobby holds full text 30 days (deletion not guaranteed); semantic cache 24 h; Prometheus 30 days, no text; feedback comments (14.0) proposed 90 days (`docs/templates/security/Data_Privacy.md`).
+- **SLOs (provisional until 15.4):** availability 99% non-5xx, latency 95% of `/query` within 10 s, 28-day window; recording rules `slo:query_errors:*` and `slo:query_slow:*` in `rag-project/prometheus-rules.yml`. Grafana alerting emails `ALERT_EMAIL` through Gmail SMTP (fast/slow burn for both SLOs, app down, provider failures, fallback rate). External uptime: `Uptime` workflow every 10 min.
+- **Prod Grafana runs continuously** under `mem_limit: 256m`, with its dashboard, datasource and alerts provisioned from `rag-project/grafana/`; `deploy.sh` syncs those files and restarts Grafana if it is running. Its admin password lives in its own database volume (from 2026-10-12): `GF_SECURITY_ADMIN_PASSWORD` applies only on first start, so reset it with `grafana cli admin reset-admin-password` when they drift. Reach it with VS Code port forwarding or `aws ssm start-session ... AWS-StartPortForwardingSession` (needs the Session Manager plugin and a fresh `aws login`).
+- **Limits:** app 1g, redis 192m (`maxmemory 64mb`, `volatile-lru`), prometheus 256m (30-day retention), caddy 128m, grafana 256m. Compose edits to services other than `app` and its dependency `redis` apply only on a manual `up` (needs `IMAGE_TAG`); recreating Redis drops the cache index, so run `create_cache_index()` afterwards. The first deploy of a new `deploy.sh` still runs the old one; its new synced files land on the next deploy.
+- **Deploy key (F-18):** OIDC blocked by the AWS-managed project SCP (`iam:*Provider*`). Least-privilege `github-deploy` key, rotated 2026-10-29 with a rollback drill; next rotation 2027-01-27 (`docs/templates/security/Secrets_Management.md`).
+- **Incident 2026-10-29:** keys committed in `postman/environments/` (commit `1bdfd19`) were auto-revoked when the repo went public; the Gemini verifier's 401 made every `/query` a 502. Fixes: new keys, nested Postman environments ignored, verifier degrades to a low-confidence uncached answer (`tier: verifier_error`).
+- **Verifier on Groq qwen:** Gemini free tier took 18-24 s per call (two new projects); `config.CITATION_VERIFIER_MODEL` runs the verifier on Groq `qwen/qwen3.8-27b` (~1 s, different family from `gpt-oss-120b`, own rate limit) when `EVAL_PROVIDER=groq`. `EVAL_PROVIDER=gemini` restores Gemini. Answered queries are about 3-4 s end to end again.
 
 ## 3. Current evaluation and corpus facts
  
@@ -111,8 +122,8 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 ## 4. Open issues and carryovers
  
 ### Security / repository hygiene
-- **RESOLVED (2026-10-22):** Tracked Postman environments issue is resolved. `git ls-files postman/environments` confirmed clean (zero tracked files), and `postman/environments/` is ignored in root `.gitignore`.
-- IAM access-key rotation reminder: Rotate `github-deploy` access keys approximately every 80–90 days.
+- **Postman environments:** nested `**/postman/environments/` and `*.postman_environment.json` are ignored (2026-10-29). Keys committed earlier in commit `1bdfd19` stay in git history; they were revoked and replaced, so treat that history as public. Postman's Native Git can stash uncommitted work when it switches branches: check `git stash list` if work disappears.
+- `github-deploy` access key: rotate every 90 days; next 2027-01-27 (procedure in `Secrets_Management.md`).
 - Confirm AWS account status and $0 constraint before modifying infrastructure.
 
 ### Deployment documentation & repository cleanup
@@ -131,9 +142,9 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - **Vector store:** ChromaDB, SQLite persistence.
 - **Keyword retrieval:** BM25 (`rank_bm25`).
 - **Hybrid retrieval:** Dense + BM25 → Reciprocal Rank Fusion (RRF) → Cross-Encoder Reranker (`ms-marco-MiniLM-L-6-v2`).
-- **LLMs:** Groq primary; OpenRouter & Gemini fallback; Ollama local-dev-only.
-- **Cache/Rate Limit:** Redis Stack (`redis/redis-stack:latest`) with RediSearch vector KNN cosine distance; ephemeral by design.
-- **Observability:** Prometheus metrics (`/metrics`) and structured JSON logging. Grafana on demand (stopped in prod by choice). Langfuse Cloud Hobby tracing (Phase 13.4).
+- **LLMs:** Groq primary (`gpt-oss-120b`); OpenRouter & Gemini fallback; citation verifier on Groq `qwen/qwen3.8-27b` (13.5); Ollama local-dev-only.
+- **Cache/Rate Limit:** Redis Stack (pinned by digest) with RediSearch vector KNN cosine distance; ephemeral by design, `maxmemory 64mb` with `volatile-lru` in prod.
+- **Observability:** Prometheus metrics (`/metrics`), SLO recording rules, structured JSON logging. Grafana runs in prod under a 256m limit with provisioned dashboard and email alerts (13.5). Langfuse Cloud Hobby tracing (13.4). External uptime check from GitHub Actions.
 - **Deployment:** Docker Compose on AWS EC2 (`t3.small`); Caddy automated TLS; GitHub Actions GHCR build & SSM Run Command auto-deploy.
 - **CI:** GitHub Actions eval regression gate, Ruff linting, Bandit security scanning, CodeRabbit review.
 

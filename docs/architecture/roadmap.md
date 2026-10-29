@@ -1,8 +1,8 @@
 # Personal Knowledge OS — Detailed Roadmap (working plan)
 
-Last reconciled: 2026-10-26
+Last reconciled: 2026-10-29
 
-Current phase: **Phase 13 — LLMOps foundations**
+Current phase: **Phase 14 — Human feedback and React frontend** (Phase 13 closed 2026-10-29)
 
 Active development copy: `rag-project/`
 
@@ -101,7 +101,7 @@ Complete. Includes the documented local Ollama integration and provider-handling
 
 ### Phase 7 — Prometheus observability
 
-Complete for metrics collection. **No alert rules, SLOs, or load test exist** (F-20); alerting moves to Phase 13.5 and the load test to Phase 15.4. RAG quality metrics and detailed token/cost tracing are tracked in the LLMOps work.
+Complete for metrics collection. Alert rules and provisional SLOs were added in Phase 13.5 (F-20); the load test is Phase 15.4. RAG quality metrics and detailed token/cost tracing are tracked in the LLMOps work.
 
 ### Phase 8 — RAG quality
 
@@ -133,11 +133,9 @@ Verified deployment work includes:
 - GitHub Actions path filtering (`rag-project/**`, workflow files) and optional Grafana profile.
 - Deployment and rollback behavior verified live.
 
-Do not reimplement or revisit completed deployment work without a specific bug, operational need, or user request. Scheduled operational needs: long-lived AWS keys (F-18, Phase 13.5), no container memory limits (F-16, Phase 13.5), index not persisted across deploys (F-02, Phase 15.0).
+Do not reimplement or revisit completed deployment work without a specific bug, operational need, or user request. Long-lived AWS keys (F-18) and container memory limits (F-16) were handled in Phase 13.5. Still scheduled: index not persisted across deploys (F-02, Phase 15.0).
 
-## Current phase
-
-## Phase 13 — LLMOps foundations
+## Phase 13 — LLMOps foundations (CLOSED 2026-10-29)
 
 Scope: evaluation close-out, tests and CI hygiene, prompt versioning, cost accounting, tracing, and operational readiness, all on the existing pipeline and corpus `c1`. **No retrieval, chunking, reranking or storage changes** (see *Interim rules*).
 
@@ -259,7 +257,7 @@ Exit: for a sample of queries, per-stage tokens and latency are visible; estimat
 **Status: CLOSED 2026-10-28** (confirmed by the owner). Delivered in PRs #75 (request-ID correlation, per-stage timing), #76 (cache hits keep their grounding), #77 (RAG quality signals), #78 (Langfuse tracing: fail-open, content masked by default) and #79 (Grafana panels for stage latency, LLM usage and RAG quality).
 
 - Fail-open: `tests/api/test_tracing.py::test_tracing_failures_never_fail_or_slow_a_query` covers an exporter that raises, an SDK that raises and an unreachable Langfuse host; `/query` still returns 200 in under 1 s. Runs in the default CI suite.
-- Grafana panels are verified on dev only. Production Grafana is stopped on purpose (on demand, 2 GiB host) and loads no dashboards from files; moving the panels to production goes with the 13.5 alerting work.
+- Grafana panels are verified on dev only. Production Grafana is stopped on purpose (on demand, 2 GiB host) and loads no dashboards from files; moving the panels to production goes with the 13.5 alerting work. Done in 13.5: prod Grafana runs under a 256m limit, with the dashboard and alert rules provisioned from files.
 
 Starting point (2026-10-26): logs and metrics are in place. The request ID is created in `api/middleware/logging.py` and returned as `X-Request-ID` and `query_id`, but only the `api/` layer logs it; `src/` and `api/core/retry.py` do not. No spans or per-stage timing exist.
 
@@ -283,6 +281,33 @@ Exit: any `/query` can be followed by one request ID through the response, logs 
 
 ### Phase 13.5 — Operational readiness
 
+**Status: CLOSED 2026-10-29.** PRs #87 (verifier degrades instead of failing), #88 (uptime workflow), #90 (verifier on Groq qwen), #92 (limits, SLOs, Grafana alerting; merge `81ed641`, deployed). CI on #92: `pytest` 250 passed / 6 strict xfail, coverage 74.56% (floor 65); `lint-security` green. No evaluation numbers are quoted for this sub-phase.
+
+Exit evidence:
+- **SLOs documented and shown in Grafana:** availability 99% non-5xx and latency 95% within 10 s, both over 28 days (`docs/templates/engineering/Observability.md`). Recording rules in `rag-project/prometheus-rules.yml` (promtool unit tests pass; 10 rules loaded on prod). The prod dashboard has availability and latency SLO and budget panels.
+- **Alerts fire and reach the channel:** Grafana email via Gmail SMTP to `ALERT_EMAIL`. Prod: the contact-point test email and a duplicated fast-burn rule both arrived quickly (2026-10-29); the copy was deleted, leaving the 7 provisioned rules. Locally (mailpit, fake exporter), the real availability and latency fast-burn, app-down, provider-failure and fallback rules fired and emailed at their real thresholds. External check: the `Uptime` workflow (`/health` every 10 min) failed against a bad URL and GitHub emailed the owner.
+- **Log rotation:** `json-file` 3 × 10 MB on all five prod services.
+- **Rotated key and rollback drill:** new `github-deploy` key; rollback to `275614f` (about 75 s) and forward to `9473d78`, both with the new key; old key deleted (2026-10-29, next rotation 2027-01-27).
+- **Container limits active** (`docker inspect`, 2026-10-29): app 1g, redis 192m, prometheus 256m, caddy 128m, grafana 256m; Redis `maxmemory` 64 MB with `volatile-lru`. No OOM kills. After the manual `up`, a warm-up query took 10.5 s (the idle app had been swapped out while the other containers started), then 4.1 s for a new query and 2.0 s for a cache hit.
+- **Decisions recorded in `Memory.md`:** authorization model and logging policy.
+
+Decisions:
+- F-18: GitHub OIDC is blocked by the AWS-managed project SCP. Kept the least-privilege key with 90-day rotation instead.
+- F-19: single-user system, one shared API key, every key holder sees the whole corpus (`docs/templates/security/Security.md`; `Architecture.md` line amended).
+- F-21: log policy in `docs/templates/security/Data_Privacy.md`. App logs keep at most 60 characters of query text; Langfuse holds full text for 30 days (deletion not guaranteed); the semantic cache holds it 24 h; Prometheus keeps 30 days with no text.
+- Alerting: Grafana alerting with email, not a separate Alertmanager; uptime from a GitHub Actions cron, not UptimeRobot. Prod Grafana now runs continuously under its memory limit.
+- The latency SLO uses a threshold (share of `/query` within 10 s) instead of a p95 estimate, read from the `le="10.0"` bucket (pinned by a test). Histogram buckets now reach 30 s so 15.4 can measure the true p95.
+- Incident (2026-10-29): OpenRouter and Gemini keys committed in `postman/environments/` (commit `1bdfd19`) were auto-revoked when the repo went public, and the Gemini citation verifier's 401 turned every `/query` into a 502. Fixed by rotating the keys, ignoring nested Postman environments, and making the verifier degrade to a low-confidence, uncached answer (`tier: verifier_error`). GitHub secret-scanning alerts #1 and #2 resolved as revoked.
+- The citation verifier moved from Gemini to Groq `qwen/qwen3.8-27b` (`config.CITATION_VERIFIER_MODEL`). Gemini's free tier took 18-24 s per call on two different new projects; qwen takes about 1 s, is a different model family from the generator `gpt-oss-120b`, and has its own Groq rate limit. `EVAL_PROVIDER=gemini` restores the Gemini verifier.
+
+Unresolved (owned below or accepted):
+- Generation and citation verification now both depend on Groq. A Groq outage already fails generation, and the verifier degrades safely. Revisit in 15.4.
+- Grafana sits at its 256m limit (the excess is page cache; its own memory is about 176 MiB). Raise to 320m if it is ever OOM-killed; re-check all limits in 15.4.
+- Starting several containers at once swaps the idle app out, so the next query is slow (10.5 s once). Normal deploys recreate only the app.
+- The latency SLO also counts cache hits and abstentions, and single-user traffic makes both SLOs noisy; thresholds are final only in 15.4.
+- Container image vulnerability scanning is still missing (15.4).
+- The eval judge is still Gemini (13.0 calibration); with current Gemini latency, eval runs are slow. Re-check before 15.2.
+
 Addresses F-16 (limits), F-18, F-19 (authorization decision), F-20 (alerting), F-21 (logging policy).
 
 - **SLOs (provisional):** define them from `c1` measurements and document them with a 28-day window and an error budget. Starting points:
@@ -297,7 +322,7 @@ Addresses F-16 (limits), F-18, F-19 (authorization decision), F-20 (alerting), F
 - **External uptime monitoring:** Prometheus runs on the same host, so it cannot report the host being down. Use a free external check on `/health`, such as UptimeRobot or a scheduled GitHub Actions workflow.
 - **Docker log rotation:** add `json-file` rotation (`max-size`, `max-file`) to every service in `docker-compose.prod.yml`. Logs currently grow without limit on the instance disk.
 - Pin the Prometheus and Grafana image versions in `docker-compose.yml`, which currently uses `latest`, to match prod.
-- Replace long-lived AWS keys in GitHub Actions with GitHub OIDC to an IAM role (F-18); re-run the rollback drill afterwards.
+- ~~Replace long-lived AWS keys in GitHub Actions with GitHub OIDC to an IAM role (F-18)~~: blocked by the AWS-managed project SCP (`iam:*Provider*` denied). Decided 2026-10-29: keep the least-privilege `github-deploy` key with 90-day rotation (`docs/templates/security/Secrets_Management.md`). Re-run the rollback drill after rotating.
 - Add `mem_limit` to services and `maxmemory` to Redis in `docker-compose.prod.yml`, sized from current measurements (~0.9 GiB used on a 2 GiB host); confirm with a deploy and a warm-up query.
 - Decide and document the **authorization model**: a single shared key is acceptable for a single-user system if stated as such; otherwise per-user keys with per-user cache and document filtering. If the system stays single-user, amend the "retrieve only authorized evidence" line in `Architecture.md`.
 - Log retention and what is logged (queries can contain sensitive text); applies to feedback comments in Phase 14 as well.
@@ -307,12 +332,14 @@ Exit:
 - Provisional SLOs are documented and shown in Grafana.
 - A burn-rate alert and the external uptime check each fire in a test and reach the notification channel.
 - Log rotation is active.
-- The OIDC deploy works, and the container limits are active.
+- The deploy works with the rotated key and the rollback drill passes, and the container limits are active.
 - The authorization and logging decisions are recorded in `Memory.md`.
 
 ### Closing Phase 13
 
 Update the *Production-readiness checklist*. Every remaining gap must be owned by Phase 14 or 15. Provide the starting prompt for Phase 14.
+
+**Done 2026-10-29:** checklist updated below; every open row is owned by 14.0, 14.1 or a 15.x sub-phase, or accepted with a reason. The Phase 14 starting prompt was given at close-out.
 
 ### LLMOps operating constraints
 
@@ -321,6 +348,8 @@ Update the *Production-readiness checklist*. Every remaining gap must be owned b
 - Prefer offline paired comparisons over online A/B tests while there is insufficient production traffic to split.
 - Evaluation runs must stay resumable/batchable; every run records dataset version, corpus identifier, prompt versions, model names and configuration.
 - Do not assume old provider quotas or model availability remain current; verify them when the decision depends on them.
+
+## Current phase
 
 ## Phase 14 — Human feedback and React frontend
 
@@ -481,26 +510,26 @@ Exit: the *Production-readiness checklist* has no open gaps, or each remaining o
 
 ## Production-readiness checklist
 
-Status as of 2026-10-23. Gap items name the owning phase.
+Status as of 2026-10-29 (Phase 13 closed). Gap items name the owning phase.
 
 | Area | Status | Owner / evidence |
 | --- | --- | --- |
 | Hybrid retrieval, reranking, grounded answers with citations, abstention | Done | Phases 2, 8 |
 | Prompt-injection defense | Partial — API path only | F-03 → 15.0; multi-format → 15.1 |
-| Auth (shared key), rate limiting, HTTPS | Done for single-user | Phases 9, 12; decision → 13.5 |
-| Automated deployment, health check, rollback | Done, verified live | Phase 12 |
-| Regression evaluation in CI | Partial — LLM-judge gate only | 13.0, 13.1 |
-| Unit / API / integration tests in CI | Built in 13.1; confirm on the first PR run | F-04 → 13.1 |
-| Reproducible builds (pinned dependencies) | Lock built in 13.1; confirm with a CI/Docker build | F-06 → 13.1 |
-| Dependency / image vulnerability scanning | pip-audit + Dependabot built in 13.1; image scan still a gap | F-22 → 13.1 |
+| Auth (shared key), rate limiting, HTTPS | Done — single-user by decision (one shared key) | Phases 9, 12; decision 13.5 (`Security.md`) |
+| Automated deployment, health check, rollback | Done, verified live; rollback drilled again 2026-10-29 | Phase 12, 13.5 |
+| Regression evaluation in CI | Partial — LLM-judge gate on 4 items, path-filtered and advisory; `c1` cannot discriminate variants | F-07, F-08 → 15.1, 15.2 |
+| Unit / API / integration tests in CI | Done — required `pytest` check, 250 passed, coverage 74.56% (PR #92) | 13.1 |
+| Reproducible builds (pinned dependencies) | Done — lock files; image built on every pipeline PR | 13.1 |
+| Dependency / image vulnerability scanning | Partial — pip-audit, Dependabot and CodeQL done; no container image scan | F-22 → 15.4 |
 | Prompt / model versioning | Done — `config.PROMPT_VERSION` in responses, logs, metrics, cache namespace and eval records | 13.2, PR #67 |
-| Per-stage cost and latency visibility | Partial — LLM stages done (tokens + latency, reported vs estimated); retrieval stages not timed | 13.3 PR #72, 13.4 |
-| Request correlation and tracing | Partial — request ID in the `api/` layer only | 13.4 |
-| Alerting and SLOs | **Gap** | F-20 → 13.5 (final numbers 15.4) |
-| External uptime monitoring | **Gap** | 13.5 |
-| Resource limits on containers | **Gap** | F-16 → 13.5 |
-| Secrets without long-lived keys | **Gap** | F-18 → 13.5 |
-| Logging / retention policy and log rotation | **Gap** | F-21 → 13.5 |
+| Per-stage cost and latency visibility | Done — LLM stages (tokens, latency, reported vs estimated) and retrieval stages | 13.3, 13.4 |
+| Request correlation and tracing | Done — one request ID across response, logs and Langfuse trace | 13.4 |
+| Alerting and SLOs | Done, provisional — availability and latency SLOs, burn-rate alerts by email, fire-tested on prod | 13.5; final numbers → 15.4 |
+| External uptime monitoring | Done — `Uptime` workflow every 10 min, fire-tested | 13.5 |
+| Resource limits on containers | Done — `mem_limit` on all services, Redis `maxmemory`, verified live | 13.5; re-check → 15.4 |
+| Secrets without long-lived keys | Accepted — OIDC blocked by the AWS-managed SCP; least-privilege deploy key, 90-day rotation (next 2027-01-27) | F-18, 13.5; re-check → 15.4 |
+| Logging / retention policy and log rotation | Done — policy in `Data_Privacy.md`, rotation active | 13.5; feedback comments → 14.0 |
 | User feedback loop | **Gap** | 14.0 |
 | Usable front end | **Gap** | 14.1 |
 | Storage architecture fit for production | **Gap, deferred** | F-27 → 15.0 |
@@ -509,7 +538,7 @@ Status as of 2026-10-23. Gap items name the owning phase.
 | Evaluation that can discriminate variants | **Gap, deferred** | F-07, F-08 → 15.1 |
 | Corpus versioning and privacy decision | **Gap, deferred** | F-21 → 15.1 |
 | Load test and capacity statement | **Gap, deferred** | F-16 → 15.4 |
-| Backup / restore procedure | **Gap** | documented in 13.5, revised in 15.0 |
+| Backup / restore procedure | Partial — index rebuild documented (`Backup_Recovery.md`); revised when storage changes | 13.5 → 15.0 |
 
 ## Later roadmap — order: 16 → 17, after Phase 15
 

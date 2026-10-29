@@ -132,7 +132,7 @@ Treat these as focused experiments rather than mandatory production dependencies
 ## Production definition of done
  
 The system should progressively be able to:
-- Retrieve only authorized evidence.
+- Retrieve only evidence the caller may see. The system is single-user with one shared API key, so every key holder may see the whole corpus (decided 2026-10-29; see `docs/templates/security/Security.md`). Per-user filtering is required before a second user is added.
 - Produce grounded answers with verifiable citations.
 - Abstain when evidence is insufficient.
 - Measure quality and run regression evaluations.
