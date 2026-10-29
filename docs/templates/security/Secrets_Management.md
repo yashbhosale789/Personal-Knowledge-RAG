@@ -9,17 +9,19 @@
 - Avoid printing secret values in logs, terminal transcripts, documentation, or chat.
 
 ## Environment-variable inventory
-Populate this table from the current code/configuration. Do not assume the examples below are all used.
+The full list, with what each variable does and which ones only the prod server needs, is `rag-project/.env.sample` (placeholders only). Copy it to `rag-project/.env` and fill it in; keep that file and the sample in sync when a variable is added or removed.
 
-| Variable | Purpose | Required condition | Secret? |
-|---|---|---|---|
-| `OPENAI_API_KEY` | Provider authentication | If the configured provider requires it | Yes |
-| `GROQ_API_KEY` | Provider authentication | If the configured provider requires it | Yes |
-| `LANGFUSE_SECRET_KEY` | Tracing authentication | If tracing is enabled | Yes |
-| `LANGFUSE_PUBLIC_KEY` | Tracing client identifier | If tracing is enabled | Treat according to provider guidance |
-| `LANGFUSE_BASE_URL` | Langfuse region endpoint (must match the project's region) | If tracing is enabled | No |
-| `LANGFUSE_TRACING_ENVIRONMENT` | Tags traces by environment (`development` locally, `production` on the prod host); same keys for both | If tracing is enabled | No |
-| `DATABASE_URL` | Database connection | If the application uses a database URL | May contain credentials |
+Where to get each secret (all free tiers):
+
+| Variable | Where to create it |
+|---|---|
+| `GROQ_API_KEY` | https://console.groq.com/keys |
+| `OPENROUTER_API_KEY` | https://openrouter.ai/settings/keys |
+| `GEMINI_API_KEY` | https://aistudio.google.com/apikey |
+| `HF_TOKEN` (optional, read access is enough) | https://huggingface.co/settings/tokens |
+| `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` (optional) | https://cloud.langfuse.com → project → Settings → API Keys |
+| `GF_SMTP_PASSWORD` (prod only) | https://myaccount.google.com/apppasswords (needs 2-Step Verification) |
+| `API_KEY`, `GRAFANA_ADMIN_PASSWORD` | Generate locally: `python -c "import secrets; print(secrets.token_urlsafe(32))"` |
 
 ## Repository hygiene
 - Review tracked environment and Postman files.
