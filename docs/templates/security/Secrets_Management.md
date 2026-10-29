@@ -27,6 +27,21 @@ Populate this table from the current code/configuration. Do not assume the examp
 - Remember: adding a file to `.gitignore` does not remove it from Git history or untrack an already tracked file.
 - If a secret was committed or otherwise exposed, revoke/rotate it; deleting the visible value alone is insufficient.
 
+## GitHub Actions deploy key (F-18, decided 2026-10-29)
+GitHub OIDC is not possible on this account: the AWS-managed SCP for projects (Free and Paid plans) denies `iam:*Provider*`, so no OIDC identity provider can be created. Only activating advanced features removes that SCP. The deploy keeps a long-lived access key, hardened instead:
+
+- IAM user `github-deploy` with only `rag-deploy-ssm-only`: `ssm:SendCommand` for the `rag-deploy` document on instance `i-024027af801548268`, plus `ssm:GetCommandInvocation`. The document accepts only a 40-hex commit SHA, so a leaked key can redeploy an existing image and nothing else.
+- Stored only as the `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` repo secrets, used only by the `deploy` job.
+- **Rotate every 90 days** (last: 2026-10-29, with a rollback drill to 275614f and back to 9473d78, about 75 s per deploy; next: 2027-01-27), and at once on suspected exposure. In bash (prints no secret):
+  ```bash
+  out=$(aws iam create-access-key --profile yashbhosale789 --user-name github-deploy --query 'AccessKey.[AccessKeyId,SecretAccessKey]' --output text)
+  read -r id secret <<<"$out"
+  printf %s "$id" | gh secret set AWS_ACCESS_KEY_ID -R yashbhosale789/Personal-Knowledge-RAG
+  printf %s "$secret" | gh secret set AWS_SECRET_ACCESS_KEY -R yashbhosale789/Personal-Knowledge-RAG
+  ```
+  Then re-run the latest `deploy` job (`gh run rerun <run-id> --job <job-id>`), and once it passes, `aws iam delete-access-key` the old key.
+- Revisit OIDC if advanced features are ever activated.
+
 ## Rotation procedure
 1. Identify the credential and systems that use it without copying the value into reports.
 2. Revoke or rotate it at the issuing provider.

@@ -1,8 +1,8 @@
 # Personal Knowledge OS — RAG Project Roadmap
 
-Last updated: 2026-10-26
+Last updated: 2026-10-29
 
-Current phase: **Phase 13 — LLMOps foundations**
+Current phase: **Phase 14 — Human feedback and React frontend** (Phase 13 closed 2026-10-29)
 
 Detailed working plan (scope, exit criteria, risks): [`docs/architecture/roadmap.md`](../architecture/roadmap.md)
 
@@ -107,7 +107,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 
 ## LLMOps and product (Phases 13–14)
 
-### Phase 13 — LLMOps foundations
+### Phase 13 — LLMOps foundations (closed 2026-10-29)
 
 | Sub-phase | Name |
 | --- | --- |
@@ -156,7 +156,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 - Error-budget burn-rate alerts with free notifications through Grafana alerting
 - External uptime monitoring
 - Docker log rotation and logging/retention policy
-- Short-lived deployment credentials
+- Deployment credentials: least-privilege key with 90-day rotation (short-lived OIDC credentials are blocked by the AWS account's managed policy)
 - Container resource limits
 - Authorization model
 - Index rebuild procedure

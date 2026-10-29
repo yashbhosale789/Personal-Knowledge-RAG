@@ -10,6 +10,14 @@ Describe the security controls actually implemented by this application. This do
 - Bound resource consumption and external-provider costs.
 - Avoid exposing sensitive content through logs, traces, errors, or evaluation artifacts.
 
+## Authorization model (decided 2026-10-29, Phase 13.5)
+Single-user system with one shared API key. This is a deliberate decision, not a gap.
+
+- Every endpoint except `/health` and `/metrics` requires `Authorization: Bearer <API_KEY>` (`api/core/auth.py`). The comparison is constant-time and fails closed (401) when `API_KEY` is unset. In prod, Caddy also blocks `/metrics` and `/ingest` from the internet, so only `/query` and `/health` are public.
+- Every key holder sees every document: there is no per-user identity, no document-level access control, and one shared semantic cache. Rate limits are keyed on the key's SHA-256 hash.
+- The key is the only boundary, so anyone holding it holds the whole corpus. Rotate it in the server `.env` (and restart `app`) if it may have leaked.
+- Revisit if a second user is ever added: that needs per-user keys, a per-user cache namespace and document filtering at retrieval time, all decided before the second user gets access.
+
 ## Controls to verify
 - [ ] Authentication and authorization requirements are documented.
 - [ ] Request schemas and inputs are validated.

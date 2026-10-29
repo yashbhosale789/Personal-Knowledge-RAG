@@ -24,7 +24,8 @@ def rewrite_query(query: str, provider: str | None = None) -> str:
         rewritten = call_llm(
             prompt=query, system=REWRITE_SYSTEM, provider=provider, stage="rewrite"
         )
-        logger.info(f"Query rewrite: {query} -> {rewritten}")
+        # Snippets only: logs keep at most 60 chars of query text (log policy, Data_Privacy.md).
+        logger.info(f"Query rewrite: {query[:60]} -> {rewritten[:60]}")
         return rewritten
 
     except Exception as e:  # noqa: BLE001
