@@ -75,6 +75,10 @@ OLLAMA_MODEL = "llama3.2:3b-instruct-q4_K_M"  # must match what you've pulled lo
 # EVAL Provider could be set from .env
 EVAL_PROVIDER = os.getenv("EVAL_PROVIDER", "groq")  # "openrouter" | "groq" | "gemini"
 # EVAL_PROVIDER = "groq"  # "openrouter" | "groq" | "gemini"
+# Citation-verifier model where EVAL_PROVIDER's pipeline model is also the generator's
+# (self-grading bias); unset falls back to that pipeline model. qwen on Groq has its own
+# rate limit, apart from gpt-oss-120b's (2026-10-29: Gemini verifier took 18-24 s).
+CITATION_VERIFIER_MODEL = {"groq": "qwen/qwen3.8-27b"}.get(EVAL_PROVIDER)
 
 OPENROUTER_EVALUATOR_MODEL = "poolside/laguna-s-2.1:free"
 OPENROUTER_EVALUATOR_URL = OPENROUTER_API_URL

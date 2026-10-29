@@ -10,6 +10,7 @@ CODE_DIRS = ("src/pipeline", "src/retrieval", "src/llm")
 CONFIG_KEYS = (
     "PIPELINE_PROVIDER",
     "EVAL_PROVIDER",
+    "CITATION_VERIFIER_MODEL",
     "GROQ_PIPELINE_MODEL",
     "OPENROUTER_MODEL",
     "GEMINI_PIPELINE_MODEL",

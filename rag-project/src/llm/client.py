@@ -129,14 +129,20 @@ def _call_ollama(messages: list, model, url) -> tuple[str, dict]:
 
 
 def call_llm(
-    prompt: str, system: str = "", provider: str | None = None, stage: str = "other"
+    prompt: str,
+    system: str = "",
+    provider: str | None = None,
+    stage: str = "other",
+    model: str | None = None,
 ) -> str:
     """
     Send a prompt to the active pipeline LLM and return the response text.
     Provider is controlled by PIPELINE_PROVIDER in config.py. `stage` labels the
     token and latency metrics (rewrite | sufficiency | generate | citation_verify).
+    `model` overrides the provider's pipeline model.
     """
-    active, model, url, key_env = _resolve_provider(provider)
+    active, default_model, url, key_env = _resolve_provider(provider)
+    model = model or default_model
 
     messages = []
     if system:

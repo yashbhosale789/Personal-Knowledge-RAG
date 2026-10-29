@@ -26,6 +26,21 @@ def test_llm_calls_reuse_one_pooled_session(monkeypatch):
     assert len(urls) == 2
 
 
+def test_model_override_replaces_the_pipeline_model(monkeypatch):
+    monkeypatch.setenv(client._resolve_provider("groq")[3], "test-key")
+    sent = []
+    monkeypatch.setattr(
+        client._session,
+        "post",
+        lambda url, **kw: sent.append(kw["json"]) or FakeResponse(),
+    )
+
+    client.call_llm("q", provider="groq")
+    client.call_llm("q", provider="groq", model="qwen/qwen3.8-27b")
+    assert sent[0]["model"] == client.model_name("groq")
+    assert sent[1]["model"] == "qwen/qwen3.8-27b"
+
+
 def test_missing_provider_counts_are_estimated_and_labelled(monkeypatch):
     """Ollama omits prompt_eval_count on a KV-cache hit; that half must say 'estimated'."""
     from prometheus_client import REGISTRY

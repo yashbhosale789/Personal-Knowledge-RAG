@@ -16,6 +16,7 @@ from config import (
     CACHE_KEY_PREFIX,
     CACHE_SIMILARITY_THRESHOLD,
     CACHE_TTL_SECONDS,
+    CITATION_VERIFIER_MODEL,
     EMBEDDING_DIAMENSION,
     ENTITY_GROUPS,
     EVAL_PROVIDER,
@@ -51,7 +52,8 @@ def cache_namespace(provider: str | None = None) -> str:
     and looked up within one namespace, so changing any of these misses old entries,
     which then expire by TTL. Hex only, so it is safe inside a TAG query.
     """
-    parts = f"{PROMPT_VERSION}|{model_name(provider)}|{model_name(EVAL_PROVIDER)}"
+    verifier = CITATION_VERIFIER_MODEL or model_name(EVAL_PROVIDER)
+    parts = f"{PROMPT_VERSION}|{model_name(provider)}|{verifier}"
     return hashlib.sha256(parts.encode()).hexdigest()[:16]
 
 

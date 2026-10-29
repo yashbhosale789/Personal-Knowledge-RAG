@@ -36,6 +36,9 @@ def test_changing_the_prompts_or_a_model_moves_the_cache_namespace(monkeypatch):
     assert sc.cache_namespace("groq") == base
     assert sc.cache_namespace("gemini") != base  # different answering model
 
+    monkeypatch.setattr(sc, "CITATION_VERIFIER_MODEL", "other-verifier")
+    assert sc.cache_namespace("groq") != base  # different verifier model
+
     monkeypatch.setattr(sc, "PROMPT_VERSION", "edited-prompts")
     assert sc.cache_namespace("groq") != base
 
