@@ -357,6 +357,10 @@ Starts after Phase 13 closes. Delivered in this order.
 
 ### Phase 14.0 — Human feedback endpoint (backend first)
 
+**Status: CLOSED 2026-10-30.** PR #95 (merge `2634d56`), deployed by run `41010543709` (build and deploy green; deploy created volume `rag_feedback_data`). CI on #95: `pytest` 276 passed / 6 strict xfail, coverage 75.46% (floor 65); `lint-security` green; `/query` contract unchanged (no version bump). No evaluation numbers are quoted for this sub-phase. Prod evidence (2026-10-30, through Caddy): `/query` → `POST /feedback` 200 `recorded`; resubmit replaced the rating and cleared the comment; unknown ID 404; the row (outcome `cached`, model `openai/gpt-oss-120b`) was identical after `up -d --force-recreate app`. Deploy and rollback drill (2026-10-30, `deploy.sh` as `ubuntu`): rolled back to the pre-14.0 image `0050465` (app recreated, compose synced, no volume mounted, warm-up 200), then redeployed `2634d56` (app recreated, `rag_feedback_data` mounted again, warm-up 200); both feedback rows were unchanged. A same-image re-run of the workflow (run `41019137706`) does not recreate the app, so it proves nothing here.
+
+As built: `/query` saves grounding (query, answer, outcome, prompt version, model, and per chunk handed to generation its source, page, 200-char snippet and a `cited` flag) in Redis at `feedback:grounding:<request_id>` for 24 h, on cache hits too. `POST /feedback` takes only `request_id`, `rating` (`up`/`down`) and an optional comment (≤1000 chars, unknown fields rejected), reads the grounding (404 when gone, 503 when Redis is down) and upserts one SQLite row per request ID at `/app/feedback/feedback.db` on the `feedback_data` volume. Query, answer and comment text are nulled 90 days after the first rating (purge at startup and on every write). Rate limit 30/min per key. Code: `src/feedback.py`, `api/routers/feedback.py`. Retention: `Data_Privacy.md`. Note: grounding shares Redis's 64 MB `volatile-lru` budget, so it can be evicted before 24 h (feedback then returns 404). Adding `chunks` to the pipeline result changed the eval fingerprint (retrieval and generation unchanged).
+
 A minimal `POST /feedback`, authenticated like the other endpoints and rate limited.
 
 - Fields: request ID (from Phase 13.4), rating, optional comment with a length cap. Comments are untrusted text: never put them into prompts automatically and render them as plain text.
@@ -531,8 +535,8 @@ Status as of 2026-10-29 (Phase 13 closed). Gap items name the owning phase.
 | External uptime monitoring | Done — `Uptime` workflow every 10 min, fire-tested | 13.5 |
 | Resource limits on containers | Done — `mem_limit` on all services, Redis `maxmemory`, verified live | 13.5; re-check → 15.4 |
 | Secrets without long-lived keys | Accepted — OIDC blocked by the AWS-managed SCP; least-privilege deploy key, 90-day rotation (next 2027-01-27) | F-18, 13.5; re-check → 15.4 |
-| Logging / retention policy and log rotation | Done — policy in `Data_Privacy.md`, rotation active | 13.5; feedback comments → 14.0 |
-| User feedback loop | **Gap** | 14.0 |
+| Logging / retention policy and log rotation | Done — policy in `Data_Privacy.md`, rotation active; feedback text 90 days | 13.5, 14.0 |
+| User feedback loop | Done (backend) — `POST /feedback`, server-side grounding, SQLite on a named volume, verified on prod; UI → 14.1 | 14.0, PR #95 |
 | Usable front end | **Gap** | 14.1 |
 | Storage architecture fit for production | **Gap, deferred** | F-27 → 15.0 |
 | Ingestion correct and persistent | **Gap, deferred** | F-01, F-02, F-03 → 15.0 |
