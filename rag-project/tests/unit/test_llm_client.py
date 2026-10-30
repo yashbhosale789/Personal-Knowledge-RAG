@@ -75,3 +75,43 @@ def test_missing_provider_counts_are_estimated_and_labelled(monkeypatch):
     assert (call["completion_tokens"], call["completion_source"]) == (3, "reported")
     assert sample("prompt", "estimated") == before + 100
     assert sample("completion", "reported") >= 3
+
+
+def test_streamed_reply_is_passed_on_piece_by_piece(monkeypatch):
+    monkeypatch.setenv(client._resolve_provider("groq")[3], "test-key")
+    lines = [
+        ": keep-alive",
+        'data: {"choices": [{"delta": {"role": "assistant"}}]}',
+        'data: {"choices": [{"delta": {"content": " Lösen "}}]}',
+        "",
+        'data: {"choices": [{"delta": {"content": "[SOURCE 1]"}}]}',
+        'data: {"choices": [], "usage": {"prompt_tokens": 7, "completion_tokens": 2}}',
+        "data: [DONE]",
+        'data: {"choices": [{"delta": {"content": "after done"}}]}',
+    ]
+    sent = {}
+
+    class StreamResponse:
+        encoding = None
+
+        def raise_for_status(self):
+            pass
+
+        def iter_lines(self, decode_unicode):
+            assert decode_unicode and self.encoding == "utf-8"
+            return iter(lines)
+
+    def fake_post(url, **kw):
+        sent.update(kw)
+        return StreamResponse()
+
+    monkeypatch.setattr(client._session, "post", fake_post)
+    pieces = []
+
+    text = client.call_llm(
+        "q", provider="groq", stage="generate", on_token=pieces.append
+    )
+
+    assert pieces == [" Lösen ", "[SOURCE 1]"]
+    assert text == "Lösen [SOURCE 1]"
+    assert sent["stream"] is True and sent["json"]["stream"] is True

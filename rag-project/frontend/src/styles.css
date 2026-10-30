@@ -163,7 +163,26 @@ button.link {
 
 .sources {
   margin: 0;
+  padding-left: 0;
+  list-style: none;
   overflow-wrap: anywhere;
+}
+
+.sources li {
+  border-left: 3px solid var(--border);
+  padding-left: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.sources li.cited {
+  border-color: var(--accent);
+}
+
+.snippet {
+  display: block;
+  color: var(--muted);
+  font-size: 0.875rem;
+  white-space: pre-wrap;
 }
 
 .hint,

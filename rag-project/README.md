@@ -110,14 +110,14 @@ uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
 
 ## Web UI
 
-A small React app in `frontend/`: ask a question, read the answer with its `[SOURCE N]` markers, sources and an abstain or low-confidence banner, and rate it through `/feedback`. You type the API key into the page; it is kept in `sessionStorage` for that tab only, never in the build. Answers and sources are rendered as plain text, and the production build carries a Content-Security-Policy that allows only same-origin scripts and requests. There is no upload or delete UI (roadmap *Interim rules*).
+A small React app in `frontend/`: ask a question, watch the answer stream in from `/query/stream`, read it with each `[SOURCE N]` marker mapped to its file, page and snippet and an abstain or low-confidence banner, and rate it through `/feedback`. You type the API key into the page; it is kept in `sessionStorage` for that tab only, never in the build. Answers and sources are rendered as plain text, and the production build carries a Content-Security-Policy that allows only same-origin scripts and requests. There is no upload or delete UI (roadmap *Interim rules*).
 
 In production the Dockerfile's `web` stage builds it (Node runs in CI only, never on the server) and FastAPI serves it at `/` and `/assets` on the same origin as the API, behind Caddy. Locally, with the API running on port 8000:
 
 ```powershell
 cd frontend
 npm ci
-npm run dev          # http://localhost:5173, proxies /query and /feedback to :8000
+npm run dev          # http://localhost:5173, proxies /query/stream and /feedback to :8000
 npm run lint; npm run typecheck; npm test
 npm run build; npm run e2e   # Playwright against the build, API mocked (once: npx playwright install chromium)
 ```
@@ -155,6 +155,27 @@ Invoke-RestMethod `
 ```
 
 The response includes the answer, rewritten query, source filenames, number of chunks used, provider, latency, sufficiency verdict, citation check, confidence, and an outcome of `answer`, `answer_low_confidence`, `abstain`, or `cached`.
+
+### Query (streaming)
+
+`POST /query/stream` takes the same body and key and answers with server-sent events (the web UI uses it):
+
+```text
+event: token
+data: {"text": "Loosen the "}        (repeated while the answer is generated)
+
+event: final
+data: {...every /query field..., "caveat": null, "chunks": [{"n": 1, "source": "manual.pdf", "page": "2", "snippet": "...", "cited": true}]}
+```
+
+- A cache hit, an abstain or an empty retrieval sends only `final`.
+- `final.answer` is authoritative: it carries the low-confidence caveat and character fixes applied after generation, so a client replaces the streamed text with it. `chunks[n-1]` is the chunk behind `[SOURCE n]`.
+- A failure sends one `error` event, `{"status": 502, "error": "..."}`, in place of `final`. Providers are retried and fallen back only until the first token; after that the stream ends with `error`.
+- The `final` schema is pinned in `tests/contracts/query_stream_final.json` (`tests/api/test_stream_contract.py`). `/query` is unchanged.
+
+```powershell
+curl.exe -N -X POST http://127.0.0.1:8000/query/stream -H "Authorization: Bearer $env:API_KEY" -H "Content-Type: application/json" -d '{\"query\": \"How do I change a tyre?\"}'
+```
 
 ### Feedback
 

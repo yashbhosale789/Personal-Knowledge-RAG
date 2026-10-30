@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { answer, REQUEST_ID } from "../src/fixtures";
+import { answer, REQUEST_ID, sse } from "../src/fixtures";
 
 const KEY = "test-key-0123456789";
 
@@ -10,11 +10,15 @@ test("ask a question, read the cited answer, rate it", async ({ page }) => {
   page.on("pageerror", (err) => errors.push(err.message));
 
   const sent: Array<{ path: string; auth: string | undefined; body: unknown }> = [];
-  await page.route(/\/(query|feedback)$/, async (route) => {
+  await page.route(/\/(query\/stream|feedback)$/, async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
     sent.push({ path, auth: request.headers()["authorization"], body: request.postDataJSON() });
-    await route.fulfill({ json: path === "/query" ? answer() : { status: "recorded", request_id: REQUEST_ID } });
+    if (path === "/feedback") return route.fulfill({ json: { status: "recorded", request_id: REQUEST_ID } });
+    await route.fulfill({
+      contentType: "text/event-stream",
+      body: sse(["Loosen the lug nuts ", "before jacking the car [SOURCE 1]."], { final: answer() }),
+    });
   });
 
   await page.goto("/");
@@ -24,7 +28,7 @@ test("ask a question, read the cited answer, rate it", async ({ page }) => {
   await page.getByRole("button", { name: "Ask" }).click();
 
   await expect(page.getByText(/Loosen the lug nuts.*\[SOURCE 1\]/)).toBeVisible();
-  await expect(page.getByText("aventro_manual.pdf")).toBeVisible();
+  await expect(page.getByText(/\[SOURCE 1\] aventro_manual\.pdf, page 12 · cited/)).toBeVisible();
 
   await page.getByRole("button", { name: /^👍 Helpful/ }).click();
   await page.getByLabel("Comment (optional)").fill("clear steps");
@@ -32,7 +36,7 @@ test("ask a question, read the cited answer, rate it", async ({ page }) => {
   await expect(page.getByText(/Feedback recorded/)).toBeVisible();
 
   expect(sent).toEqual([
-    { path: "/query", auth: `Bearer ${KEY}`, body: { query: "How do I change a tyre?" } },
+    { path: "/query/stream", auth: `Bearer ${KEY}`, body: { query: "How do I change a tyre?" } },
     { path: "/feedback", auth: `Bearer ${KEY}`, body: { request_id: REQUEST_ID, rating: "up", comment: "clear steps" } },
   ]);
   // Usable at this viewport: nothing forces sideways scrolling.

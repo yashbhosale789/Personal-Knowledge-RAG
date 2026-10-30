@@ -66,6 +66,10 @@ class Recorder:
         self.cached = None
         self.error: Exception | None = None
         self.groundings: dict[str, dict] = {}
+        # /query/stream: the pieces streamed before returning (None: the answer in two pieces),
+        # and an error raised after them.
+        self.tokens: list[str] | None = None
+        self.stream_error: Exception | None = None
 
     def embed(self, query: str) -> bytes:
         self.embeddings.append(query)
@@ -84,7 +88,19 @@ def fakes(monkeypatch):
             raise rec.error
         return rec.result
 
+    def fake_stream_pipeline(query, provider, on_token):
+        rec.pipeline_calls.append({"query": query, "provider": provider})
+        if rec.error:
+            raise rec.error
+        answer = rec.result["answer"]
+        for piece in rec.tokens if rec.tokens is not None else [answer[:8], answer[8:]]:
+            on_token(piece)
+        if rec.stream_error:
+            raise rec.stream_error
+        return rec.result
+
     monkeypatch.setattr(query_router, "_run_pipeline", fake_pipeline)
+    monkeypatch.setattr(query_router, "_run_stream_pipeline", fake_stream_pipeline)
     monkeypatch.setattr(query_router, "cache_embedding", lambda q: rec.embed(q))
     monkeypatch.setattr(
         query_router, "find_cached_answer", lambda q, provider, emb: rec.cached

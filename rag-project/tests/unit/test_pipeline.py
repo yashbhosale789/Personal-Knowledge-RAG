@@ -185,7 +185,7 @@ def wired(monkeypatch):
         ar, "check_sufficiency", lambda q, chunks, provider=None: w.sufficiency
     )
 
-    def llm(prompt, system=None, provider=None, stage=None):
+    def llm(prompt, system=None, provider=None, stage=None, on_token=None):
         w.llm_calls.append({"prompt": prompt, "provider": provider})
         return w.answer
 

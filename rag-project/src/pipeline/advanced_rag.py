@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import secrets
+from collections.abc import Callable
 
 from langchain_core.documents import Document
 
@@ -145,15 +146,18 @@ def run_advanced_rag_pipeline(
     return_contexts: bool = False,
     provider: str | None = None,
     rewritten: str | None = None,
+    on_token: Callable[[str], None] | None = None,
 ) -> dict:
     """
     Advanced RAG pipeline:
     query → rewrite → dense + BM25 → RRF fusion → rerank → prompt → LLM
 
     The result carries `llm_usage`: tokens and latency of every LLM call it made.
+    `on_token` receives the generated answer as it streams (POST /query/stream);
+    it is never called when generation is skipped (empty retrieval, abstain).
     """
     with usage.track() as calls:
-        result = _run(query, top_k, return_contexts, provider, rewritten)
+        result = _run(query, top_k, return_contexts, provider, rewritten, on_token)
     result["llm_usage"] = usage.summarize(calls)
     return result
 
@@ -164,6 +168,7 @@ def _run(
     return_contexts: bool,
     provider: str | None,
     rewritten: str | None,
+    on_token: Callable[[str], None] | None = None,
 ) -> dict:
 
     logger.info(f"Advanced RAG pipeline started for : {query[:60]}")
@@ -213,7 +218,13 @@ def _run(
 
     # Stage 5: Prompt + LLM
     prompt = _build_prompt(rewritten, reranked)
-    answer = call_llm(prompt, system=SYSTEM_PROMPT, provider=provider, stage="generate")
+    answer = call_llm(
+        prompt,
+        system=SYSTEM_PROMPT,
+        provider=provider,
+        stage="generate",
+        on_token=on_token,
+    )
     answer = answer.replace("【", "[").replace("】", "]")
 
     # Stage 5.5: Citation Verification

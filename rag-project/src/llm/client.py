@@ -1,6 +1,8 @@
+import json
 import logging
 import os
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 import requests
@@ -71,8 +73,38 @@ def model_name(provider: str | None = None) -> str:
     return _resolve_provider(provider)[1]
 
 
+def _read_stream(
+    response: requests.Response, on_token: Callable[[str], None]
+) -> tuple[str, dict]:
+    """OpenAI-style server-sent events: one `data:` JSON line per delta, then `data: [DONE]`."""
+    response.encoding = (
+        "utf-8"  # text/event-stream has no charset; requests would assume Latin-1
+    )
+    parts: list[str] = []
+    reported: dict = {}
+    for line in response.iter_lines(decode_unicode=True):
+        if not line or not line.startswith("data:"):
+            continue
+        data = line[5:].strip()
+        if data == "[DONE]":
+            break
+        chunk = json.loads(data)
+        # shortcut: only providers that put `usage` on a chunk report tokens; the rest are estimated by usage.record.
+        reported = chunk.get("usage") or reported
+        for choice in chunk.get("choices") or []:
+            text = (choice.get("delta") or {}).get("content")
+            if text:
+                parts.append(text)
+                on_token(text)
+    return "".join(parts).strip(), reported
+
+
 def _call_openai_compatible(
-    messages: list, model: str, url: str, key_env: str | None
+    messages: list,
+    model: str,
+    url: str,
+    key_env: str | None,
+    on_token: Callable[[str], None] | None = None,
 ) -> tuple[str, dict]:
     """OpenRouter, Groq, Gemini — all speak the same OpenAI-compatible shape."""
     payload = {
@@ -81,6 +113,8 @@ def _call_openai_compatible(
         "temperature": 0.2,
         "max_tokens": 512,
     }
+    if on_token:
+        payload["stream"] = True
     headers = {"Content-Type": "application/json"}
     if key_env:
         key = os.getenv(key_env)
@@ -90,8 +124,12 @@ def _call_openai_compatible(
         headers["Authorization"] = f"Bearer {os.getenv(key_env)}"
         headers["HTTP-Referer"] = "https://github.com/personal-kb-rag"
 
-    response = _session.post(url, headers=headers, json=payload, timeout=30)
+    response = _session.post(
+        url, headers=headers, json=payload, timeout=30, stream=bool(on_token)
+    )
     response.raise_for_status()
+    if on_token:
+        return _read_stream(response, on_token)
 
     response_json = response.json()
     try:
@@ -134,12 +172,14 @@ def call_llm(
     provider: str | None = None,
     stage: str = "other",
     model: str | None = None,
+    on_token: Callable[[str], None] | None = None,
 ) -> str:
     """
     Send a prompt to the active pipeline LLM and return the response text.
     Provider is controlled by PIPELINE_PROVIDER in config.py. `stage` labels the
     token and latency metrics (rewrite | sufficiency | generate | citation_verify).
-    `model` overrides the provider's pipeline model.
+    `model` overrides the provider's pipeline model. `on_token`, if given, receives
+    the reply piece by piece as it streams in; the return value is unchanged.
     """
     active, default_model, url, key_env = _resolve_provider(provider)
     model = model or default_model
@@ -157,8 +197,13 @@ def call_llm(
         try:
             if active == "ollama":
                 text, reported = _call_ollama(messages, model, url)
+                # shortcut: Ollama (explicit-only, local) is not streamed, so it arrives as one piece; stream /api/chat if it is ever used in prod.
+                if on_token and text:
+                    on_token(text)
             else:
-                text, reported = _call_openai_compatible(messages, model, url, key_env)
+                text, reported = _call_openai_compatible(
+                    messages, model, url, key_env, on_token
+                )
 
         except requests.exceptions.Timeout:
             logger.error(f"{active} request timeout")

@@ -376,6 +376,12 @@ Scope: query box, answer with citations, abstention display, and thumbs up/down 
 
 **Status: IN PROGRESS.** Two PRs: (1) the UI on the existing `/query`, (2) a streaming SSE route.
 
+PR 1: #97 (merge `d1821b0`), deployed by run `41027257170` (build, deploy and the new smoke check that `/` serves the UI all green). CI on #97: `pytest`, `lint-security`, `build`, `Frontend` (lint, type check, 11 Vitest tests, build, Playwright e2e at desktop and mobile viewports) and CodeQL green; `/query` contract unchanged. Live 2026-10-30: `/` 200 with `Cache-Control: no-cache` and the CSP meta, hashed bundle 200, `/metrics` still 404. `HEAD /` returns 405 (the route is GET only). Browser round-trip on prod (2026-10-30): query answered in the UI, thumbs up sent ("Feedback recorded"), row `6558d316-…` stored (`up`, outcome `answer`, no comment, 09:13:42 UTC). Survival across a deploy is checked on the PR 2 deploy. Mobile check by Yash on a phone (2026-10-30): fine.
+
+PR 2 (streaming), as built: `POST /query/stream` (same body and key) answers with server-sent events: `token` {text} while generating, then one `final` = `QueryStreamFinal` (every `QueryResponse` field plus `caveat` and `chunks` [{n, source, page, snippet, cited}]), or one `error` {status, error}. Cache hit, abstain and empty send only `final`; `final.answer` is authoritative. Providers retry and fall back only until the first token; after it, a failure ends the stream with `error`. `call_llm(..., on_token=)` streams OpenAI-compatible replies (Ollama arrives in one piece); the pipeline passes `on_token` to generation only, so retrieval and gates are unchanged (the eval fingerprint changes, as code hashes do). `/query`'s cache, logging, tracing and grounding steps moved into helpers both routes share; `/query`'s response is unchanged. Contract: `tests/contracts/query_stream_final.json` v1 and event-sequence tests in `tests/api/test_stream_contract.py`. The UI streams the text, then swaps in `final` and lists each `[SOURCE N]` with file, page, snippet and a cited mark. Local measurement (Windows CPU, one question, corpus c1): first token about 1.2 s before `final`; gpt-oss reasons before it writes, so the gain is mostly the verifier's ~1 s. Groq reports token usage on the stream, so cost accounting stays "reported".
+
+Known limits of the stream route (accepted for one user; revisit in 15.4): the SLO rules and alerts cover `path="/query"` only; the access log and `http_request_duration_seconds` time the stream to its headers, not its end; a provider failure is HTTP 200 with an `error` event, not a 5xx; a client that disconnects mid-answer leaves the pipeline to finish in the background.
+
 Decided 2026-10-30:
 
 - **Stack:** Vite + React + TypeScript in `rag-project/frontend/`, plain CSS; runtime dependencies are only `react` and `react-dom`. Vitest + Testing Library for components, one Playwright e2e test against the production build with the API mocked (desktop and mobile viewports).
@@ -547,7 +553,7 @@ Status as of 2026-10-29 (Phase 13 closed). Gap items name the owning phase.
 | Secrets without long-lived keys | Accepted — OIDC blocked by the AWS-managed SCP; least-privilege deploy key, 90-day rotation (next 2027-01-27) | F-18, 13.5; re-check → 15.4 |
 | Logging / retention policy and log rotation | Done — policy in `Data_Privacy.md`, rotation active; feedback text 90 days | 13.5, 14.0 |
 | User feedback loop | Done (backend) — `POST /feedback`, server-side grounding, SQLite on a named volume, verified on prod; UI → 14.1 | 14.0, PR #95 |
-| Usable front end | **Gap** — in progress (PR 1: UI on `/query`) | 14.1 |
+| Usable front end | **Gap** — in progress: UI live on prod (PR #97, feedback round-trip verified); streaming PR 2 pending | 14.1 |
 | Storage architecture fit for production | **Gap, deferred** | F-27 → 15.0 |
 | Ingestion correct and persistent | **Gap, deferred** | F-01, F-02, F-03 → 15.0 |
 | Supports the real corpus formats | **Gap, deferred** | F-15 → 15.1 |
