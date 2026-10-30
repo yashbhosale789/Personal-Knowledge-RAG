@@ -95,6 +95,7 @@ jobs:
             sleep 10
           done
           [ "$ok" = 1 ] || { echo "health check failed"; exit 1; }
+          curl -fsS --max-time 10 "$SITE_URL/" | grep -q '<div id="root">' || { echo "UI not served"; exit 1; }
           [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$SITE_URL/metrics")" = 404 ]
           [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 -X POST "$SITE_URL/ingest")" = 404 ]
           echo "smoke test passed"

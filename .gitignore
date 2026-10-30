@@ -28,6 +28,8 @@ dataset/
 *.sqlite3
 # Local feedback store (Phase 14.0); prod keeps it on the feedback_data volume
 rag-project/feedback/
+# React build copied for a local FastAPI run (Phase 14.1); the image builds its own
+rag-project/web/
 chunks.json
 **/chunks.json
 

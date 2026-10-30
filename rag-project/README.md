@@ -43,6 +43,7 @@ src/vectorstore/     Persistent Chroma store
 scripts/             CLI ingestion, querying, inspection, and agentic queries
 eval/                Golden dataset, generate/judge/gate eval harness, retrieval and prompt-injection evaluations
 tests/               Unit and component tests
+frontend/            React + TypeScript web UI (Vite, Vitest, Playwright)
 data/documents/      Default local document directory
 storage/chroma/      Persistent vector database
 storage/chunks.json  Human-readable CLI ingestion output
@@ -105,6 +106,20 @@ python scripts/ingest.py
 
 ```powershell
 uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+## Web UI
+
+A small React app in `frontend/`: ask a question, read the answer with its `[SOURCE N]` markers, sources and an abstain or low-confidence banner, and rate it through `/feedback`. You type the API key into the page; it is kept in `sessionStorage` for that tab only, never in the build. Answers and sources are rendered as plain text, and the production build carries a Content-Security-Policy that allows only same-origin scripts and requests. There is no upload or delete UI (roadmap *Interim rules*).
+
+In production the Dockerfile's `web` stage builds it (Node runs in CI only, never on the server) and FastAPI serves it at `/` and `/assets` on the same origin as the API, behind Caddy. Locally, with the API running on port 8000:
+
+```powershell
+cd frontend
+npm ci
+npm run dev          # http://localhost:5173, proxies /query and /feedback to :8000
+npm run lint; npm run typecheck; npm test
+npm run build; npm run e2e   # Playwright against the build, API mocked (once: npx playwright install chromium)
 ```
 
 ## API Reference
@@ -266,6 +281,7 @@ Pull requests against `main` run:
 - **Tests** — `pytest -m "not slow"` with a Redis service container, offline with an empty Hugging Face cache (proves the default run never downloads a model), a coverage floor (`--cov-fail-under`, ratcheted up, never lowered), and `eval.tools.validate_dataset`. Required check: `pytest`.
 - **Code Quality** — runs `ruff` (linting) and `bandit` (security static analysis) against the application code. Both are hard gates: a finding fails the PR.
 - **Dependency Audit** — `pip-audit` on the locks, on dependency changes and weekly. Reports; it does not gate unrelated PRs.
+- **Frontend** — ESLint, type check, Vitest component tests, build, and one Playwright end-to-end test against a mocked API at desktop and mobile viewports. Runs only when `frontend/` changes; advisory, not a required check.
 - **Eval Regression Gate** — LLM-judged and rate-limit-prone, so it runs only when pipeline code, config, data or the eval harness change, weekly, and on demand. A real faithfulness/relevancy regression fails it; an incomplete run (provider rate limit) is reported as a warning and in the job summary instead of blocking.
 
 Dependabot proposes weekly pip and GitHub Actions updates.

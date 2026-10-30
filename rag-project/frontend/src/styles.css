@@ -1,0 +1,177 @@
+:root {
+  --bg: #f7f7f5;
+  --fg: #1d1d1f;
+  --muted: #5f6368;
+  --card: #ffffff;
+  --border: #d9d9d6;
+  --accent: #2456c7;
+  --low-bg: #fff6dd;
+  --low-edge: #b07a00;
+  --abstain-bg: #eef1f6;
+  --abstain-edge: #5f6f8a;
+  --error: #b3261e;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161618;
+    --fg: #ececec;
+    --muted: #a0a4ab;
+    --card: #222226;
+    --border: #3a3a40;
+    --accent: #7ea6ff;
+    --low-bg: #3a2f12;
+    --low-edge: #e0b040;
+    --abstain-bg: #252b36;
+    --abstain-edge: #8ea0c0;
+    --error: #ff8a80;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 system-ui, sans-serif;
+}
+
+main {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+h1 {
+  font-size: 1.4rem;
+}
+
+h2 {
+  font-size: 1rem;
+  margin: 1rem 0 0.25rem;
+}
+
+.card,
+.answer,
+.feedback fieldset {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0 0 1rem;
+}
+
+label,
+legend {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+input,
+textarea {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+button {
+  font: inherit;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--card);
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.link {
+  background: none;
+  color: var(--accent);
+  border: none;
+  margin: 0;
+}
+
+.thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.thumbs button {
+  background: none;
+  color: var(--fg);
+  border-color: var(--border);
+}
+
+.thumbs button[aria-pressed="true"] {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+}
+
+.answer-text,
+.reason,
+.banner li {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.banner {
+  border-left: 4px solid;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.banner.low {
+  background: var(--low-bg);
+  border-color: var(--low-edge);
+}
+
+.banner.abstain {
+  background: var(--abstain-bg);
+  border-color: var(--abstain-edge);
+}
+
+.reason {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+}
+
+.sources {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.hint,
+.meta {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.error {
+  color: var(--error);
+}

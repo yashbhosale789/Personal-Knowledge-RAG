@@ -4,9 +4,11 @@ import logging
 import logging.config
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 import config
 from api.core.exceptions import RAGException
@@ -144,6 +146,24 @@ app.include_router(query.router, tags=["Query"])
 app.include_router(ingest.router, tags=["Ingest"])
 app.include_router(feedback.router, tags=["Feedback"])
 app.include_router(metrics.router, tags=["Metrics"])
+
+
+def mount_web(app: FastAPI, web_dir: Path) -> None:
+    """Serves the React build at `/` and `/assets` only, so every other path behaves as before."""
+    app.mount("/assets", StaticFiles(directory=web_dir / "assets"), name="assets")
+
+    @app.get("/", include_in_schema=False)
+    async def index():
+        # Asset names are content hashes that change every build: a cached index.html would point at deleted ones.
+        return FileResponse(
+            web_dir / "index.html", headers={"Cache-Control": "no-cache"}
+        )
+
+
+# The React build (Phase 14.1), copied in by the Dockerfile's web stage; absent in tests and plain dev runs.
+WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+if WEB_DIR.is_dir():
+    mount_web(app, WEB_DIR)
 
 
 @app.exception_handler(RAGException)
