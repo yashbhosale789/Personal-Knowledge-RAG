@@ -4,19 +4,28 @@ import { Answer } from "./Answer";
 import { answer } from "./fixtures";
 
 describe("Answer", () => {
-  it("shows the answer with its citation markers and sources", () => {
+  it("maps each [SOURCE N] marker to its file, page and snippet", () => {
     render(<Answer result={answer()} />);
     expect(screen.getByText(/Loosen the lug nuts.*\[SOURCE 1\]/)).toBeTruthy();
-    expect(screen.getByText("aventro_manual.pdf")).toBeTruthy();
+    const [first, second] = screen.getAllByRole("listitem");
+    expect(first.textContent).toBe("[SOURCE 1] aventro_manual.pdf, page 12 · citedLoosen each lug nut half a turn.");
+    expect(first.className).toBe("cited");
+    expect(second.textContent).toBe("[SOURCE 2] warranty.pdf" + "Tyres are not covered.");
     expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("renders markup from documents as text, never as HTML", () => {
     const { container } = render(
-      <Answer result={answer({ answer: '<img src=x onerror="alert(1)"> **bold**', sources: ["<b>x</b>.pdf"] })} />,
+      <Answer
+        result={answer({
+          answer: '<img src=x onerror="alert(1)"> **bold**',
+          chunks: [{ n: 1, source: "<b>x</b>.pdf", page: null, snippet: "<script>alert(1)</script>", cited: true }],
+        })}
+      />,
     );
-    expect(container.querySelector("img, b")).toBeNull();
+    expect(container.querySelector("img, b, script")).toBeNull();
     expect(screen.getByText('<img src=x onerror="alert(1)"> **bold**')).toBeTruthy();
+    expect(screen.getByText("<script>alert(1)</script>")).toBeTruthy();
   });
 
   it("shows an abstain clearly and hides the canned abstain text", () => {
@@ -37,7 +46,7 @@ describe("Answer", () => {
   });
 
   it("shows an empty retrieval as not answered", () => {
-    render(<Answer result={answer({ outcome: "empty", sources: [], sufficiency: null })} />);
+    render(<Answer result={answer({ outcome: "empty", chunks: [], sufficiency: null })} />);
     expect(screen.getByRole("status").textContent).toMatch(/Nothing relevant was found/);
   });
 

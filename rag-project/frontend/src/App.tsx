@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Answer } from "./Answer";
-import { ApiError, postQuery, type QueryResponse } from "./api";
+import { ApiError, streamQuery, type QueryResponse } from "./api";
 import { Feedback } from "./Feedback";
 
 // sessionStorage only: the key leaves with the tab and is never written to the build or localStorage.
@@ -42,6 +42,8 @@ export default function App() {
   const [keyError, setKeyError] = useState("");
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<QueryResponse | null>(null);
+  // The answer as it streams in; replaced by the verified `final` answer.
+  const [partial, setPartial] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +66,7 @@ export default function App() {
     setApiKey("");
     setKeyError(message);
     setResult(null);
+    setPartial("");
     setError("");
   }
 
@@ -74,8 +77,10 @@ export default function App() {
     setLoading(true);
     setError("");
     setResult(null);
+    setPartial("");
     try {
-      setResult(await postQuery(apiKey, q));
+      setResult(await streamQuery(apiKey, q, (text) => setPartial((p) => p + text)));
+      setPartial("");
     } catch (err) {
       const apiError = err instanceof ApiError ? err : new ApiError(0, "Request failed.");
       if (apiError.status === 401) forgetKey(apiError.message);
@@ -106,8 +111,15 @@ export default function App() {
               {loading ? "Searching…" : "Ask"}
             </button>
           </form>
+          {partial && (
+            <section className="answer" aria-label="Answer so far">
+              <p className="answer-text">{partial}</p>
+            </section>
+          )}
           <div aria-live="polite">
-            {loading && <p className="hint">Retrieving, generating and verifying citations. This can take about 10 seconds.</p>}
+            {loading && (
+              <p className="hint">{partial ? "Verifying citations…" : "Retrieving and checking the documents…"}</p>
+            )}
             {error && (
               <p className="error" role="alert">
                 {error}

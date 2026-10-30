@@ -81,6 +81,34 @@ class QueryResponse(BaseModel):
     )
 
 
+class ChunkInfo(BaseModel):
+    n: int = Field(description="The N of the answer's [SOURCE N] markers.")
+
+    source: str = Field(description="File name of the document.")
+
+    page: str | int | None = Field(default=None, description="Page label, if known.")
+
+    snippet: str = Field(
+        description="First 200 characters of the chunk. Untrusted document text."
+    )
+
+    cited: bool = Field(description="Whether the answer cites [SOURCE n].")
+
+
+class QueryStreamFinal(QueryResponse):
+    """The `final` event of POST /query/stream: every /query field plus the chunks behind the markers."""
+
+    caveat: str | None = Field(
+        default=None,
+        description="The low-confidence note, already appended to `answer`. None when confident or not answered.",
+    )
+
+    chunks: list[ChunkInfo] = Field(
+        default_factory=list,
+        description="The chunks handed to generation, numbered as in [SOURCE N]. Empty when retrieval found nothing.",
+    )
+
+
 class FeedbackResponse(BaseModel):
     status: str = Field(description="'recorded'.")
 

@@ -38,12 +38,17 @@ export function Answer({ result }: { result: QueryResponse }) {
     <section className="answer" aria-label="Answer">
       <Verdict result={result} />
       {answered && <p className="answer-text">{result.answer}</p>}
-      {result.sources.length > 0 && (
+      {result.chunks.length > 0 && (
         <>
           <h2>{answered ? "Sources" : "Documents searched"}</h2>
           <ul className="sources">
-            {result.sources.map((source) => (
-              <li key={source}>{source}</li>
+            {result.chunks.map((chunk) => (
+              <li key={chunk.n} className={chunk.cited ? "cited" : undefined}>
+                <strong>[SOURCE {chunk.n}]</strong> {chunk.source}
+                {chunk.page != null && `, page ${chunk.page}`}
+                {chunk.cited && " · cited"}
+                <span className="snippet">{chunk.snippet}</span>
+              </li>
             ))}
           </ul>
         </>
