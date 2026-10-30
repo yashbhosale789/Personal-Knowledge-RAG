@@ -1,0 +1,45 @@
+name: Frontend
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "rag-project/frontend/**"
+      - ".github/workflows/frontend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "rag-project/frontend/**"
+      - ".github/workflows/frontend.yml"
+  workflow_dispatch:
+
+# Advisory, not a required check. $0: the e2e test mocks the API.
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: rag-project/frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: rag-project/frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      - name: End-to-end test (mocked API, desktop and mobile viewports)
+        run: |
+          npx playwright install --with-deps chromium
+          npm run e2e

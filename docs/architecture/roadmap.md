@@ -374,7 +374,17 @@ A minimal `POST /feedback`, authenticated like the other endpoints and rate limi
 
 Scope: query box, answer with citations, abstention display, and thumbs up/down plus comment calling `/feedback`. **No upload or delete UI** (*Interim rules*).
 
-Decisions to record before building:
+**Status: IN PROGRESS.** Two PRs: (1) the UI on the existing `/query`, (2) a streaming SSE route.
+
+Decided 2026-10-30:
+
+- **Stack:** Vite + React + TypeScript in `rag-project/frontend/`, plain CSS; runtime dependencies are only `react` and `react-dom`. Vitest + Testing Library for components, one Playwright e2e test against the production build with the API mocked (desktop and mobile viewports).
+- **Hosting:** the build ships in the app image (Dockerfile `web` stage, so Node runs only in CI) and FastAPI serves `/` and `/assets` (`api/main.py` `mount_web`); every other path behaves as before. Chosen over a Caddy-served folder synced by `deploy.sh` because it needs no change to `deploy.sh`, compose or the Caddyfile, and a rollback rolls the UI back with the image. Caddy still fronts it on the same origin, so no CORS.
+- **API key:** typed into the UI, kept in `sessionStorage` only. A 401 clears it.
+- **Rendering:** plain text only (React escapes it; no markdown library). The production build adds a `<meta>` Content-Security-Policy allowing only same-origin scripts, styles and requests, so injected markup could neither run nor send the key elsewhere.
+- **Citations:** `/query` returns `sources` as unique filenames only; the chunk behind each `[SOURCE N]` marker is not in the response. PR 1 shows the markers as text plus the filename list, leaving `/query` unchanged; the streaming route's final event carries the per-chunk `source`, `page`, snippet and `cited` flag so PR 2 maps markers to them.
+
+Decisions to record before building (original brief):
 
 - **API key handling.** The API uses one shared Bearer key; a static single-page app cannot hold a secret. For a single-user system the default is that the user enters the key in the UI and it is kept in memory or `sessionStorage` only; never bake it into the build. Revisit only if the authorization model changes.
 - **Hosting.** Preferred: build static files and serve them from the existing Caddy on the same origin (no CORS, no new service, negligible memory). Free static hosting is the alternative and requires CORS to be configured deliberately.
@@ -537,7 +547,7 @@ Status as of 2026-10-29 (Phase 13 closed). Gap items name the owning phase.
 | Secrets without long-lived keys | Accepted — OIDC blocked by the AWS-managed SCP; least-privilege deploy key, 90-day rotation (next 2027-01-27) | F-18, 13.5; re-check → 15.4 |
 | Logging / retention policy and log rotation | Done — policy in `Data_Privacy.md`, rotation active; feedback text 90 days | 13.5, 14.0 |
 | User feedback loop | Done (backend) — `POST /feedback`, server-side grounding, SQLite on a named volume, verified on prod; UI → 14.1 | 14.0, PR #95 |
-| Usable front end | **Gap** | 14.1 |
+| Usable front end | **Gap** — in progress (PR 1: UI on `/query`) | 14.1 |
 | Storage architecture fit for production | **Gap, deferred** | F-27 → 15.0 |
 | Ingestion correct and persistent | **Gap, deferred** | F-01, F-02, F-03 → 15.0 |
 | Supports the real corpus formats | **Gap, deferred** | F-15 → 15.1 |
