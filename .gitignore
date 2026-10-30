@@ -101,3 +101,6 @@ CLAUDE.md
 .coverage.*
 htmlcov/
 coverage.xml
+
+# Brainstorming mockups (superpowers visual companion)
+.superpowers/

@@ -20,6 +20,7 @@ from api.models.responses import QueryResponse, QueryStreamFinal
 from api.routers.health import is_pipeline_ready
 from src import observability, tracing
 from src.feedback import save_grounding
+from src.llm import usage
 from src.llm.client import model_name
 from src.llm.semantic_cache import (
     GROUNDING_FIELDS,
@@ -28,26 +29,74 @@ from src.llm.semantic_cache import (
     store_cache_entry,
 )
 from src.pipeline.confidence import CAVEAT_TEXT
+from src.pipeline.query_rewriter import condense_query
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-def _run_pipeline(query: str, provider: str, return_contexts: bool) -> dict:
+def _run_pipeline(
+    query: str, provider: str, return_contexts: bool, rewritten: str | None
+) -> dict:
     from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
     return run_advanced_rag_pipeline(
-        query, return_contexts=return_contexts, provider=provider
+        query, return_contexts=return_contexts, provider=provider, rewritten=rewritten
     )
 
 
 def _run_stream_pipeline(
-    query: str, provider: str, on_token: Callable[[str], None]
+    query: str,
+    provider: str,
+    on_token: Callable[[str], None],
+    rewritten: str | None,
 ) -> dict:
     from src.pipeline.advanced_rag import run_advanced_rag_pipeline
 
-    return run_advanced_rag_pipeline(query, provider=provider, on_token=on_token)
+    return run_advanced_rag_pipeline(
+        query, provider=provider, on_token=on_token, rewritten=rewritten
+    )
+
+
+def _condense(
+    query: str, history: list[dict], provider: str
+) -> tuple[str | None, list[dict]]:
+    with usage.track() as calls:
+        return condense_query(query, history, provider), calls
+
+
+def _with_condense(llm_usage: dict | None, condense_calls: list[dict]) -> dict | None:
+    """Adds the follow-up rewrite's LLM call to a request's usage."""
+    if not condense_calls:
+        return llm_usage
+    return usage.summarize(condense_calls + ((llm_usage or {}).get("calls") or []))
+
+
+async def _lookup_question(
+    body: QueryRequest, query: str, provider: str
+) -> tuple[str, str | None, list[dict], bytes | None, dict | None]:
+    """
+    (question to answer, its standalone rewrite, that rewrite's LLM calls, cache embedding, cache hit).
+
+    A follow-up (history present) is rewritten into a standalone question first, so the
+    cache and retrieval see what is really asked. No history: the query as before.
+    """
+    if not body.history:
+        return (query, None, [], *await _lookup_cache(query, provider))
+    history = [turn.model_dump() for turn in body.history]
+    standalone, condense_calls = await run_in_threadpool(
+        _condense, query, history, provider
+    )
+    if standalone is None:
+        # An unresolved follow-up's raw words must not match another chat's cached answer.
+        return query, None, condense_calls, None, None
+    return (
+        standalone,
+        standalone,
+        condense_calls,
+        *await _lookup_cache(standalone, provider),
+    )
 
 
 def _log_query(
@@ -133,6 +182,7 @@ async def _record_cache_hit(
     latency_ms: float,
     stages: list[dict],
     trace: tracing.Observation,
+    condense_calls: list[dict],
 ) -> dict:
     """Logs, traces and saves feedback grounding for a cache hit; returns its cached grounding."""
     # For the Phase 15.3 cache-layer decision: how close hits are, and how many
@@ -143,6 +193,7 @@ async def _record_cache_hit(
         cached["provider"],
         latency_ms,
         stages,
+        _with_condense(None, condense_calls),
         cache_similarity=round(cached["similarity"], 4),
         cache_exact_repeat=cached["query"] == query,
     )
@@ -171,16 +222,22 @@ async def _record_result(
     query: str,
     result: dict,
     provider_used: str,
-    embedding: bytes,
+    embedding: bytes | None,
     start_time: float,
     stages: list[dict],
     trace: tracing.Observation,
+    condense_calls: list[dict],
 ) -> float:
     """Caches, logs, traces and saves feedback grounding for a pipeline result; returns latency_ms."""
     # Not cached: an abstain, or an empty retrieval, which must not outlive the
-    # ingest that would answer it; nor an unverified answer, which must not outlive the verifier outage.
+    # ingest that would answer it; nor an unverified answer, which must not outlive the verifier outage;
+    # nor an unresolved follow-up (no embedding).
     unverified = (result.get("citation_check") or {}).get("tier") == "verifier_error"
-    if result.get("outcome") not in ("abstain", "empty") and not unverified:
+    if (
+        embedding is not None
+        and result.get("outcome") not in ("abstain", "empty")
+        and not unverified
+    ):
         with observability.timed("cache_store") as obs:
             obs.update(input={"query": query, "outcome": result.get("outcome")})
             await run_in_threadpool(
@@ -200,7 +257,7 @@ async def _record_result(
         provider_used,
         latency_ms,
         stages,
-        result.get("llm_usage"),
+        _with_condense(result.get("llm_usage"), condense_calls),
         # For Phase 15.3: repeats of one rewrite are what a retrieval cache would reuse.
         rewritten_query_hash=(
             hashlib.sha256(rewritten.encode()).hexdigest()[:12] if rewritten else None
@@ -264,17 +321,19 @@ async def _answer(
     start_time = time.monotonic()
     preferred_provider = body.provider or config.PIPELINE_PROVIDER
 
-    embedding, cached = await _lookup_cache(query, preferred_provider)
+    query, standalone, condense_calls, embedding, cached = await _lookup_question(
+        body, query, preferred_provider
+    )
 
     if cached is not None:
         latency_ms = (time.monotonic() - start_time) * 1000
         grounding = await _record_cache_hit(
-            request_id, query, cached, latency_ms, stages, trace
+            request_id, query, cached, latency_ms, stages, trace, condense_calls
         )
         return QueryResponse(
             query_id=request_id,
             query=body.query,
-            rewritten_query=None,
+            rewritten_query=standalone,
             answer=cached["answer"],
             sources=grounding.get("sources") or [],
             chunks_used=grounding.get("chunks_used") or 0,
@@ -298,7 +357,9 @@ async def _answer(
                 input={"query": query},
                 metadata={"provider": provider},
             ) as attempt:
-                result = _run_pipeline(query, provider, body.return_contexts)
+                result = _run_pipeline(
+                    query, provider, body.return_contexts, standalone
+                )
                 attempt.update(
                     output={
                         "answer": result.get("answer"),
@@ -322,7 +383,15 @@ async def _answer(
         raise HTTPException(status_code=502, detail=e.message)
 
     latency_ms = await _record_result(
-        request_id, query, result, provider_used, embedding, start_time, stages, trace
+        request_id,
+        query,
+        result,
+        provider_used,
+        embedding,
+        start_time,
+        stages,
+        trace,
+        condense_calls,
     )
     return QueryResponse(
         query_id=request_id,
@@ -417,12 +486,14 @@ async def _stream(
     ):
         start_time = time.monotonic()
         preferred_provider = body.provider or config.PIPELINE_PROVIDER
-        embedding, cached = await _lookup_cache(query, preferred_provider)
+        query, standalone, condense_calls, embedding, cached = await _lookup_question(
+            body, query, preferred_provider
+        )
 
         if cached is not None:
             latency_ms = (time.monotonic() - start_time) * 1000
             grounding = await _record_cache_hit(
-                request_id, query, cached, latency_ms, stages, trace
+                request_id, query, cached, latency_ms, stages, trace, condense_calls
             )
             yield _sse(
                 "final",
@@ -434,7 +505,7 @@ async def _stream(
                     latency_ms,
                     grounding,
                     "cached",
-                    None,
+                    standalone,
                 ),
             )
             return
@@ -458,7 +529,7 @@ async def _stream(
                 metadata={"provider": provider},
             ) as span:
                 try:
-                    result = _run_stream_pipeline(query, provider, on_token)
+                    result = _run_stream_pipeline(query, provider, on_token, standalone)
                 except Exception as e:
                     if not sent:
                         raise  # nothing shown yet: retry or fall back, as /query does
@@ -522,6 +593,7 @@ async def _stream(
             start_time,
             stages,
             trace,
+            condense_calls,
         )
         yield _sse(
             "final",
