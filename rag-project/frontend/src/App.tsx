@@ -2,7 +2,6 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { Answer } from "./Answer";
 import { ApiError, MEMORY_TURNS, remember, streamQuery, type QueryResponse, type Turn } from "./api";
 import { Feedback } from "./Feedback";
-import { Icon } from "./Icon";
 
 // sessionStorage only: the key leaves with the tab and is never written to the build or localStorage.
 const KEY_STORAGE = "rag-api-key";
@@ -43,7 +42,7 @@ function KeyForm({ error, onSave }: { error: string; onSave: (key: string) => vo
           {error}
         </p>
       )}
-      <button type="submit" className="primary">
+      <button type="submit" className="button">
         Save key
       </button>
     </form>
@@ -117,18 +116,15 @@ export default function App() {
     }
   }
 
+  const soon = "Available after the storage fix (Phase 15.0)";
   return (
     <div className={menuOpen ? "app menu-open" : "app"}>
       <aside className="side" aria-label="Actions">
-        <div className="brand">
-          <span className="logo">
-            <Icon name="book" />
-          </span>
-          Knowledge OS
+        <div className="wordmark">
+          Knowledge<span>.</span>os
         </div>
         <p className="group">Chat</p>
         <button type="button" className="act" disabled={loading || !messages.length} onClick={() => clearChat(false)}>
-          <Icon name="chat" />
           Clear chat
         </button>
         <button
@@ -137,36 +133,29 @@ export default function App() {
           disabled={loading || (!messages.length && !memory.length)}
           onClick={() => clearChat(true)}
         >
-          <Icon name="reset" />
-          Clear chat &amp; memory
+          Clear chat and memory
         </button>
         <p className="group">Documents</p>
         {/* shortcut: disabled until Phase 15.0 makes API ingest and delete persist (Interim rules, F-01/F-02). */}
-        <button type="button" className="act" disabled title="Available after the storage fix (Phase 15.0)">
-          <Icon name="upload" />
-          Upload files<span className="tag">soon</span>
+        <button type="button" className="act" disabled title={soon}>
+          Upload files <small>after 15.0</small>
         </button>
-        <button type="button" className="act danger" disabled title="Available after the storage fix (Phase 15.0)">
-          <Icon name="trash" />
-          Clear database<span className="tag">soon</span>
+        <button type="button" className="act" disabled title={soon}>
+          Clear database <small>after 15.0</small>
         </button>
-        <div className="memory">
-          Memory · {memory.length} of {MEMORY_TURNS} turns
-          <div className="dots" aria-hidden="true">
-            {Array.from({ length: MEMORY_TURNS }, (_, i) => (
-              <span key={i} className={i < memory.length ? "on" : undefined} />
-            ))}
-          </div>
+        <div className="side-foot">
+          <p>
+            memory <b>{memory.length}/{MEMORY_TURNS}</b> turns
+          </p>
+          {apiKey && (
+            <p>
+              key set ·{" "}
+              <button type="button" className="text-btn" aria-label="Change API key" onClick={() => forgetKey()}>
+                change
+              </button>
+            </p>
+          )}
         </div>
-        {apiKey && (
-          <div className="key-row">
-            <Icon name="key" />
-            <span>API key set</span>
-            <button type="button" className="link" aria-label="Change API key" onClick={() => forgetKey()}>
-              Change
-            </button>
-          </div>
-        )}
       </aside>
       <div className="backdrop" onClick={() => setMenuOpen(false)} />
 
@@ -174,37 +163,37 @@ export default function App() {
         <header className="topbar">
           <button
             type="button"
-            className="icon-btn"
+            className="menu-btn"
             aria-label="Menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((o) => !o)}
           >
-            <Icon name="menu" />
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
           </button>
-          Knowledge OS
+          <span className="wordmark">
+            Knowledge<span>.</span>os
+          </span>
         </header>
 
-        {!apiKey ? (
-          <div className="chat">
-            <KeyForm error={keyError} onSave={saveKey} />
-          </div>
-        ) : (
-          <>
-            <div className="chat">
-              {messages.length === 0 && (
-                <div className="empty">
-                  <h1>Ask your documents</h1>
-                  <p className="hint">Answers come only from your documents, with the sources they used.</p>
-                </div>
-              )}
-              {messages.map((m) => (
-                <Fragment key={m.id}>
-                  <p className="user-msg">{m.query}</p>
-                  <div className="turn">
-                    <span className="avatar" aria-hidden="true">
-                      <Icon name="spark" />
-                    </span>
-                    <div className="bot">
+        {/* Scrolls at the window edge, around the centred column, so opening sources never narrows it. */}
+        <div className="scroll">
+          <div className="column chat">
+            {!apiKey ? (
+              <KeyForm error={keyError} onSave={saveKey} />
+            ) : (
+              <>
+                {messages.length === 0 && (
+                  <div className="empty">
+                    <h1>Ask your documents.</h1>
+                    <p className="hint">Answers come only from your documents, with the passages they used.</p>
+                  </div>
+                )}
+                {messages.map((m) => (
+                  <Fragment key={m.id}>
+                    <p className="question">{m.query}</p>
+                    <div className="reply">
                       {m.result ? (
                         <Answer result={m.result}>
                           <Feedback
@@ -219,14 +208,14 @@ export default function App() {
                           <section aria-label="Answer so far">
                             <p className="answer-text">
                               {m.partial}
-                              {!m.error && <span className="cursor" aria-hidden="true" />}
+                              {!m.error && <span className="caret" aria-hidden="true" />}
                             </p>
                           </section>
                         )
                       )}
                       {!m.result && !m.error && (
-                        <p className="hint" aria-live="polite">
-                          {m.partial ? "Verifying citations…" : "Retrieving and checking the documents…"}
+                        <p className="meta" aria-live="polite">
+                          {m.partial ? "checking citations…" : "searching the documents…"}
                         </p>
                       )}
                       {m.error && (
@@ -235,35 +224,34 @@ export default function App() {
                         </p>
                       )}
                     </div>
-                  </div>
-                </Fragment>
-              ))}
-              <div ref={end} />
-            </div>
+                  </Fragment>
+                ))}
+                <div ref={end} />
+              </>
+            )}
+          </div>
+        </div>
 
-            <form className="composer" onSubmit={ask}>
-              <div className="box">
-                <label htmlFor="query" className="sr-only">
-                  Question
-                </label>
-                <textarea
-                  id="query"
-                  rows={1}
-                  maxLength={2000}
-                  placeholder="Ask about your documents…"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) ask(e);
-                  }}
-                />
-                <button type="submit" className="send" aria-label="Send" disabled={loading || !query.trim()}>
-                  <Icon name="send" />
-                </button>
-              </div>
-              <p className="hint">Enter to send · Shift+Enter for a new line</p>
-            </form>
-          </>
+        {apiKey && (
+          <form className="column composer" onSubmit={ask}>
+            <label htmlFor="query" className="sr-only">
+              Question
+            </label>
+            <textarea
+              id="query"
+              rows={1}
+              maxLength={2000}
+              placeholder="Ask a question…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) ask(e);
+              }}
+            />
+            <button type="submit" className="button" disabled={loading || !query.trim()}>
+              Ask
+            </button>
+          </form>
         )}
       </main>
     </div>
