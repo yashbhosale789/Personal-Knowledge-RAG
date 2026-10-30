@@ -379,7 +379,10 @@ def test_a_cache_hit_returns_the_grounding_of_the_original_answer(
     fakes.cached["grounding"] = stored
     body = post(client, auth_headers).json()
     assert body["outcome"] == "cached"
-    assert {f: body[f] for f in GROUNDING_FIELDS} == stored
+    # chunks feed /feedback grounding (Phase 14.0); they are not part of the response.
+    in_response = [f for f in GROUNDING_FIELDS if f != "chunks"]
+    assert {f: body[f] for f in in_response} == {f: stored[f] for f in in_response}
+    assert fakes.groundings[body["query_id"]]["chunks"] == stored["chunks"]
 
 
 # --- RAG quality signals (Phase 13.4 step 3) --------------------------------

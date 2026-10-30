@@ -13,7 +13,8 @@ Describe the security controls actually implemented by this application. This do
 ## Authorization model (decided 2026-10-29, Phase 13.5)
 Single-user system with one shared API key. This is a deliberate decision, not a gap.
 
-- Every endpoint except `/health` and `/metrics` requires `Authorization: Bearer <API_KEY>` (`api/core/auth.py`). The comparison is constant-time and fails closed (401) when `API_KEY` is unset. In prod, Caddy also blocks `/metrics` and `/ingest` from the internet, so only `/query` and `/health` are public.
+- Every endpoint except `/health` and `/metrics` requires `Authorization: Bearer <API_KEY>` (`api/core/auth.py`). The comparison is constant-time and fails closed (401) when `API_KEY` is unset. In prod, Caddy also blocks `/metrics` and `/ingest` from the internet, so only `/query`, `/feedback` (Phase 14.0) and `/health` are public.
+- `POST /feedback` takes only a request ID, a rating and an optional comment (unknown fields are rejected); what was answered comes from the server's 24 h Redis record of that request, so a client cannot attach forged answers or sources. It is rate limited per key hash (`RATE_LIMIT_PER_MINUTE["feedback"]`, 30/min). Comments are untrusted text: never placed into prompts, never logged, rendered as plain text only.
 - Every key holder sees every document: there is no per-user identity, no document-level access control, and one shared semantic cache. Rate limits are keyed on the key's SHA-256 hash.
 - The key is the only boundary, so anyone holding it holds the whole corpus. Rotate it in the server `.env` (and restart `app`) if it may have leaked.
 - Revisit if a second user is ever added: that needs per-user keys, a per-user cache namespace and document filtering at retrieval time, all decided before the second user gets access.

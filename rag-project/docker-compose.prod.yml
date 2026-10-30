@@ -35,6 +35,9 @@ services:
       - .env
     environment:
       - REDIS_HOST=redis
+    volumes:
+      # Feedback SQLite (Phase 14.0): survives deploys and rollbacks; independent of the index.
+      - feedback_data:/app/feedback
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
@@ -105,3 +108,4 @@ volumes:
   caddy_data:
   prometheus_data:
   grafana_data:
+  feedback_data:

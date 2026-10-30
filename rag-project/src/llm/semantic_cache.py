@@ -42,6 +42,7 @@ GROUNDING_FIELDS = (
     "sufficiency",
     "citation_check",
     "confidence",
+    "chunks",  # per-chunk source/page/snippet, so feedback on a hit is grounded too
 )
 
 

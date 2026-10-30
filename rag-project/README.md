@@ -141,6 +141,23 @@ Invoke-RestMethod `
 
 The response includes the answer, rewritten query, source filenames, number of chunks used, provider, latency, sufficiency verdict, citation check, confidence, and an outcome of `answer`, `answer_low_confidence`, `abstain`, or `cached`.
 
+### Feedback
+
+Rate an answer within 24 hours of the `/query` call, using its `query_id`:
+
+```powershell
+$body = @{ request_id = "<query_id>"; rating = "down"; comment = "Cited the wrong page." } | ConvertTo-Json
+
+Invoke-RestMethod `
+ -Uri http://127.0.0.1:8000/feedback `
+ -Method Post `
+ -Headers $headers `
+ -ContentType "application/json" `
+ -Body $body
+```
+
+`rating` is `up` or `down`; `comment` is optional (at most 1000 characters). Sending again for the same `request_id` replaces the rating and comment. The stored record takes the query, answer, model, prompt version and cited sources from what the server saved for that request, not from the client. Errors: `404` when the request ID is unknown or older than 24 hours, `429` above 30 requests a minute, `503` when Redis is down. Retention: `docs/templates/security/Data_Privacy.md`.
+
 ### Ingest a PDF
 
 ```powershell

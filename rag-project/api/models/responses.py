@@ -81,6 +81,12 @@ class QueryResponse(BaseModel):
     )
 
 
+class FeedbackResponse(BaseModel):
+    status: str = Field(description="'recorded'.")
+
+    request_id: str
+
+
 class IngestResponse(BaseModel):
     status: str = Field(description="'success'.")
 

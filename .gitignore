@@ -26,6 +26,8 @@ dataset/
 **/storage/
 **/chroma/
 *.sqlite3
+# Local feedback store (Phase 14.0); prod keeps it on the feedback_data volume
+rag-project/feedback/
 chunks.json
 **/chunks.json
 
