@@ -57,7 +57,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - **13.3 Reranker/model benchmark:** Compare candidates through evaluation harness. Retrieval metrics (Recall@K, MRR, NDCG) do not require LLM judge calls.
 - **13.4 Tracing:** Add Langfuse tracing, fail-open and non-blocking. Langfuse Cloud Hobby proposed—confirm with Yash before taking this step and verify free-tier terms. Self-hosting impractical on current hardware.
 - **13.5 Token optimization:** Each change validated against evaluation harness.
-- **13.6 Human feedback endpoint:** Deferred to Phase 16 unless priorities change.
+- **Human feedback endpoint:** delivered as Phase 14.0 (CLOSED 2026-10-30, PR #95); see the 14.0 entry in §2.
 - **Operating constraints:** Hard $0 budget. Groq free-tier TPM limits apply. Evaluation runs must be batchable, resumable, and offline paired comparisons (no online traffic split).
  
 **Phase 13.0 (Evaluation foundation) — close-out 2026-10-28; item 1 partly evidenced**
@@ -69,6 +69,11 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 **13.0a Status:**
 - `eval/tools/validate_dataset.py` validates schema and evidence spans against `storage/chunks.json` using alphanumeric-only normalization. Exits 0 on `eval/data/golden_dataset.json` with Q01 in v2 format.
 - Corpus rebuilt: 40 chunks across 5 PDFs in both Chroma and `storage/chunks.json`.
+
+**Phase 14.0 (Human feedback endpoint) — CLOSED 2026-10-30; next: 14.1 React frontend**
+- PR #95 (merge `2634d56`, deployed by run `41010543709`). CI: 276 passed / 6 strict xfail, coverage 75.46%; `/query` contract unchanged. Prod round-trip, replace-on-resubmit, 404 and survival of `--force-recreate` verified 2026-10-30; rows also survived a rollback to `0050465` and a redeploy of `2634d56` (deploy drill, same day). Full evidence: roadmap §14.0.
+- **Design:** `/query` saves grounding to Redis `feedback:grounding:<request_id>` (24 h, cache hits too); `POST /feedback` {request_id, rating up/down, comment ≤1000, extra fields rejected} trusts only that grounding; SQLite `/app/feedback/feedback.db` on volume `rag_feedback_data`, one row per request ID (upsert); text nulled after 90 days; 30/min per key. Comments never go into prompts or logs. Feedback reaches eval only via `generate_candidates` / `review_candidates` with manual review.
+- **Ops:** any `docker compose -f docker-compose.prod.yml` command on the server needs `export IMAGE_TAG="$(cat .image_tag)"` first (compose interpolates `${IMAGE_TAG:?}` for every command, `exec` included). The prod API key is not the local one; for prod checks run from the server with `KEY="$($C exec -T app printenv API_KEY)"`. Run `deploy.sh` by hand as `ubuntu`, never with `sudo`: root has no GHCR login, so the pull fails (`unauthorized`; the script then changes nothing). Rollback target: `.prev_image_tag`.
 
 **Phase 13.5 (Operational readiness) — CLOSED 2026-10-29; Phase 13 CLOSED the same day**
 - PRs #87, #88, #90, #92 (merge `81ed641`, deployed). CI on #92: 250 passed / 6 strict xfail, coverage 74.56%. Full evidence and open items: roadmap §13.5.
