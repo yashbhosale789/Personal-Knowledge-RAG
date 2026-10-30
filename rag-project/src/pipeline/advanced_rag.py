@@ -1,10 +1,17 @@
 import logging
 import os
+import re
 import secrets
 
 from langchain_core.documents import Document
 
-from config import ABSTAIN_MESSAGE, ANSWER_TEMPLATE, SYSTEM_PROMPT, TOP_K
+from config import (
+    ABSTAIN_MESSAGE,
+    ANSWER_TEMPLATE,
+    FEEDBACK_SNIPPET_CHARS,
+    SYSTEM_PROMPT,
+    TOP_K,
+)
 from src.llm import usage
 from src.llm.client import call_llm
 from src.observability import timed
@@ -85,6 +92,24 @@ def _chunk_refs(chunks: list[dict], score_key: str) -> list[dict]:
             score_key: c.get(score_key),
         }
         for c in chunks
+    ]
+
+
+def _feedback_chunks(chunks: list[dict], answer: str | None) -> list[dict]:
+    """
+    What feedback stores per chunk handed to generation. Source and page, not chunk ID,
+    because Phase 15 may re-chunk. `n` is the [SOURCE n] number in the prompt.
+    """
+    cited = {int(n) for n in re.findall(r"SOURCE\s*(\d+)", answer or "", re.IGNORECASE)}
+    return [
+        {
+            "n": i,
+            "source": os.path.basename(c["metadata"].get("filename", "unknown")),
+            "page": c["metadata"].get("page_label"),
+            "snippet": c["text"][:FEEDBACK_SNIPPET_CHARS],
+            "cited": i in cited,
+        }
+        for i, c in enumerate(chunks, 1)
     ]
 
 
@@ -179,6 +204,7 @@ def _run(
             "rewritten_query": rewritten,
             "sufficiency": sufficiency,
             "outcome": "abstain",
+            "chunks": _feedback_chunks(reranked, None),
         }
 
         if return_contexts:
@@ -221,6 +247,7 @@ def _run(
         "citation_check": citation_check,
         "confidence": confidence["confidence"],
         "outcome": outcome,
+        "chunks": _feedback_chunks(reranked, answer),
     }
 
     if return_contexts:

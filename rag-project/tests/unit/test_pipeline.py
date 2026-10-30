@@ -341,3 +341,35 @@ def test_every_llm_stage_reports_tokens_and_latency(monkeypatch):
         tokens_before + 100
     )
     assert sample("llm_call_duration_seconds_count") == calls_before + 1
+
+
+# --- feedback grounding (Phase 14.0) ---------------------------------------
+
+
+def test_result_carries_feedback_chunks_with_cited_flags(wired):
+    second = _chunk("Jack points are under the sills. " + "x" * 300, "jack.pdf")
+    second["metadata"]["page_label"] = "4"
+    wired.reranked = [_chunk("Use the lug wrench."), second]
+    result = ar.run_advanced_rag_pipeline("how?")
+    assert result["chunks"] == [
+        {
+            "n": 1,
+            "source": "manual.pdf",
+            "page": None,
+            "snippet": "Use the lug wrench.",
+            "cited": True,
+        },
+        {
+            "n": 2,
+            "source": "jack.pdf",
+            "page": "4",
+            "snippet": second["text"][: config.FEEDBACK_SNIPPET_CHARS],
+            "cited": False,
+        },
+    ]
+
+
+def test_abstain_records_the_context_it_saw_as_uncited(wired):
+    wired.sufficiency = {"sufficient": False, "reason": "off", "tier": "score_floor"}
+    result = ar.run_advanced_rag_pipeline("weather?")
+    assert [c["cited"] for c in result["chunks"]] == [False]

@@ -1,6 +1,9 @@
 from typing import Literal
+from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+import config
 
 
 class QueryRequest(BaseModel):
@@ -21,6 +24,23 @@ class QueryRequest(BaseModel):
     return_contexts: bool = Field(
         default=True,
         description="Whether to include retrieved source chunks in the response.",
+    )
+
+
+class FeedbackRequest(BaseModel):
+    # Nothing the client says about the answer is accepted: it comes from the server's grounding.
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: UUID = Field(
+        ..., description="The query_id from the /query response being rated."
+    )
+
+    rating: Literal["up", "down"] = Field(..., description="Thumbs up or down.")
+
+    comment: str | None = Field(
+        default=None,
+        max_length=config.FEEDBACK_COMMENT_MAX_CHARS,
+        description="Optional free text. Untrusted: stored as plain text, never put into prompts.",
     )
 
 

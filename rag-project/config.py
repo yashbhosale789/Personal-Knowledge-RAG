@@ -236,6 +236,7 @@ RATE_LIMIT_PER_MINUTE = {
     "groq": 100,
     "gemini": 10,
     "openrouter": 3,
+    "feedback": 30,  # POST /feedback, not a provider
 }
 RATE_LIMIT_TTL_SECONDS = 120
 ENTITY_GROUPS = [{"sedan", "suv", "hatchback"}]
@@ -243,6 +244,18 @@ CACHE_INDEX_NAME = "semantic_cache_idx_v2"  # v2 adds the namespace tag
 CACHE_KEY_PREFIX = "cache:"
 CACHE_TTL_SECONDS = 86400  # 24 Hours
 CACHE_SIMILARITY_THRESHOLD = 0.87
+
+# Feedback (Phase 14.0)
+
+# The prod compose mounts the named volume feedback_data at /app/feedback.
+FEEDBACK_DB_PATH = Path(
+    os.getenv("FEEDBACK_DB_PATH", BASE_DIR / "feedback" / "feedback.db")
+)
+FEEDBACK_GROUNDING_PREFIX = "feedback:grounding:"
+FEEDBACK_GROUNDING_TTL_SECONDS = 86400  # 24 Hours, like the semantic cache
+FEEDBACK_RETENTION_DAYS = 90  # then query, answer and comment text are deleted
+FEEDBACK_COMMENT_MAX_CHARS = 1000
+FEEDBACK_SNIPPET_CHARS = 200
 
 # Evals/Generate Candidates
 

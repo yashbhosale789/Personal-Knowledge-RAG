@@ -15,6 +15,8 @@ from api.models.requests import QueryRequest
 from api.models.responses import QueryResponse
 from api.routers.health import is_pipeline_ready
 from src import observability, tracing
+from src.feedback import save_grounding
+from src.llm.client import model_name
 from src.llm.semantic_cache import (
     GROUNDING_FIELDS,
     cache_embedding,
@@ -68,6 +70,29 @@ def _log_query(
                 **fields,
             }
         )
+    )
+
+
+async def _save_feedback_grounding(
+    request_id: str,
+    query: str,
+    answer: str,
+    outcome: str | None,
+    provider: str,
+    chunks: list[dict] | None,
+) -> None:
+    """What POST /feedback stores for this request ID; the client is never asked."""
+    await run_in_threadpool(
+        save_grounding,
+        request_id,
+        {
+            "query": query,
+            "answer": answer,
+            "outcome": outcome,
+            "prompt_version": config.PROMPT_VERSION,
+            "model": model_name(provider),
+            "chunks": chunks or [],
+        },
     )
 
 
@@ -145,6 +170,14 @@ async def _answer(
                 "sources": grounding.get("sources") or [],
             },
             metadata={"provider": cached["provider"]},
+        )
+        await _save_feedback_grounding(
+            request_id,
+            query,
+            cached["answer"],
+            "cached",
+            cached["provider"],
+            grounding.get("chunks"),
         )
         return QueryResponse(
             query_id=request_id,
@@ -234,6 +267,14 @@ async def _answer(
             "confidence": result.get("confidence"),
         },
         metadata={"provider": provider_used},
+    )
+    await _save_feedback_grounding(
+        request_id,
+        query,
+        result.get("answer", ""),
+        result.get("outcome"),
+        provider_used,
+        result.get("chunks"),
     )
     return QueryResponse(
         query_id=request_id,

@@ -26,12 +26,16 @@ Queries can contain sensitive text, so text is kept only where it is needed, and
 | Redis rate-limit counters | None (key hash only). | 120 s TTL. |
 | Prometheus | None: counters/histograms with route, status and provider labels only. | 30 days (`--storage.tsdb.retention.time=30d`, so the 28-day SLO window fits). |
 | Grafana | None (dashboards and alert state only). | Until the volume is deleted. |
-| Feedback comments (Phase 14.0) | Free-text comments. | Proposed 90 days, then deleted; ratings without comments may be kept for evaluation. |
+| Redis feedback grounding (Phase 14.0) | Per `/query` request ID: full query, answer, outcome, prompt version, model, and for each chunk handed to generation its source, page and first 200 chars. Key `feedback:grounding:<request_id>`. | 24 h TTL (`FEEDBACK_GROUNDING_TTL_SECONDS`), evicted earlier under `maxmemory` (`volatile-lru`); after that, `POST /feedback` for that request returns 404. Survives deploys (the deploy flushes only `cache:*`). |
+| Feedback store (Phase 14.0): SQLite on the `feedback_data` volume (`/app/feedback/feedback.db`) | One row per rated request: query, answer and comment text, plus rating, outcome, prompt version, model and the chunk sources (source, page, snippet, cited flag). | Query, answer and comment text are set to NULL 90 days after the first rating (`FEEDBACK_RETENTION_DAYS`; the purge runs at app start and on every `POST /feedback`). Rating, request ID, outcome, prompt version, model and chunk sources are kept until the volume is deleted. Survives deploys, rollbacks and container recreation; not backed up. |
 
 Rules:
 - Never log full query, prompt or answer text at INFO or above in the app; snippets are capped at 60 characters.
 - Never log secrets or the API key (only its SHA-256 hash is used, for rate limiting).
 - Do not send documents you would not give to Langfuse and the LLM providers (Groq, OpenRouter, Gemini): both receive retrieved passages.
+- Feedback comments are untrusted text: never put them into prompts, render them as plain text only, never log them (the `feedback` log event carries the request ID, rating and whether a comment exists). Feedback stores what the server served for that request ID, never what the client says about the answer.
+- Feedback becomes evaluation data only as candidates through `generate_candidates` / `review_candidates` with manual review, never directly into the golden dataset.
+- Delete all feedback (cannot be undone; the app is down until the last step): `docker compose -f docker-compose.prod.yml rm -sf app`, then `docker volume rm` on the volume `docker volume ls | grep feedback_data` shows, then start `app` again with `IMAGE_TAG` set.
 
 ## Privacy review checklist
 - [ ] Identify whether prompts include retrieved document passages.

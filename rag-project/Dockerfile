@@ -19,7 +19,9 @@ COPY . .
 
 RUN python scripts/ingest.py
 
+# /app/feedback exists in the image so the feedback_data volume starts owned by appuser.
 RUN useradd --create-home --shell /bin/bash appuser \
+    && mkdir -p /app/feedback \
     && chown -R appuser:appuser /app
 USER appuser
 

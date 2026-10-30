@@ -23,6 +23,15 @@ def pipeline_result(**over) -> dict:
         },
         "confidence": "high",
         "outcome": "answer",
+        "chunks": [
+            {
+                "n": 1,
+                "source": "manual.pdf",
+                "page": "2",
+                "snippet": "Use the lug wrench.",
+                "cited": True,
+            }
+        ],
         "llm_usage": {
             "calls": [
                 {
@@ -56,6 +65,7 @@ class Recorder:
         self.result = pipeline_result()
         self.cached = None
         self.error: Exception | None = None
+        self.groundings: dict[str, dict] = {}
 
     def embed(self, query: str) -> bytes:
         self.embeddings.append(query)
@@ -83,6 +93,11 @@ def fakes(monkeypatch):
         query_router, "store_cache_entry", lambda *args: rec.cache_writes.append(args)
     )
     monkeypatch.setattr(retry, "is_rate_limited", lambda key, provider: False)
+    monkeypatch.setattr(
+        query_router,
+        "save_grounding",
+        lambda request_id, grounding: rec.groundings.__setitem__(request_id, grounding),
+    )
     return rec
 
 

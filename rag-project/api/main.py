@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 import config
 from api.core.exceptions import RAGException
 from api.middleware.logging import StructuredLoggingMiddleware
-from api.routers import health, ingest, metrics, query
+from api.routers import feedback, health, ingest, metrics, query
 
 LOGGING_CONFIG = {
     "version": 1,
@@ -103,6 +103,17 @@ async def lifespan(app: FastAPI):
         # Server starts but in degraded state — health endpoint reports this
 
     try:
+        from starlette.concurrency import run_in_threadpool
+
+        from src import feedback as feedback_store
+
+        purged = await run_in_threadpool(feedback_store.purge)
+        logger.info(json.dumps({"event": "feedback_purge", "rows": purged}))
+    except Exception as e:  # noqa: BLE001
+        # Non-fatal: /query must not depend on the feedback volume.
+        logger.error("Feedback store unavailable: %s", e)
+
+    try:
         await asyncio.wait_for(_warmup_llm(logger), timeout=15)
     except TimeoutError:
         logger.warning(
@@ -131,6 +142,7 @@ app.add_middleware(StructuredLoggingMiddleware)
 app.include_router(health.router, tags=["Health"])
 app.include_router(query.router, tags=["Query"])
 app.include_router(ingest.router, tags=["Ingest"])
+app.include_router(feedback.router, tags=["Feedback"])
 app.include_router(metrics.router, tags=["Metrics"])
 
 
