@@ -6,12 +6,12 @@ import { answer } from "./fixtures";
 const expandSources = (name: RegExp) => fireEvent.click(screen.getByRole("button", { name }));
 
 describe("Answer", () => {
-  it("shows [SOURCE N] markers as numbered badges and folds the sources away", () => {
+  it("shows [SOURCE N] markers as footnote numbers and folds the sources away", () => {
     render(<Answer result={answer()} />);
-    expect(screen.getByText(/before jacking the car/).textContent).toBe("Loosen the lug nuts before jacking the car 1.");
+    expect(screen.getByText(/before jacking the car/).textContent).toBe("Loosen the lug nuts before jacking the car1.");
     expect(screen.getByTitle("Source 1").textContent).toBe("1");
     expect(screen.queryByRole("listitem")).toBeNull();
-    expect(screen.getByText("High confidence")).toBeTruthy();
+    expect(screen.getByText("✓ verified")).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();
   });
 
@@ -22,7 +22,7 @@ describe("Answer", () => {
     fireEvent.click(chip);
     expect(chip.getAttribute("aria-expanded")).toBe("true");
     const [first, second] = screen.getAllByRole("listitem");
-    expect(first.textContent).toBe("1aventro_manual.pdf · page 12Loosen each lug nut half a turn.cited");
+    expect(first.textContent).toBe("1aventro_manual.pdf, p. 12Loosen each lug nut half a turn.cited");
     expect(first.className).toBe("cited");
     expect(second.textContent).toBe("2warranty.pdfTyres are not covered.");
     fireEvent.click(chip);
@@ -59,7 +59,7 @@ describe("Answer", () => {
     expect(screen.getByRole("status").textContent).toMatch(/Not answered.*not contain enough.*Nothing about brakes/);
     expect(screen.queryByText("I don't have enough information.")).toBeNull();
     expect(screen.getByRole("button", { name: /2 documents searched/ })).toBeTruthy();
-    expect(screen.queryByText("High confidence")).toBeNull();
+    expect(screen.queryByText("✓ verified")).toBeNull();
   });
 
   it("shows an empty retrieval as not answered", () => {
@@ -79,12 +79,12 @@ describe("Answer", () => {
       />,
     );
     expect(screen.getByRole("status").textContent).toMatch(/Low confidence.*Torque is 200 Nm\./);
-    expect(screen.queryByText("High confidence")).toBeNull();
+    expect(screen.queryByText("✓ verified")).toBeNull();
   });
 
   it("keeps the low-confidence flag on a cache hit", () => {
     render(<Answer result={answer({ outcome: "cached", confidence: "low" })} />);
     expect(screen.getByRole("status").textContent).toMatch(/Low confidence/);
-    expect(screen.getByText(/From cache/)).toBeTruthy();
+    expect(screen.getByText("from cache")).toBeTruthy();
   });
 });

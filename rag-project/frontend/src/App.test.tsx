@@ -22,10 +22,11 @@ function saveKey() {
 
 function ask(question = "How do I change a tyre?") {
   fireEvent.change(screen.getByLabelText("Question"), { target: { value: question } });
-  fireEvent.click(screen.getByRole("button", { name: "Send" }));
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 }
 
 const answered = () => screen.findAllByText(/before jacking the car/);
+const memoryLine = () => screen.getByText((_, el) => el?.tagName === "P" && /^memory /.test(el.textContent ?? "")).textContent;
 
 describe("App", () => {
   it("keeps the key in sessionStorage only and sends it as a Bearer token", async () => {
@@ -50,7 +51,7 @@ describe("App", () => {
     const box = screen.getByLabelText("Question");
     fireEvent.change(box, { target: { value: "How do I change a tyre?" } });
     fireEvent.keyDown(box, { key: "Enter" });
-    expect(screen.getByText("How do I change a tyre?").className).toBe("user-msg");
+    expect(screen.getByText("How do I change a tyre?").className).toBe("question");
     await answered();
     expect((box as HTMLTextAreaElement).value).toBe("");
   });
@@ -82,7 +83,7 @@ describe("App", () => {
     render(<App />);
     ask();
     await answered();
-    expect(screen.getByText(/Memory · 1 of 5 turns/)).toBeTruthy();
+    expect(memoryLine()).toBe("memory 1/5 turns");
 
     ask("And how tight?");
     await screen.findByText("And how tight?");
@@ -92,7 +93,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Clear chat" }));
     expect(screen.queryByText("And how tight?")).toBeNull();
-    expect(screen.getByText(/Memory · 2 of 5 turns/)).toBeTruthy();
+    expect(memoryLine()).toBe("memory 2/5 turns");
 
     ask("What about the spare?");
     await answered();
@@ -106,8 +107,8 @@ describe("App", () => {
     ask();
     await answered();
 
-    fireEvent.click(screen.getByRole("button", { name: "Clear chat & memory" }));
-    expect(screen.getByText(/Memory · 0 of 5 turns/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Clear chat and memory" }));
+    expect(memoryLine()).toBe("memory 0/5 turns");
     ask("And how tight?");
     await answered();
     expect(sentBody(fetch, 1)).toEqual({ query: "And how tight?", history: [] });
@@ -147,15 +148,15 @@ describe("App", () => {
     await answered();
 
     fireEvent.click(screen.getByRole("button", { name: "Not helpful" }));
-    await screen.findByText(/feedback recorded/);
+    await screen.findByText("thanks");
     expect(fetch.mock.calls[1][0]).toBe("/feedback");
     expect(sentBody(fetch, 1)).toEqual({ request_id: REQUEST_ID, rating: "down" });
     expect(screen.getByRole("button", { name: "Not helpful" }).getAttribute("aria-pressed")).toBe("true");
 
-    fireEvent.click(screen.getByRole("button", { name: "Add a comment" }));
+    fireEvent.click(screen.getByRole("button", { name: "add a comment" }));
     fireEvent.change(screen.getByLabelText("Comment (optional)"), { target: { value: "  wrong torque  " } });
     fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
-    await screen.findByText("Comment saved.");
+    await screen.findByText("comment saved");
     expect(sentBody(fetch, 2)).toEqual({ request_id: REQUEST_ID, rating: "down", comment: "wrong torque" });
   });
 
