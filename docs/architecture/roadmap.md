@@ -349,9 +349,7 @@ Update the *Production-readiness checklist*. Every remaining gap must be owned b
 - Evaluation runs must stay resumable/batchable; every run records dataset version, corpus identifier, prompt versions, model names and configuration.
 - Do not assume old provider quotas or model availability remain current; verify them when the decision depends on them.
 
-## Current phase
-
-## Phase 14 — Human feedback and React frontend
+## Phase 14 — Human feedback and React frontend (CLOSED 2026-10-30)
 
 Starts after Phase 13 closes. Delivered in this order.
 
@@ -374,7 +372,7 @@ A minimal `POST /feedback`, authenticated like the other endpoints and rate limi
 
 Scope: query box, answer with citations, abstention display, and thumbs up/down plus comment calling `/feedback`. **No upload or delete UI** (*Interim rules*).
 
-**Status: IN PROGRESS.** Two PRs: (1) the UI on the existing `/query`, (2) a streaming SSE route.
+**Status: CLOSED 2026-10-30.** Two PRs: (1) the UI on the existing `/query` (#97), (2) a streaming SSE route (#98, merge `857f9a9`, deployed by run `41042230125`; build and deploy green). CI on #98: `pytest` 288 passed / 6 strict xfail, coverage 76.89%; `lint-security`, `build`, `eval`, `Frontend` and CodeQL green; `/query` contract unchanged (no version bump), stream contract `query_stream_final.json` v1. Prod evidence (2026-10-30, through Caddy): UI usable on desktop and phone; feedback row `6558d316-…` (`up`, 09:13:42) rated through the UI on PR 1 and unchanged after the PR 2 deploy (image `857f9a9`); `POST /query/stream` delivers `token` events word by word before `final`. No evaluation numbers are quoted for this sub-phase.
 
 PR 1: #97 (merge `d1821b0`), deployed by run `41027257170` (build, deploy and the new smoke check that `/` serves the UI all green). CI on #97: `pytest`, `lint-security`, `build`, `Frontend` (lint, type check, 11 Vitest tests, build, Playwright e2e at desktop and mobile viewports) and CodeQL green; `/query` contract unchanged. Live 2026-10-30: `/` 200 with `Cache-Control: no-cache` and the CSP meta, hashed bundle 200, `/metrics` still 404. `HEAD /` returns 405 (the route is GET only). Browser round-trip on prod (2026-10-30): query answered in the UI, thumbs up sent ("Feedback recorded"), row `6558d316-…` stored (`up`, outcome `answer`, no comment, 09:13:42 UTC). Survival across a deploy is checked on the PR 2 deploy. Mobile check by Yash on a phone (2026-10-30): fine.
 
@@ -400,6 +398,8 @@ Decisions to record before building (original brief):
 Quality bar: ESLint and type-check clean, component tests (Vitest or equivalent), and a minimal end-to-end test against a mocked API; a CI job that lints, tests and builds; no new paid service. Keep the UI small: its value is a usable demo of the pipeline and the feedback loop.
 
 Exit: usable on desktop and mobile widths, feedback round-trips and survives a deploy, CI green, `/query` contract tests still pass.
+
+## Current phase
 
 ## Phase 15 — RAG pipeline hardening and scale
 
@@ -532,7 +532,7 @@ Exit: the *Production-readiness checklist* has no open gaps, or each remaining o
 
 ## Production-readiness checklist
 
-Status as of 2026-10-29 (Phase 13 closed). Gap items name the owning phase.
+Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
 
 | Area | Status | Owner / evidence |
 | --- | --- | --- |
@@ -552,8 +552,8 @@ Status as of 2026-10-29 (Phase 13 closed). Gap items name the owning phase.
 | Resource limits on containers | Done — `mem_limit` on all services, Redis `maxmemory`, verified live | 13.5; re-check → 15.4 |
 | Secrets without long-lived keys | Accepted — OIDC blocked by the AWS-managed SCP; least-privilege deploy key, 90-day rotation (next 2027-01-27) | F-18, 13.5; re-check → 15.4 |
 | Logging / retention policy and log rotation | Done — policy in `Data_Privacy.md`, rotation active; feedback text 90 days | 13.5, 14.0 |
-| User feedback loop | Done (backend) — `POST /feedback`, server-side grounding, SQLite on a named volume, verified on prod; UI → 14.1 | 14.0, PR #95 |
-| Usable front end | **Gap** — in progress: UI live on prod (PR #97, feedback round-trip verified); streaming PR 2 pending | 14.1 |
+| User feedback loop | Done — `POST /feedback` (server-side grounding, SQLite on a named volume) and the UI thumbs + comment; round-trip and deploy survival verified on prod | 14.0, 14.1, PRs #95, #97 |
+| Usable front end | Done — React UI on the same origin, streaming answers with mapped citations, abstain/low-confidence display, feedback; verified on desktop and phone | 14.1, PRs #97, #98 |
 | Storage architecture fit for production | **Gap, deferred** | F-27 → 15.0 |
 | Ingestion correct and persistent | **Gap, deferred** | F-01, F-02, F-03 → 15.0 |
 | Supports the real corpus formats | **Gap, deferred** | F-15 → 15.1 |

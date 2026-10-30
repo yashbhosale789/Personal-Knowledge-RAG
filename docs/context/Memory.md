@@ -46,7 +46,7 @@
 - Grafana made optional via Docker Compose profile; on-demand access via SSH tunnel without loading VM resources continuously.
 - Do not reimplement or revisit completed deployment work without a specific bug or explicit request.
 
-### Phase 13: LLMOps — CLOSED 2026-10-29 (started 2026-10-17). Current phase: 14 (Human feedback and React frontend)
+### Phase 13: LLMOps — CLOSED 2026-10-29 (started 2026-10-17). Phase 14 CLOSED 2026-10-30. Current phase: 15 (RAG pipeline hardening and scale)
  
 Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
  
@@ -70,10 +70,10 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - `eval/tools/validate_dataset.py` validates schema and evidence spans against `storage/chunks.json` using alphanumeric-only normalization. Exits 0 on `eval/data/golden_dataset.json` with Q01 in v2 format.
 - Corpus rebuilt: 40 chunks across 5 PDFs in both Chroma and `storage/chunks.json`.
 
-**Phase 14.1 (React frontend) — IN PROGRESS (started 2026-10-30)**
-- PR 1 (UI on the existing `/query`): #97 (merge `d1821b0`), deployed by run `41027257170`, all CI green; browser round-trip verified on prod 2026-10-30 (row `6558d316-…`, `up`); its survival is checked on the PR 2 deploy. Decisions and design: roadmap §14.1. In short: `rag-project/frontend/` (Vite + React + TS, runtime deps react/react-dom only); built in the Dockerfile `web` stage and served by FastAPI at `/` and `/assets` only (`api/main.py` `mount_web`), so `deploy.sh`, compose and the Caddyfile are unchanged; key in `sessionStorage`; plain-text rendering plus a build-time CSP `<meta>`; advisory `Frontend` workflow; deploy smoke test checks `/` serves the UI.
+**Phase 14.1 (React frontend) — CLOSED 2026-10-30; Phase 14 CLOSED the same day; next: Phase 15.0**
+- PR 1 (UI on the existing `/query`): #97 (merge `d1821b0`), deployed by run `41027257170`, all CI green; browser round-trip verified on prod 2026-10-30 (row `6558d316-…`, `up`); unchanged after the PR 2 deploy. Decisions and design: roadmap §14.1. In short: `rag-project/frontend/` (Vite + React + TS, runtime deps react/react-dom only); built in the Dockerfile `web` stage and served by FastAPI at `/` and `/assets` only (`api/main.py` `mount_web`), so `deploy.sh`, compose and the Caddyfile are unchanged; key in `sessionStorage`; plain-text rendering plus a build-time CSP `<meta>`; advisory `Frontend` workflow; deploy smoke test checks `/` serves the UI.
 - Mobile check by Yash 2026-10-30: fine.
-- PR 2 (SSE `POST /query/stream`): built and verified locally (approved 2026-10-30), not yet merged. `token` events, then one `final` (`QueryStreamFinal` = QueryResponse fields + `caveat` + `chunks`), or one `error`; cache hit/abstain/empty send only `final`; fallback only before the first token. Contract snapshot `tests/contracts/query_stream_final.json` v1. The stream route sits outside the `/query` SLO rules and reports provider failures as 200 + `error` event (accepted; 15.4). Full detail: roadmap §14.1.
+- PR 2 (SSE `POST /query/stream`): #98 (merge `857f9a9`, deployed by run `41042230125`). CI: 288 passed / 6 strict xfail, coverage 76.89%; `/query` contract unchanged. Streams word by word through Caddy on prod. `token` events, then one `final` (`QueryStreamFinal` = QueryResponse fields + `caveat` + `chunks`), or one `error`; cache hit/abstain/empty send only `final`; fallback only before the first token. Contract snapshot `tests/contracts/query_stream_final.json` v1. The stream route sits outside the `/query` SLO rules and reports provider failures as 200 + `error` event (accepted; 15.4). Full detail: roadmap §14.1.
 
 **Phase 14.0 (Human feedback endpoint) — CLOSED 2026-10-30; next: 14.1 React frontend**
 - PR #95 (merge `2634d56`, deployed by run `41010543709`). CI: 276 passed / 6 strict xfail, coverage 75.46%; `/query` contract unchanged. Prod round-trip, replace-on-resubmit, 404 and survival of `--force-recreate` verified 2026-10-30; rows also survived a rollback to `0050465` and a redeploy of `2634d56` (deploy drill, same day). Full evidence: roadmap §14.0.
