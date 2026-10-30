@@ -5,6 +5,7 @@ export const REQUEST_ID = "6f1c2a9e-3b4d-4e5f-8a9b-0c1d2e3f4a5b";
 export const answer = (overrides: Partial<QueryResponse> = {}): QueryResponse => ({
   query_id: REQUEST_ID,
   answer: "Loosen the lug nuts before jacking the car [SOURCE 1].",
+  rewritten_query: "change a tyre",
   latency_ms: 3210,
   outcome: "answer",
   confidence: "high",

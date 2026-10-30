@@ -70,6 +70,10 @@ class Recorder:
         # and an error raised after them.
         self.tokens: list[str] | None = None
         self.stream_error: Exception | None = None
+        # Follow-ups: what the history rewrite was given, and its reply (None: it failed).
+        self.condense_calls: list[tuple[str, list[dict]]] = []
+        self.standalone: str | None = "What torque do the lug nuts need?"
+        self.cache_lookups: list[str] = []
 
     def embed(self, query: str) -> bytes:
         self.embeddings.append(query)
@@ -80,16 +84,23 @@ class Recorder:
 def fakes(monkeypatch):
     rec = Recorder()
 
-    def fake_pipeline(query, provider, return_contexts):
+    def fake_pipeline(query, provider, return_contexts, rewritten):
         rec.pipeline_calls.append(
-            {"query": query, "provider": provider, "return_contexts": return_contexts}
+            {
+                "query": query,
+                "provider": provider,
+                "return_contexts": return_contexts,
+                "rewritten": rewritten,
+            }
         )
         if rec.error:
             raise rec.error
         return rec.result
 
-    def fake_stream_pipeline(query, provider, on_token):
-        rec.pipeline_calls.append({"query": query, "provider": provider})
+    def fake_stream_pipeline(query, provider, on_token, rewritten):
+        rec.pipeline_calls.append(
+            {"query": query, "provider": provider, "rewritten": rewritten}
+        )
         if rec.error:
             raise rec.error
         answer = rec.result["answer"]
@@ -102,9 +113,17 @@ def fakes(monkeypatch):
     monkeypatch.setattr(query_router, "_run_pipeline", fake_pipeline)
     monkeypatch.setattr(query_router, "_run_stream_pipeline", fake_stream_pipeline)
     monkeypatch.setattr(query_router, "cache_embedding", lambda q: rec.embed(q))
-    monkeypatch.setattr(
-        query_router, "find_cached_answer", lambda q, provider, emb: rec.cached
-    )
+
+    def fake_find_cached_answer(query, provider, embedding):
+        rec.cache_lookups.append(query)
+        return rec.cached
+
+    def fake_condense(query, history, provider):
+        rec.condense_calls.append((query, history))
+        return rec.standalone
+
+    monkeypatch.setattr(query_router, "find_cached_answer", fake_find_cached_answer)
+    monkeypatch.setattr(query_router, "condense_query", fake_condense)
     monkeypatch.setattr(
         query_router, "store_cache_entry", lambda *args: rec.cache_writes.append(args)
     )

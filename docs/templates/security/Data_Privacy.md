@@ -21,7 +21,7 @@ Queries can contain sensitive text, so text is kept only where it is needed, and
 | Store | Query/answer text it holds | Retention |
 | --- | --- | --- |
 | Container logs (Docker `json-file`) | Access log: none (request ID, path, status, latency). Pipeline logs: at most 60 chars of the query and the rewritten query; provider error bodies. | 3 × 10 MB per service (rotation in `docker-compose.prod.yml`), and deleted when the container is recreated, which happens on every app deploy. No off-host shipping. |
-| Langfuse Cloud (Hobby, third party) | Full query, full LLM prompts including retrieved passages, full answers. | 30 days of data access on Hobby. Retention management is a paid feature, so deletion after 30 days is not guaranteed: treat anything sent there as kept by a third party. Tracing is fail-open; unset the Langfuse keys to stop sending. |
+| Langfuse Cloud (Hobby, third party) | Full query, full LLM prompts including retrieved passages, full answers. For a follow-up, the chat memory too (up to 5 earlier questions, their rewrites and answers clipped to 500 characters), inside the rewrite prompt. | 30 days of data access on Hobby. Retention management is a paid feature, so deletion after 30 days is not guaranteed: treat anything sent there as kept by a third party. Tracing is fail-open; unset the Langfuse keys to stop sending. |
 | Redis semantic cache | Full query, its embedding, answer, sources. | 24 h TTL (`CACHE_TTL_SECONDS`), evicted earlier under `maxmemory` (`volatile-lru`). |
 | Redis rate-limit counters | None (key hash only). | 120 s TTL. |
 | Prometheus | None: counters/histograms with route, status and provider labels only. | 30 days (`--storage.tsdb.retention.time=30d`, so the 28-day SLO window fits). |

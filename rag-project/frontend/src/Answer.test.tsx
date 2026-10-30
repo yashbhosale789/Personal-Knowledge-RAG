@@ -1,17 +1,32 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Answer } from "./Answer";
 import { answer } from "./fixtures";
 
+const expandSources = (name: RegExp) => fireEvent.click(screen.getByRole("button", { name }));
+
 describe("Answer", () => {
-  it("maps each [SOURCE N] marker to its file, page and snippet", () => {
+  it("shows [SOURCE N] markers as numbered badges and folds the sources away", () => {
     render(<Answer result={answer()} />);
-    expect(screen.getByText(/Loosen the lug nuts.*\[SOURCE 1\]/)).toBeTruthy();
-    const [first, second] = screen.getAllByRole("listitem");
-    expect(first.textContent).toBe("[SOURCE 1] aventro_manual.pdf, page 12 · citedLoosen each lug nut half a turn.");
-    expect(first.className).toBe("cited");
-    expect(second.textContent).toBe("[SOURCE 2] warranty.pdf" + "Tyres are not covered.");
+    expect(screen.getByText(/before jacking the car/).textContent).toBe("Loosen the lug nuts before jacking the car 1.");
+    expect(screen.getByTitle("Source 1").textContent).toBe("1");
+    expect(screen.queryByRole("listitem")).toBeNull();
+    expect(screen.getByText("High confidence")).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("expands the sources with file, page, snippet and a cited mark", () => {
+    render(<Answer result={answer()} />);
+    const chip = screen.getByRole("button", { name: /2 sources/ });
+    expect(chip.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(chip);
+    expect(chip.getAttribute("aria-expanded")).toBe("true");
+    const [first, second] = screen.getAllByRole("listitem");
+    expect(first.textContent).toBe("1aventro_manual.pdf · page 12Loosen each lug nut half a turn.cited");
+    expect(first.className).toBe("cited");
+    expect(second.textContent).toBe("2warranty.pdfTyres are not covered.");
+    fireEvent.click(chip);
+    expect(screen.queryByRole("listitem")).toBeNull();
   });
 
   it("renders markup from documents as text, never as HTML", () => {
@@ -23,6 +38,7 @@ describe("Answer", () => {
         })}
       />,
     );
+    expandSources(/1 source/);
     expect(container.querySelector("img, b, script")).toBeNull();
     expect(screen.getByText('<img src=x onerror="alert(1)"> **bold**')).toBeTruthy();
     expect(screen.getByText("<script>alert(1)</script>")).toBeTruthy();
@@ -42,12 +58,14 @@ describe("Answer", () => {
     );
     expect(screen.getByRole("status").textContent).toMatch(/Not answered.*not contain enough.*Nothing about brakes/);
     expect(screen.queryByText("I don't have enough information.")).toBeNull();
-    expect(screen.getByText("Documents searched")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /2 documents searched/ })).toBeTruthy();
+    expect(screen.queryByText("High confidence")).toBeNull();
   });
 
   it("shows an empty retrieval as not answered", () => {
     render(<Answer result={answer({ outcome: "empty", chunks: [], sufficiency: null })} />);
     expect(screen.getByRole("status").textContent).toMatch(/Nothing relevant was found/);
+    expect(screen.queryByRole("button")).toBeNull();
   });
 
   it("flags low confidence with the unsupported claims", () => {
@@ -61,6 +79,7 @@ describe("Answer", () => {
       />,
     );
     expect(screen.getByRole("status").textContent).toMatch(/Low confidence.*Torque is 200 Nm\./);
+    expect(screen.queryByText("High confidence")).toBeNull();
   });
 
   it("keeps the low-confidence flag on a cache hit", () => {

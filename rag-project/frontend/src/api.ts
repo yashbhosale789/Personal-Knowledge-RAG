@@ -10,6 +10,7 @@ export interface Chunk {
 export interface QueryResponse {
   query_id: string;
   answer: string;
+  rewritten_query: string | null;
   latency_ms: number;
   outcome: string | null;
   confidence: string | null;
@@ -19,6 +20,31 @@ export interface QueryResponse {
 }
 
 export type Rating = "up" | "down";
+
+/** One remembered chat turn (api/models/requests.py Turn): no sources, so memory stays small. */
+export interface Turn {
+  query: string;
+  rewritten_query: string | null;
+  answer: string;
+}
+
+// Mirror config.HISTORY_TURNS and HISTORY_ANSWER_CHARS; the API rejects anything larger.
+export const MEMORY_TURNS = 5;
+export const MEMORY_ANSWER_CHARS = 500;
+
+// Clips by code point so an emoji is never cut in half.
+const clip = (text: string, max: number) => Array.from(text).slice(0, max).join("");
+
+/** Appends a finished answer to the memory, keeping the newest MEMORY_TURNS turns. */
+export const remember = (memory: Turn[], query: string, result: QueryResponse): Turn[] =>
+  [
+    ...memory,
+    {
+      query,
+      rewritten_query: result.rewritten_query && clip(result.rewritten_query, 2000),
+      answer: clip(result.answer, MEMORY_ANSWER_CHARS),
+    },
+  ].slice(-MEMORY_TURNS);
 
 export class ApiError extends Error {
   status: number;
@@ -52,8 +78,13 @@ async function post(path: string, apiKey: string, body: object): Promise<Respons
 }
 
 /** Streams the answer to onToken as it is generated; resolves with the `final` event. */
-export async function streamQuery(apiKey: string, query: string, onToken: (text: string) => void): Promise<QueryResponse> {
-  const res = await post("/query/stream", apiKey, { query });
+export async function streamQuery(
+  apiKey: string,
+  query: string,
+  history: Turn[],
+  onToken: (text: string) => void,
+): Promise<QueryResponse> {
+  const res = await post("/query/stream", apiKey, { query, history });
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = "";

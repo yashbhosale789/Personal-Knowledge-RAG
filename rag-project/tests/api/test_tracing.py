@@ -59,7 +59,7 @@ def pipeline_with_stages(fakes, monkeypatch):
     monkeypatch.setenv(llm_client._resolve_provider("groq")[3], "test-key")
     monkeypatch.setattr(llm_client._session, "post", lambda url, **kw: _LLMResponse())
 
-    def pipeline(query, provider, return_contexts):
+    def pipeline(query, provider, return_contexts, rewritten):
         with timed("dense_retrieve") as obs:
             with timed("dense_embed"):
                 pass

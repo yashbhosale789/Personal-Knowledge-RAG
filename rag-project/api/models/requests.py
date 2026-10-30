@@ -6,6 +6,16 @@ from pydantic import BaseModel, ConfigDict, Field
 import config
 
 
+class Turn(BaseModel):
+    """One remembered chat turn. Nothing else (sources, chunks) is accepted."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(..., min_length=1, max_length=2000)
+    rewritten_query: str | None = Field(default=None, max_length=2000)
+    answer: str = Field(..., max_length=config.HISTORY_ANSWER_CHARS)
+
+
 class QueryRequest(BaseModel):
     query: str = Field(
         ...,
@@ -24,6 +34,13 @@ class QueryRequest(BaseModel):
     return_contexts: bool = Field(
         default=True,
         description="Whether to include retrieved source chunks in the response.",
+    )
+
+    history: list[Turn] = Field(
+        default_factory=list,
+        max_length=config.HISTORY_TURNS,
+        description="Earlier turns of this chat, oldest first. Untrusted: only used to "
+        "rewrite a follow-up into a standalone question.",
     )
 
 

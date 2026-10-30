@@ -184,7 +184,7 @@ def test_first_provider_failing_falls_back(
 ):
     calls = []
 
-    def flaky(query, provider, return_contexts):
+    def flaky(query, provider, return_contexts, rewritten):
         calls.append(provider)
         if provider == "groq":
             raise RuntimeError("boom")
@@ -290,7 +290,7 @@ def test_every_api_and_src_log_line_of_a_query_carries_its_request_id(
 
     from src.observability import JsonFormatter, RequestIdFilter
 
-    def pipeline(query, provider, return_contexts):
+    def pipeline(query, provider, return_contexts, rewritten):
         logging.getLogger("src.pipeline.advanced_rag").info("in the pipeline thread")
         return fakes.result
 
@@ -326,7 +326,7 @@ def test_named_stages_account_for_the_query_latency(
     from src.llm import usage
     from src.observability import timed
 
-    def pipeline(query, provider, return_contexts):
+    def pipeline(query, provider, return_contexts, rewritten):
         with timed("dense_retrieve"):
             with timed("dense_embed"):
                 time.sleep(0.05)

@@ -1,10 +1,20 @@
-import { useState, type FormEvent } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Answer } from "./Answer";
-import { ApiError, streamQuery, type QueryResponse } from "./api";
+import { ApiError, MEMORY_TURNS, remember, streamQuery, type QueryResponse, type Turn } from "./api";
 import { Feedback } from "./Feedback";
+import { Icon } from "./Icon";
 
 // sessionStorage only: the key leaves with the tab and is never written to the build or localStorage.
 const KEY_STORAGE = "rag-api-key";
+
+interface Message {
+  id: number;
+  query: string;
+  // The answer as it streams in; replaced by the verified `final` result.
+  partial: string;
+  result: QueryResponse | null;
+  error: string;
+}
 
 function storedKey(): string {
   try {
@@ -18,12 +28,13 @@ function KeyForm({ error, onSave }: { error: string; onSave: (key: string) => vo
   const [key, setKey] = useState("");
   return (
     <form
-      className="card"
+      className="key-card"
       onSubmit={(e) => {
         e.preventDefault();
         if (key.trim()) onSave(key.trim());
       }}
     >
+      <h1>Welcome to Knowledge OS</h1>
       <label htmlFor="api-key">API key</label>
       <input id="api-key" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} />
       <p className="hint">Kept in this tab only and cleared when the tab closes.</p>
@@ -32,7 +43,9 @@ function KeyForm({ error, onSave }: { error: string; onSave: (key: string) => vo
           {error}
         </p>
       )}
-      <button type="submit">Save key</button>
+      <button type="submit" className="primary">
+        Save key
+      </button>
     </form>
   );
 }
@@ -41,11 +54,18 @@ export default function App() {
   const [apiKey, setApiKey] = useState(storedKey);
   const [keyError, setKeyError] = useState("");
   const [query, setQuery] = useState("");
-  const [result, setResult] = useState<QueryResponse | null>(null);
-  // The answer as it streams in; replaced by the verified `final` answer.
-  const [partial, setPartial] = useState("");
-  const [error, setError] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  // Sent with each question so a follow-up can be rewritten; "Clear chat" keeps it.
+  const [memory, setMemory] = useState<Turn[]>([]);
   const [loading, setLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const nextId = useRef(0);
+  const end = useRef<HTMLDivElement>(null);
+
+  // A block body: newer browsers return a Promise from scrollIntoView, which must not become the effect's cleanup.
+  useEffect(() => {
+    end.current?.scrollIntoView?.({ block: "end" });
+  }, [messages]);
 
   function saveKey(key: string) {
     try {
@@ -65,75 +85,187 @@ export default function App() {
     }
     setApiKey("");
     setKeyError(message);
-    setResult(null);
-    setPartial("");
-    setError("");
+    setMenuOpen(false);
   }
 
-  async function ask(e: FormEvent) {
-    e.preventDefault();
+  function clearChat(alsoMemory: boolean) {
+    setMessages([]);
+    if (alsoMemory) setMemory([]);
+    setMenuOpen(false);
+  }
+
+  async function ask(e?: { preventDefault(): void }) {
+    e?.preventDefault();
     const q = query.trim();
     if (!q || loading) return;
+    const id = nextId.current++;
+    const update = (change: (m: Message) => Partial<Message>) =>
+      setMessages((ms) => ms.map((m) => (m.id === id ? { ...m, ...change(m) } : m)));
+    setMessages((ms) => [...ms, { id, query: q, partial: "", result: null, error: "" }]);
+    setQuery("");
     setLoading(true);
-    setError("");
-    setResult(null);
-    setPartial("");
     try {
-      setResult(await streamQuery(apiKey, q, (text) => setPartial((p) => p + text)));
-      setPartial("");
+      const result = await streamQuery(apiKey, q, memory, (text) => update((m) => ({ partial: m.partial + text })));
+      update(() => ({ result, partial: "" }));
+      setMemory((mem) => remember(mem, q, result));
     } catch (err) {
       const apiError = err instanceof ApiError ? err : new ApiError(0, "Request failed.");
+      update(() => ({ error: apiError.message }));
       if (apiError.status === 401) forgetKey(apiError.message);
-      else setError(apiError.message);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main>
-      <header>
-        <h1>Knowledge OS</h1>
-        {apiKey && (
-          <button type="button" className="link" onClick={() => forgetKey()}>
-            Forget key
-          </button>
-        )}
-      </header>
-      {!apiKey ? (
-        <KeyForm error={keyError} onSave={saveKey} />
-      ) : (
-        <>
-          <form className="card" onSubmit={ask}>
-            <label htmlFor="query">Question</label>
-            <textarea id="query" rows={3} maxLength={2000} value={query} onChange={(e) => setQuery(e.target.value)} />
-            <button type="submit" disabled={loading || !query.trim()}>
-              {loading ? "Searching…" : "Ask"}
-            </button>
-          </form>
-          {partial && (
-            <section className="answer" aria-label="Answer so far">
-              <p className="answer-text">{partial}</p>
-            </section>
-          )}
-          <div aria-live="polite">
-            {loading && (
-              <p className="hint">{partial ? "Verifying citations…" : "Retrieving and checking the documents…"}</p>
-            )}
-            {error && (
-              <p className="error" role="alert">
-                {error}
-              </p>
-            )}
+    <div className={menuOpen ? "app menu-open" : "app"}>
+      <aside className="side" aria-label="Actions">
+        <div className="brand">
+          <span className="logo">
+            <Icon name="book" />
+          </span>
+          Knowledge OS
+        </div>
+        <p className="group">Chat</p>
+        <button type="button" className="act" disabled={loading || !messages.length} onClick={() => clearChat(false)}>
+          <Icon name="chat" />
+          Clear chat
+        </button>
+        <button
+          type="button"
+          className="act"
+          disabled={loading || (!messages.length && !memory.length)}
+          onClick={() => clearChat(true)}
+        >
+          <Icon name="reset" />
+          Clear chat &amp; memory
+        </button>
+        <p className="group">Documents</p>
+        {/* shortcut: disabled until Phase 15.0 makes API ingest and delete persist (Interim rules, F-01/F-02). */}
+        <button type="button" className="act" disabled title="Available after the storage fix (Phase 15.0)">
+          <Icon name="upload" />
+          Upload files<span className="tag">soon</span>
+        </button>
+        <button type="button" className="act danger" disabled title="Available after the storage fix (Phase 15.0)">
+          <Icon name="trash" />
+          Clear database<span className="tag">soon</span>
+        </button>
+        <div className="memory">
+          Memory · {memory.length} of {MEMORY_TURNS} turns
+          <div className="dots" aria-hidden="true">
+            {Array.from({ length: MEMORY_TURNS }, (_, i) => (
+              <span key={i} className={i < memory.length ? "on" : undefined} />
+            ))}
           </div>
-          {result && (
-            <>
-              <Answer result={result} />
-              <Feedback key={result.query_id} apiKey={apiKey} requestId={result.query_id} onUnauthorized={forgetKey} />
-            </>
-          )}
-        </>
-      )}
-    </main>
+        </div>
+        {apiKey && (
+          <div className="key-row">
+            <Icon name="key" />
+            <span>API key set</span>
+            <button type="button" className="link" aria-label="Change API key" onClick={() => forgetKey()}>
+              Change
+            </button>
+          </div>
+        )}
+      </aside>
+      <div className="backdrop" onClick={() => setMenuOpen(false)} />
+
+      <main className="main">
+        <header className="topbar">
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((o) => !o)}
+          >
+            <Icon name="menu" />
+          </button>
+          Knowledge OS
+        </header>
+
+        {!apiKey ? (
+          <div className="chat">
+            <KeyForm error={keyError} onSave={saveKey} />
+          </div>
+        ) : (
+          <>
+            <div className="chat">
+              {messages.length === 0 && (
+                <div className="empty">
+                  <h1>Ask your documents</h1>
+                  <p className="hint">Answers come only from your documents, with the sources they used.</p>
+                </div>
+              )}
+              {messages.map((m) => (
+                <Fragment key={m.id}>
+                  <p className="user-msg">{m.query}</p>
+                  <div className="turn">
+                    <span className="avatar" aria-hidden="true">
+                      <Icon name="spark" />
+                    </span>
+                    <div className="bot">
+                      {m.result ? (
+                        <Answer result={m.result}>
+                          <Feedback
+                            key={m.result.query_id}
+                            apiKey={apiKey}
+                            requestId={m.result.query_id}
+                            onUnauthorized={forgetKey}
+                          />
+                        </Answer>
+                      ) : (
+                        m.partial && (
+                          <section aria-label="Answer so far">
+                            <p className="answer-text">
+                              {m.partial}
+                              {!m.error && <span className="cursor" aria-hidden="true" />}
+                            </p>
+                          </section>
+                        )
+                      )}
+                      {!m.result && !m.error && (
+                        <p className="hint" aria-live="polite">
+                          {m.partial ? "Verifying citations…" : "Retrieving and checking the documents…"}
+                        </p>
+                      )}
+                      {m.error && (
+                        <p className="error" role="alert">
+                          {m.error}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Fragment>
+              ))}
+              <div ref={end} />
+            </div>
+
+            <form className="composer" onSubmit={ask}>
+              <div className="box">
+                <label htmlFor="query" className="sr-only">
+                  Question
+                </label>
+                <textarea
+                  id="query"
+                  rows={1}
+                  maxLength={2000}
+                  placeholder="Ask about your documents…"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) ask(e);
+                  }}
+                />
+                <button type="submit" className="send" aria-label="Send" disabled={loading || !query.trim()}>
+                  <Icon name="send" />
+                </button>
+              </div>
+              <p className="hint">Enter to send · Shift+Enter for a new line</p>
+            </form>
+          </>
+        )}
+      </main>
+    </div>
   );
 }

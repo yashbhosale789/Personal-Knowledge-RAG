@@ -1,4 +1,6 @@
+import { useState, type ReactNode } from "react";
 import type { QueryResponse } from "./api";
+import { Icon } from "./Icon";
 
 // Answer, reasons, claims and filenames come from documents and the LLM: render as text only, never as HTML.
 function Verdict({ result }: { result: QueryResponse }) {
@@ -32,31 +34,70 @@ function Verdict({ result }: { result: QueryResponse }) {
   return null;
 }
 
-export function Answer({ result }: { result: QueryResponse }) {
+/** The answer as plain text, with each [SOURCE N] marker shown as a small numbered badge. */
+export function AnswerText({ text }: { text: string }) {
+  return (
+    <p className="answer-text">
+      {text.split(/\[SOURCE (\d+)\]/).map((part, i) =>
+        i % 2 ? (
+          <span key={i} className="cite" title={`Source ${part}`}>
+            {part}
+          </span>
+        ) : (
+          part
+        ),
+      )}
+    </p>
+  );
+}
+
+/** `children`: the feedback controls, shown in the answer's footer. */
+export function Answer({ result, children }: { result: QueryResponse; children?: ReactNode }) {
+  const [showSources, setShowSources] = useState(false);
   const answered = result.outcome !== "abstain" && result.outcome !== "empty";
+  const count = result.chunks.length;
   return (
     <section className="answer" aria-label="Answer">
       <Verdict result={result} />
-      {answered && <p className="answer-text">{result.answer}</p>}
-      {result.chunks.length > 0 && (
-        <>
-          <h2>{answered ? "Sources" : "Documents searched"}</h2>
-          <ul className="sources">
-            {result.chunks.map((chunk) => (
-              <li key={chunk.n} className={chunk.cited ? "cited" : undefined}>
-                <strong>[SOURCE {chunk.n}]</strong> {chunk.source}
-                {chunk.page != null && `, page ${chunk.page}`}
-                {chunk.cited && " · cited"}
+      {answered && <AnswerText text={result.answer} />}
+      <div className="answer-meta">
+        {answered && result.confidence === "high" && <span className="badge ok">High confidence</span>}
+        {count > 0 && (
+          <button type="button" className="chip" aria-expanded={showSources} onClick={() => setShowSources((s) => !s)}>
+            <Icon name="file" />
+            {count} {answered ? (count === 1 ? "source" : "sources") : "documents searched"}
+            <Icon name="down" className={showSources ? "flip" : undefined} />
+          </button>
+        )}
+        <span className="spacer" />
+        <span className="latency">
+          {result.outcome === "cached" && "From cache · "}
+          {(result.latency_ms / 1000).toFixed(1)} s
+        </span>
+        {children}
+      </div>
+      {showSources && (
+        <ul className="sources">
+          {result.chunks.map((chunk) => (
+            <li key={chunk.n} className={chunk.cited ? "cited" : undefined}>
+              <span className="n">{chunk.n}</span>
+              <div>
+                <div className="file">
+                  {chunk.source}
+                  {chunk.page != null && ` · page ${chunk.page}`}
+                </div>
                 <span className="snippet">{chunk.snippet}</span>
-              </li>
-            ))}
-          </ul>
-        </>
+              </div>
+              {chunk.cited && (
+                <span className="cited-mark">
+                  <Icon name="check" />
+                  cited
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
-      <p className="meta">
-        {result.outcome === "cached" && "From cache · "}
-        {(result.latency_ms / 1000).toFixed(1)} s
-      </p>
     </section>
   );
 }
