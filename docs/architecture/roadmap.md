@@ -70,7 +70,7 @@ These are real, verified by code reading (see the findings file), and **not** sc
 | F-09 / F-10 | Naive BM25 tokenizer; chunking never evaluated | Unknown retrieval-quality loss | None needed; measure in 15.2 | 15.0 / 15.2 |
 | F-07 / F-08 | Corpus too small to discriminate variants; 12-question test split | LLMOps numbers on `c1` are provisional | Label every result `c1`; do not tune on the test split | 15.1 |
 | F-14 | Cache entity guard hard-coded to `sedan/suv/hatchback` | Wrong cache hits on other domains | Single-domain corpus until 15.1 | 15.1 |
-| F-15 | Loader handles 4 formats and the ingest API only `.pdf`; the target corpus has 8 formats | None at the current corpus | None | 15.1 |
+| F-15 | Loader handles 4 formats and the ingest API only `.pdf` | None: the corpus is PDF only (decided 2026-10-31) | None | Closed by decision |
 | F-27 | Two separately maintained stores (Chroma and an in-memory BM25 built from `chunks.json`) are the root cause of F-01 | Same as F-01 | Same as F-01 | 15.0 |
 
 ## Interim rules (until Phase 15 closes)
@@ -418,8 +418,8 @@ Decisions and limits:
 Starts after Phase 14 closes. This is where the deferred defects are fixed and the pipeline is measured on the real corpus. Production readiness is not claimed before this phase closes.
 
 **Scope trim (decided 2026-10-31).** One user, $0, a 2 GiB host: Phase 15 keeps what fixes real defects or what the real corpus needs, and drops research-style work whose differences this dataset and free-tier budget cannot resolve.
-- **Dropped:** the storage migration (deferred to a decision point after 15.1 Stage A), reranker alternatives, the no-retrieval / long-context baseline, agentic vs deterministic, the embedding-model experiment, L1 exact-match and L3 retrieval caches, speculative generation.
-- **Shrunk:** 15.1 formats, chunking, hidden-content policy, parser safety and dataset growth; 15.2 ablations; 15.4 load test and SLO finalisation.
+- **Dropped:** the storage migration (deferred to the 15.1 measurements), multi-format ingestion (the corpus is 100–150 PDFs), reranker alternatives, the no-retrieval / long-context baseline, agentic vs deterministic, the embedding-model experiment, L1 exact-match and L3 retrieval caches, speculative generation.
+- **Shrunk:** 15.1 to indexing and measuring the PDF corpus plus dataset v2 (about 20–30 new questions); 15.2 ablations; 15.4 load test and SLO finalisation.
 - Revisit a dropped item only with evidence that it fixes a measured problem. The full original plan is in this file's git history before 2026-10-31.
 
 Guard rails: keep the `/query` response schema compatible with the frontend (contract tests from 13.1) or bump the version deliberately; the feedback store is independent of the index, so re-indexing does not touch it.
@@ -433,59 +433,51 @@ Fixes F-01, F-02, F-03, F-27 (and F-09 if the harness shows it helps) and remove
 Note on terms: Chroma is not "in-memory"; it persists to disk (SQLite and index files) but runs embedded in the app process, and its HNSW graph is loaded into RAM. What *is* purely in-memory is the BM25 index. The semantic cache in Redis is ephemeral by design.
 
 - Check first: Chroma returns every chunk with the text and metadata that BM25 results need. Measure the BM25 rebuild time on `c1` and project it for the 15.1 corpus.
-- One ingest/delete function used by the API, `scripts/ingest.py` and any build step: injection scan, delete-before-add, cache clear, and BM25 reset in one place.
+- One ingest function, mostly moved rather than written. Today the API path (`api/routers/ingest.py` `_run_ingest`) scans, deletes before adding, adds to Chroma and clears the cache, but never updates BM25; `scripts/ingest.py` adds to Chroma and rewrites `chunks.json`, but skips the scan, delete-before-add and cache clear. Move the API's sequence into one function in `src/` (for example `ingest_file(path)`), call it from the API and from the script's loop over files, and end it and `_run_delete` with the BM25 reset. The API keeps its path validation and HTTP error mapping; the script stops writing `chunks.json`.
+- `IngestRequest.force_reingest` is accepted but ignored (every ingest re-ingests): remove it or make it work.
 - Index lifecycle: Chroma on a **named volume** and an **offline-built index**, replacing `RUN python scripts/ingest.py` in the Dockerfile. Build on the dev machine, not on the EC2 instance (CPU credits, live-traffic starvation). API ingest and delete then persist across deploys. Revise the rebuild procedure in `Backup_Recovery.md`.
 - BM25 tokenizer: regex word tokens instead of `split()`; keep only if the harness shows it helps.
 - Check whether the stored `source` string differs between the API and script paths (F-03).
 - The feedback store (`rag_feedback_data`) stays independent of the index; re-indexing never touches it.
 
-**Storage decision deferred** to after 15.1 Stage A, on real-size data: on `c1` (40 chunks) every candidate fits in memory and answers in milliseconds, so a bake-off now cannot separate them. Triggers for revisiting: BM25 is too big or too slow to rebuild at Stage A size, or ingest has to be transactional. The next step then is SQLite FTS5 + `sqlite-vec` (real BM25, transactional, no extra container), before PostgreSQL + pgvector. Not candidates: Pinecone, managed free-tier Postgres (Supabase, Neon) and Qdrant Cloud (personal documents leave the host, and free tiers pause or delete idle projects); Elasticsearch/OpenSearch, Milvus and Weaviate (too heavy for a 2 GiB host).
+**Storage decision deferred** to the 15.1 measurements, on real-size data: on `c1` (40 chunks) every candidate fits in memory and answers in milliseconds, so a bake-off now cannot separate them. Triggers for revisiting: BM25 is too big or too slow to rebuild on the full PDF corpus, or ingest has to be transactional. The next step then is SQLite FTS5 + `sqlite-vec` (real BM25, transactional, no extra container), before PostgreSQL + pgvector. Not candidates: Pinecone, managed free-tier Postgres (Supabase, Neon) and Qdrant Cloud (personal documents leave the host, and free tiers pause or delete idle projects); Elasticsearch/OpenSearch, Milvus and Weaviate (too heavy for a 2 GiB host).
 
 Exit: the five F-01/F-03 strict xfails in `tests/integration/test_ingest_query_delete.py` removed and passing (the injection-scanner xfail is not 15.0's); retrieval on `c1` unchanged or the difference reported (paired, `corpus c1`, dataset `v1`); `/query` and stream contracts unchanged; ingest through the API survives a deploy and a rollback; the *Interim rules* about `/ingest` lifted and the checklist rows for storage, ingestion and backup/restore updated.
 
-### Phase 15.1 — Corpus scale-up and multi-format ingestion
+### Phase 15.1 — Full PDF corpus
 
-Addresses F-07, F-08, F-14, F-15, F-16, F-17, F-21.
+Addresses F-07, F-08, F-14, F-16, F-17, F-21.
 
-The target corpus is about 1,190 files, ~25 MB, in up to eight formats: PDF, DOCX, HTML, Markdown, CSV, XLS, XLSX, PPTX. The current loader covers PDF, TXT, MD and DOCX; the API accepts only PDF.
+**Decided 2026-10-31: the corpus is PDF only, 100–150 files.** Including every file type would take it past 500 files in eight formats for little gain. The loader already handles PDF (and DOCX, MD and TXT), so no new loaders or format-specific chunking are needed, and the ingest API stays PDF only. Multi-format support (F-15) is closed by this decision; revisit only if the corpus changes.
 
-#### Measure first
+#### Index and measure
 
-Count files and bytes per extension and sample a few of each. **Support only the formats with a meaningful number of files**; record the counts and the cut-off in `Memory.md`. CSV and XLSX in particular can dominate the chunk count: 25 MB of tabular text is far more chunks than 25 MB of PDFs (see F-16).
+- Index the full PDF set offline through the 15.0 ingest path. One pass: at this size no staged subset is needed.
+- Record file count, chunk count, app RSS, startup time, BM25 rebuild time, and query p50/p95. Budget: app steady RSS about 1.0 GiB or less, startup within the compose `start_period`.
+- Make the deferred storage decision (15.0) from these numbers. At this size it is expected to confirm Chroma.
 
 #### Decisions (record in `Memory.md`)
 
-1. **Per-format extraction.** Small, single-purpose libraries for the supported formats (for example `python-docx`, `python-pptx`, `openpyxl`, `csv`, `beautifulsoup4`), not the heavy `unstructured` package. Legacy `.xls` is converted to `.xlsx` once, offline; no `xlrd`.
-2. **Structure-aware chunking, only for supported formats.** Spreadsheets and CSVs: groups of rows, with the header and sheet name repeated in every chunk. Slides: one chunk per slide. DOCX: keep tables as tables. HTML: strip boilerplate only if HTML is a material share. Metadata for every chunk: file type, page / sheet / slide, and row range where relevant.
-3. **What is out of scope.** Retrieval over tables answers lookups ("what is the price of X"), not aggregations ("total sales in Q3"). Unsupported question types abstain deliberately instead of guessing.
-4. **Hidden content: one rule.** Hidden sheets, speaker notes, document comments, HTML comments and hidden elements are not indexed; formulas give their cached values and are never evaluated. Everything extracted passes through the injection scanner.
-5. **Parser safety.** File-size and decompressed-size limits; macros are never executed. No per-file timeouts or malformed-sample suite: the index is built offline from the owner's own files. Revisit if uploads from others are ever allowed.
-6. **Privacy** (F-21): keep the personal corpus out of git and out of any public repo; decide what the public demo indexes.
-7. **BM25 footprint:** measured in Stage A; it is the trigger for the deferred storage decision (15.0).
-8. **Cache entity guard:** replace or confine the hard-coded `sedan/suv/hatchback` heuristic (F-14).
-9. One allow-list of supported formats, shared by the loader and the ingest API.
-
-#### Stages
-
-- **Stage A (~100–150 files):** a representative subset covering every supported format and some deliberately messy files. Build the index offline. Measure RSS, startup time, BM25 rebuild time, query p50/p95 and ingest time. Fix what breaks, and make the deferred storage decision here.
-- **Stage B (full corpus):** only if Stage A projects within budget. Proposed budgets, to be confirmed against measurements: app steady RSS about 1.0 GiB or less including Chroma and BM25, no sustained swap growth under 10 concurrent queries, startup within the compose `start_period`.
+1. **Privacy** (F-21): keep the personal corpus out of git and out of any public repo; decide what the public demo indexes.
+2. **Cache entity guard:** replace or confine the hard-coded `sedan/suv/hatchback` heuristic (F-14), which breaks once the corpus is not only car manuals.
+3. **PDF extraction quality:** spot-check a few PDFs for broken text (the failure analysis found `A<U+202F>ventro`, a brand name split by narrow no-break spaces). Normalise whitespace at load time only if the check shows it matters.
 
 #### Evaluation after scaling (F-17)
 
 - Keep the 5-PDF corpus `c1` as the CI corpus; CI never ingests the full set.
-- Re-run retrieval-only baselines on the scaled corpus `c2` (no LLM calls needed).
+- Re-run retrieval-only baselines on the full corpus `c2` (no LLM calls needed).
 - Spot-check the 27 synthetic questions that have no review record (13.0 item 1, Q17 first) and fix or drop bad labels before dataset v2 is recorded.
 - Re-audit every `unanswerable`, `adversarial` and `ambiguous` question against `c2`; new documents can make them answerable.
-- Add about 20–30 questions for the new documents (tabular lookups, slide content, and other supported formats), within the free-tier judge budget. The 12-question test split stays frozen. Record `dataset v2 / corpus c2`.
+- Add about 20–30 questions for the new documents, within the free-tier judge budget. The 12-question test split stays frozen. Record `dataset v2 / corpus c2`.
 - Report `c1` and `c2` results side by side; do not overwrite `c1` history.
 
-Exit: `c2` ingested through the production path in every supported format, measurements and the storage decision recorded, dataset v2 validated, baselines filed.
+Exit: `c2` ingested through the production path, measurements and the storage decision recorded, dataset v2 validated, baselines filed.
 
 ### Phase 15.2 — Retrieval tuning and stage ablations
 
 Use the harness on corpus `c2`. Each experiment is a paired comparison with confidence intervals:
 
-1. **Chunking:** size, overlap, page-boundary merging (F-10), and the per-format strategies from 15.1. Retrieval-only, $0.
+1. **Chunking:** size, overlap, page-boundary merging (F-10). Retrieval-only, $0.
 2. **Retrieval:** `TOP_K`, candidate-pool size, and the keyword tokenizer (old vs new). Retrieval-only, $0.
 3. **Stage ablations (F-11):** remove query rewriting, the sufficiency judge and citation verification one at a time; keep a stage only if it earns its latency, quota and quality. Also test skipping the rewrite only for short, unambiguous queries, and the follow-up condense step (post-14) if chat use is material.
 
@@ -517,7 +509,7 @@ Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
 | Area | Status | Owner / evidence |
 | --- | --- | --- |
 | Hybrid retrieval, reranking, grounded answers with citations, abstention | Done | Phases 2, 8 |
-| Prompt-injection defense | Partial — API path only | F-03 → 15.0; multi-format → 15.1 |
+| Prompt-injection defense | Partial — API path only | F-03 → 15.0 |
 | Auth (shared key), rate limiting, HTTPS | Done — single-user by decision (one shared key) | Phases 9, 12; decision 13.5 (`Security.md`) |
 | Automated deployment, health check, rollback | Done, verified live; rollback drilled again 2026-10-29 | Phase 12, 13.5 |
 | Regression evaluation in CI | Partial — LLM-judge gate on 4 items, path-filtered and advisory; `c1` cannot discriminate variants | F-07, F-08 → 15.1, 15.2 |
@@ -534,9 +526,9 @@ Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
 | Logging / retention policy and log rotation | Done — policy in `Data_Privacy.md`, rotation active; feedback text 90 days | 13.5, 14.0 |
 | User feedback loop | Done — `POST /feedback` (server-side grounding, SQLite on a named volume) and the UI thumbs + comment; round-trip and deploy survival verified on prod | 14.0, 14.1, PRs #95, #97 |
 | Usable front end | Done — React UI on the same origin, streaming answers with mapped citations, abstain/low-confidence display, feedback; verified on desktop and phone | 14.1, PRs #97, #98 |
-| Storage architecture fit for production | **Gap, deferred** — Chroma becomes the single source of truth; store choice deferred to 15.1 Stage A | F-27 → 15.0, 15.1 |
+| Storage architecture fit for production | **Gap, deferred** — Chroma becomes the single source of truth; store choice deferred to the 15.1 measurements | F-27 → 15.0, 15.1 |
 | Ingestion correct and persistent | **Gap, deferred** | F-01, F-02, F-03 → 15.0 |
-| Supports the real corpus formats | **Gap, deferred** | F-15 → 15.1 |
+| Supports the real corpus formats | Done by decision — the corpus is 100–150 PDFs; the loader also reads DOCX, MD and TXT | F-15, decided 2026-10-31 |
 | Evaluation that can discriminate variants | **Gap, deferred** | F-07, F-08 → 15.1 |
 | Corpus versioning and privacy decision | **Gap, deferred** | F-21 → 15.1 |
 | Load test and capacity statement | **Gap, deferred** | F-16 → 15.4 |
