@@ -188,7 +188,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 | Sub-phase | Name |
 | --- | --- |
 | 15.0 | Ingestion correctness on Chroma |
-| 15.1 | Corpus scale-up and multi-format ingestion |
+| 15.1 | Full PDF corpus |
 | 15.2 | Retrieval tuning and stage ablations |
 | 15.3 | Token and cache optimization (dropped 2026-10-31) |
 | 15.4 | Final operational validation |
@@ -200,12 +200,11 @@ Scope trimmed 2026-10-31 for a single-user, $0 system: no storage migration now,
 - Single, consistent ingest and delete path
 - BM25 built from Chroma, so keyword and vector indexes cannot drift
 - Persistent, offline-built index on a named volume
-- Storage choice deferred to 15.1 Stage A, on real-size data
+- Storage choice deferred to the 15.1 measurements, on real-size data
 
-#### 15.1 Corpus scale-up and multi-format ingestion
+#### 15.1 Full PDF corpus
 
-- Full document corpus, in the formats it actually contains
-- Format-aware loading and chunking
+- Full PDF corpus (100–150 files), indexed and measured; no new formats
 - About 20–30 new evaluation questions, plus a spot-check of unreviewed labels
 
 #### 15.2 Retrieval tuning and stage ablations

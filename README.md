@@ -143,7 +143,7 @@ python -m eval.security.injection_eval     # prompt-injection resistance
 
 These are deliberate, tracked in the [roadmap](docs/architecture/roadmap.md), and each is pinned by a strict `xfail` test where it is a code defect:
 
-- **Small corpus.** Production serves 5 PDFs (`c1`). The full corpus (about 1,190 files) and its formats arrive in Phase 15.1.
+- **Small corpus.** Production serves 5 PDFs (`c1`). The full corpus (100–150 PDFs) is indexed in Phase 15.1.
 - **Ingestion is not yet consistent.** BM25 is built from `chunks.json`, so documents ingested through the API never reach keyword search and deleted ones can still be retrieved. API ingest is therefore disabled in production, and the index is built into the image. Fixed in Phase 15.0.
 - **Single user.** One shared key; every key holder sees the whole corpus and shares one cache.
 - **Provisional SLOs.** Single-user traffic is too sparse to tune them; no load test yet (Phase 15.4).
