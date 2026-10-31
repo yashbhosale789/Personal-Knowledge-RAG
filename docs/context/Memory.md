@@ -63,12 +63,16 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 **Phase 13.0 (Evaluation foundation) — close-out 2026-10-28; item 1 partly evidenced**
 - Dataset `v1` = `51bcd1e330`, corpus `c1` = `9fc4650202` (`store.run_ids()`, written into every eval record beside the fingerprint). Test split (12) frozen.
 - Judge calibration: n = 20 per metric (10 good / 10 bad), AUC 1.0 on all three metrics.
-- 27 of 42 synthetic questions have no review record; labels unverified until spot-checked.
+- 27 of 42 synthetic questions have no review record; labels unverified until spot-checked (owned by 15.1, before dataset v2).
 - Failure analysis: `docs/architecture/eval-failure-analysis-2026-10-28.md` (saved `c83fff9ba7` answers + fresh retrieval run, $0).
 
 **13.0a Status:**
 - `eval/tools/validate_dataset.py` validates schema and evidence spans against `storage/chunks.json` using alphanumeric-only normalization. Exits 0 on `eval/data/golden_dataset.json` with Q01 in v2 format.
 - Corpus rebuilt: 40 chunks across 5 PDFs in both Chroma and `storage/chunks.json`.
+
+**Post-14 additions (2026-10-30, deployed with `7889f26`): chat memory (#100) and UI redesign (#107)**
+- Optional `QueryRequest.history` (≤ 5 turns, answers clipped to 500 chars, untrusted). A follow-up is condensed into a standalone question (`condense_query`, `CONDENSE_SYSTEM`) before the cache and retrieval; on failure the raw follow-up skips the cache. No history = the old path, so eval and the `/query` response contract are unchanged. `CONDENSE_SYSTEM` is deliberately outside `PROMPT_VERSION`.
+- Accepted exception to the 13/14 "no retrieval changes" rule; follow-up quality is unevaluated (no multi-turn eval questions) and adds one LLM call to time-to-first-token. Detail: roadmap "Post-14 additions".
 
 **Phase 14.1 (React frontend) — CLOSED 2026-10-30; Phase 14 CLOSED the same day; next: Phase 15.0**
 - PR 1 (UI on the existing `/query`): #97 (merge `d1821b0`), deployed by run `41027257170`, all CI green; browser round-trip verified on prod 2026-10-30 (row `6558d316-…`, `up`); unchanged after the PR 2 deploy. Decisions and design: roadmap §14.1. In short: `rag-project/frontend/` (Vite + React + TS, runtime deps react/react-dom only); built in the Dockerfile `web` stage and served by FastAPI at `/` and `/assets` only (`api/main.py` `mount_web`), so `deploy.sh`, compose and the Caddyfile are unchanged; key in `sessionStorage`; plain-text rendering plus a build-time CSP `<meta>`; advisory `Frontend` workflow; deploy smoke test checks `/` serves the UI.
