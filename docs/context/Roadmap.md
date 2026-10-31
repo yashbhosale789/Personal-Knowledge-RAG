@@ -187,7 +187,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 
 | Sub-phase | Name |
 | --- | --- |
-| 15.0 | Ingestion correctness on Chroma |
+| 15.0 | Ingestion correctness and PDF upload |
 | 15.1 | Full PDF corpus |
 | 15.2 | Retrieval tuning and stage ablations |
 | 15.3 | Token and cache optimization (dropped 2026-10-31) |
@@ -195,11 +195,12 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 
 Scope trimmed 2026-10-31 for a single-user, $0 system: no storage migration now, no research-style comparisons. Detail: `docs/architecture/roadmap.md` Phase 15.
 
-#### 15.0 Ingestion correctness on Chroma
+#### 15.0 Ingestion correctness and PDF upload
 
 - Single, consistent ingest and delete path
 - BM25 built from Chroma, so keyword and vector indexes cannot drift
-- Persistent, offline-built index on a named volume
+- Index and documents on named volumes, seeded from the image
+- PDF upload, list and delete from the UI (PR 2)
 - Storage choice deferred to the 15.1 measurements, on real-size data
 
 #### 15.1 Full PDF corpus

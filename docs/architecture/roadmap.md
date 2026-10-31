@@ -67,7 +67,7 @@ These are real, verified by code reading (see the findings file), and **not** sc
 | F-01 | BM25 ignores API-ingested documents; deleted documents remain retrievable | Deleted content can still reach the LLM; new documents are invisible to keyword search | Do not use `/ingest` or `DELETE /ingest` in production | 15.0 |
 | F-02 | Production index is baked into the image; API ingest/delete are not persisted | API changes vanish on deploy | Same as above; ingest only by rebuilding the image | 15.0 |
 | F-03 | Script/Docker ingest skips injection scan, delete-before-add, cache clear | Stale chunks; unscanned documents | Corpus stays the 5 reviewed PDFs | 15.0 |
-| F-09 / F-10 | Naive BM25 tokenizer; chunking never evaluated | Unknown retrieval-quality loss | None needed; measure in 15.2 | 15.0 / 15.2 |
+| F-09 / F-10 | Naive BM25 tokenizer; chunking never evaluated | Unknown retrieval-quality loss | None needed; measure in 15.2 | 15.2 |
 | F-07 / F-08 | Corpus too small to discriminate variants; 12-question test split | LLMOps numbers on `c1` are provisional | Label every result `c1`; do not tune on the test split | 15.1 |
 | F-14 | Cache entity guard hard-coded to `sedan/suv/hatchback` | Wrong cache hits on other domains | Single-domain corpus until 15.1 | 15.1 |
 | F-15 | Loader handles 4 formats and the ingest API only `.pdf` | None: the corpus is PDF only (decided 2026-10-31) | None | Closed by decision |
@@ -76,7 +76,7 @@ These are real, verified by code reading (see the findings file), and **not** sc
 ## Interim rules (until Phase 15 closes)
 
 - No `/ingest` or `DELETE /ingest` against production. The production corpus is the 5 PDFs baked into the image.
-- The frontend (Phase 14) must **not** expose upload or delete.
+- The frontend (Phase 14) must **not** expose upload or delete. Lifted by 15.0 PR 2.
 - Every evaluation result quoted in Phases 13 and 14 states `corpus c1` and the dataset version.
 - The 12-question test split stays frozen.
 - Do not change retrieval, chunking, reranking or storage behaviour in Phases 13 and 14, except the behaviour-preserving refactor in 13.1 and the prompt-version/cache-key change in 13.2.
@@ -424,25 +424,40 @@ Starts after Phase 14 closes. This is where the deferred defects are fixed and t
 
 Guard rails: keep the `/query` response schema compatible with the frontend (contract tests from 13.1) or bump the version deliberately; the feedback store is independent of the index, so re-indexing does not touch it.
 
-### Phase 15.0 — Ingestion correctness on Chroma
+### Phase 15.0 — Ingestion correctness and PDF upload
 
-Fixes F-01, F-02, F-03, F-27 (and F-09 if the harness shows it helps) and removes the matching `xfail` markers. One sub-phase, one or two PRs.
+Fixes F-01, F-02, F-03, F-27 and removes the matching `xfail` markers, then adds PDF upload and delete from the UI. Two PRs, in this order.
+
+Decided 2026-10-31: the corpus (`c1` now, the 100–150 PDFs in 15.1) is public test data from another GitHub repository, not personal documents, so it may live in git and in the image (check that repository's license before committing the 15.1 set). `IngestRequest.force_reingest` is removed. The BM25 tokenizer is measured only in 15.2.
 
 **Design.** F-01 exists because two copies are kept in step by hand: Chroma (on disk, in-process) and a BM25 index built in memory from `chunks.json`. Make Chroma the single source of truth: build BM25 from the chunks Chroma stores (text and metadata), and drop it after every ingest or delete so the next query rebuilds it. `chunks.json` stops being a serving input. This removes the failure class without a new store. The rebuild swaps a reference, so a query already in flight keeps the old index.
 
 Note on terms: Chroma is not "in-memory"; it persists to disk (SQLite and index files) but runs embedded in the app process, and its HNSW graph is loaded into RAM. What *is* purely in-memory is the BM25 index. The semantic cache in Redis is ephemeral by design.
 
+#### PR 1 — Ingestion correctness
+
 - Check first: Chroma returns every chunk with the text and metadata that BM25 results need. Measure the BM25 rebuild time on `c1` and project it for the 15.1 corpus.
 - One ingest function, mostly moved rather than written. Today the API path (`api/routers/ingest.py` `_run_ingest`) scans, deletes before adding, adds to Chroma and clears the cache, but never updates BM25; `scripts/ingest.py` adds to Chroma and rewrites `chunks.json`, but skips the scan, delete-before-add and cache clear. Move the API's sequence into one function in `src/` (for example `ingest_file(path)`), call it from the API and from the script's loop over files, and end it and `_run_delete` with the BM25 reset. The API keeps its path validation and HTTP error mapping; the script stops writing `chunks.json`.
-- `IngestRequest.force_reingest` is accepted but ignored (every ingest re-ingests): remove it or make it work.
-- Index lifecycle: Chroma on a **named volume** and an **offline-built index**, replacing `RUN python scripts/ingest.py` in the Dockerfile. Build on the dev machine, not on the EC2 instance (CPU credits, live-traffic starvation). API ingest and delete then persist across deploys. Revise the rebuild procedure in `Backup_Recovery.md`.
-- BM25 tokenizer: regex word tokens instead of `split()`; keep only if the harness shows it helps.
+- Remove `force_reingest` from `IngestRequest` (every ingest already re-ingests).
+- The Dockerfile keeps building the `c1` index at build time, now through the shared function.
 - Check whether the stored `source` string differs between the API and script paths (F-03).
+- Retrieval on `c1` must be unchanged (same tokenizer, same chunks): compare against `eval/runs/retrieval_baseline.json`.
+
+Exit PR 1: the five F-01/F-03 strict xfails in `tests/integration/test_ingest_query_delete.py` removed and passing (the injection-scanner xfail is not 15.0's); retrieval on `c1` identical (`corpus c1`, dataset `v1`); `/query` and stream contracts unchanged; deployed.
+
+#### PR 2 — Persistent index and PDF upload from the UI
+
+- **Volumes:** named volumes for Chroma (`/app/storage/chroma`) and the documents folder (`/app/data/documents`) in `docker-compose.prod.yml`. Docker fills an empty named volume from the image on first mount, so the image's index seeds production with no extra code. After that the volume wins: a PDF added to git later reaches prod only by uploading it or by a documented re-seed (remove the volumes, or re-run the ingest script in the container). A rollback to a pre-PR 2 image ignores the volumes and serves its own built-in index; uploads reappear on the next forward deploy.
+- **Upload:** a multipart endpoint (for example `POST /documents`, needs `python-multipart`), keyed and rate limited. Accept `.pdf` only, check the `%PDF` header, cap the size, keep only the base name of the filename, save into the documents folder, then call the shared ingest function. A rejected file (injection scan, no text) is removed again. Same name replaces the existing document. One lock around ingest and delete so two writes never interleave.
+- **List and delete:** `GET /documents` (name, chunk count) and `DELETE /documents/{name}`, reusing the delete path. The old path-based `/ingest` and `DELETE /ingest` stay blocked at Caddy (local development only); open only the new `/documents` routes.
+- **UI:** an upload button (PDF only), the document list, and delete with a confirmation. Names render as plain text; the CSP is unchanged.
+- Embedding an uploaded PDF runs on the EC2 instance. That is accepted for one file at a time; bulk loads (15.1) are still built offline.
+- Revise the rebuild procedure in `Backup_Recovery.md` (volumes, re-seed, backup of the two volumes).
 - The feedback store (`rag_feedback_data`) stays independent of the index; re-indexing never touches it.
 
-**Storage decision deferred** to the 15.1 measurements, on real-size data: on `c1` (40 chunks) every candidate fits in memory and answers in milliseconds, so a bake-off now cannot separate them. Triggers for revisiting: BM25 is too big or too slow to rebuild on the full PDF corpus, or ingest has to be transactional. The next step then is SQLite FTS5 + `sqlite-vec` (real BM25, transactional, no extra container), before PostgreSQL + pgvector. Not candidates: Pinecone, managed free-tier Postgres (Supabase, Neon) and Qdrant Cloud (personal documents leave the host, and free tiers pause or delete idle projects); Elasticsearch/OpenSearch, Milvus and Weaviate (too heavy for a 2 GiB host).
+Exit PR 2: on prod, a PDF uploaded through the UI is answerable, survives a deploy and a rollback-then-forward, and a deleted one is no longer retrieved by either dense or keyword search; tests for size, type, name handling and the injection rejection; `/query` and stream contracts unchanged; the *Interim rules* about `/ingest` and upload lifted, and the checklist rows for storage, ingestion and backup/restore updated.
 
-Exit: the five F-01/F-03 strict xfails in `tests/integration/test_ingest_query_delete.py` removed and passing (the injection-scanner xfail is not 15.0's); retrieval on `c1` unchanged or the difference reported (paired, `corpus c1`, dataset `v1`); `/query` and stream contracts unchanged; ingest through the API survives a deploy and a rollback; the *Interim rules* about `/ingest` lifted and the checklist rows for storage, ingestion and backup/restore updated.
+**Storage decision deferred** to the 15.1 measurements, on real-size data: on `c1` (40 chunks) every candidate fits in memory and answers in milliseconds, so a bake-off now cannot separate them. Triggers for revisiting: BM25 is too big or too slow to rebuild on the full PDF corpus, or ingest has to be transactional. The next step then is SQLite FTS5 + `sqlite-vec` (real BM25, transactional, no extra container), before PostgreSQL + pgvector. Not candidates: Pinecone, managed free-tier Postgres (Supabase, Neon) and Qdrant Cloud (documents leave the host, and free tiers pause or delete idle projects); Elasticsearch/OpenSearch, Milvus and Weaviate (too heavy for a 2 GiB host).
 
 ### Phase 15.1 — Full PDF corpus
 
@@ -458,7 +473,7 @@ Addresses F-07, F-08, F-14, F-16, F-17, F-21.
 
 #### Decisions (record in `Memory.md`)
 
-1. **Privacy** (F-21): keep the personal corpus out of git and out of any public repo; decide what the public demo indexes.
+1. **Privacy** (F-21): the corpus is public test data (decided 2026-10-31), so it may be committed and shown in the demo. Confirm the source repository's license allows redistribution before committing it.
 2. **Cache entity guard:** replace or confine the hard-coded `sedan/suv/hatchback` heuristic (F-14), which breaks once the corpus is not only car manuals.
 3. **PDF extraction quality:** spot-check a few PDFs for broken text (the failure analysis found `A<U+202F>ventro`, a brand name split by narrow no-break spaces). Normalise whitespace at load time only if the check shows it matters.
 
