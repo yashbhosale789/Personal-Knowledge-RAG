@@ -170,6 +170,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 - Redis persistence is intentionally omitted; cache and rate limits fail open.
 - $0 hard budget constraint: No paid services or unexpected cloud charges.
 - Online A/B testing replaced with offline paired comparisons on the golden dataset.
+- **Phase 15 scope trim (2026-10-31):** no storage migration now. 15.0 makes Chroma the single source of truth (BM25 rebuilt from it, reset on ingest/delete), and the store choice is deferred to 15.1 Stage A (next step SQLite FTS5 + `sqlite-vec`, then Postgres). Dropped: reranker alternatives, long-context baseline, agentic vs deterministic, embedding-model experiment, L1/L3 caches, speculative generation (15.3 as a whole). Shrunk: 15.1 supports only formats the corpus really has (`.xls` converted once), one hidden-content rule, size limits only for parser safety, about 20–30 new eval questions; 15.4 is one k6 run at 5–10 users with provisional SLOs kept. Revisit only with measured evidence.
 - Separate prompt files / a prompt registry with manual version strings (13.2): built, then rejected as ceremony for a single-developer repo. Prompts stay in `config.py`, versioned by content hash.
  
 ### Technical lessons

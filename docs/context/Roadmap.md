@@ -187,41 +187,41 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 
 | Sub-phase | Name |
 | --- | --- |
-| 15.0 | Ingestion and index lifecycle |
+| 15.0 | Ingestion correctness on Chroma |
 | 15.1 | Corpus scale-up and multi-format ingestion |
-| 15.2 | Retrieval and model benchmarking |
-| 15.3 | Token and cache optimization |
+| 15.2 | Retrieval tuning and stage ablations |
+| 15.3 | Token and cache optimization (dropped 2026-10-31) |
 | 15.4 | Final operational validation |
 
-#### 15.0 Ingestion and index lifecycle
+Scope trimmed 2026-10-31 for a single-user, $0 system: no storage migration now, no research-style comparisons. Detail: `docs/architecture/roadmap.md` Phase 15.
+
+#### 15.0 Ingestion correctness on Chroma
 
 - Single, consistent ingest and delete path
-- Persistent, versioned index
-- Consistent keyword and vector indexes
+- BM25 built from Chroma, so keyword and vector indexes cannot drift
+- Persistent, offline-built index on a named volume
+- Storage choice deferred to 15.1 Stage A, on real-size data
 
 #### 15.1 Corpus scale-up and multi-format ingestion
 
-- Full document corpus
+- Full document corpus, in the formats it actually contains
 - Format-aware loading and chunking
-- Expanded evaluation dataset for the full corpus
+- About 20–30 new evaluation questions, plus a spot-check of unreviewed labels
 
-#### 15.2 Retrieval and model benchmarking
+#### 15.2 Retrieval tuning and stage ablations
 
-- Chunking, retrieval, reranker and model comparisons
+- Chunking and retrieval settings (retrieval-only, $0)
 - Pipeline-stage ablations, including skipping the rewrite for short, clear queries
-- Agentic versus deterministic pipeline comparison
 
 #### 15.3 Token and cache optimization
 
-- Prompt and context reduction validated against the evaluation baseline
-- Layered cache in Redis: exact-match → existing semantic cache → retrieval cache, each added only if measured traffic justifies it
-- Speculative generation in parallel with the sufficiency check, to cut time to first token
+- Dropped: one user gives too few repeats for extra cache layers to pay off. Revisit only with log evidence.
 
 #### 15.4 Final operational validation
 
-- Load testing and capacity statement
-- Final SLO targets and alert thresholds from load-test measurements
-- Production-readiness review
+- Short load test and capacity statement
+- Provisional SLOs kept; memory limits re-checked
+- Production-readiness review, torch upgrade, container image scan
 
 ### Phase 16 — Graph RAG and Multimodal RAG
 
