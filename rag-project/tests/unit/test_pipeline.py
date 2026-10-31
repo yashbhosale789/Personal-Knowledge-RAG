@@ -54,6 +54,15 @@ def test_getters_build_once_and_reuse(fresh):
     assert (bm25.built, reranker.built) == (1, 1)
 
 
+def test_reset_bm25_rebuilds_on_next_use_and_old_reference_stays_valid(fresh):
+    bm25, _ = fresh
+    in_flight = ar.get_bm25()
+    ar.reset_bm25()
+    rebuilt = ar.get_bm25()
+    assert rebuilt is not in_flight and in_flight is not None
+    assert bm25.built == 2
+
+
 def test_nothing_is_built_until_asked(fresh):
     bm25, reranker = fresh
     assert (bm25.built, reranker.built) == (0, 0)

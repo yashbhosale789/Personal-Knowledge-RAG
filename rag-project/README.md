@@ -197,7 +197,7 @@ Invoke-RestMethod `
 ### Ingest a PDF
 
 ```powershell
-$body = @{ file_path = "data/documents/manual.pdf"; force_reingest = $false } | ConvertTo-Json
+$body = @{ file_path = "data/documents/manual.pdf" } | ConvertTo-Json
 
 Invoke-RestMethod `
  -Uri http://127.0.0.1:8000/ingest `

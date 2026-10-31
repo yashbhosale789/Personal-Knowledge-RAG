@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from src.retrieval.bm25_retriever import BM25Retriever
@@ -12,10 +10,8 @@ CHUNKS = [
 
 
 @pytest.fixture
-def retriever(tmp_path):
-    path = tmp_path / "chunks.json"
-    path.write_text(json.dumps(CHUNKS), encoding="utf-8")
-    return BM25Retriever(chunks_path=path)
+def retriever():
+    return BM25Retriever(chunks=CHUNKS)
 
 
 def test_best_keyword_match_ranks_first(retriever):
@@ -40,6 +36,11 @@ def test_lookup_is_case_insensitive(retriever):
     assert retriever.retrieve("LUG NUTS", top_k=1)[0]["text"] == CHUNKS[1]["text"]
 
 
-def test_missing_chunks_file_raises(tmp_path):
-    with pytest.raises(FileNotFoundError, match="ingest"):
-        BM25Retriever(chunks_path=tmp_path / "nope.json")
+def test_empty_index_returns_nothing_instead_of_crashing():
+    # e.g. the last document was deleted; BM25Okapi([]) would divide by zero
+    assert BM25Retriever(chunks=[]).retrieve("anything") == []
+
+
+def test_default_builds_from_the_vector_store(monkeypatch):
+    monkeypatch.setattr("src.vectorstore.store.all_chunks", lambda: CHUNKS)
+    assert BM25Retriever().retrieve("tyre", top_k=1)[0]["text"] == CHUNKS[2]["text"]

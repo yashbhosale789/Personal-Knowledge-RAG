@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import secrets
+import threading
 from collections.abc import Callable
 
 from langchain_core.documents import Document
@@ -31,13 +32,25 @@ logger = logging.getLogger(__name__)
 # to reload per request, and importing this module must not load them (F-05).
 _bm25: BM25Retriever | None = None
 _reranker: CrossEncoderReranker | None = None
+# Held while building: a reset waits for an in-progress build, so a build that read
+# Chroma before a write can never be stored after that write's reset.
+_bm25_lock = threading.Lock()
 
 
 def get_bm25() -> BM25Retriever:
     global _bm25
-    if _bm25 is None:
-        _bm25 = BM25Retriever()
-    return _bm25
+    with _bm25_lock:
+        if _bm25 is None:
+            _bm25 = BM25Retriever()
+        return _bm25
+
+
+def reset_bm25() -> None:
+    """Drop the BM25 index after an ingest or delete; the next query rebuilds it from
+    Chroma. A query already holding the old index finishes with it."""
+    global _bm25
+    with _bm25_lock:
+        _bm25 = None
 
 
 def get_reranker() -> CrossEncoderReranker:

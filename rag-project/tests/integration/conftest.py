@@ -1,7 +1,8 @@
 """Integration harness: temp Chroma + fake embedder + real BM25 + real ingest code.
 
 All tests talk to the index through `Stack` (ingest, query, delete) so they survive
-a storage change in Phase 15.0 — only this file needs to learn the new storage.
+a storage change — only this file needs to learn the storage. Since Phase 15.0 BM25
+is built from Chroma, and chunks.json is only the script's eval export.
 """
 
 import importlib.util
@@ -36,20 +37,14 @@ class Stack:
 
         from api.routers import ingest as ingest_router
         from src.pipeline import advanced_rag
-        from src.retrieval import bm25_retriever
         from src.vectorstore import store
 
         monkeypatch.setattr(store, "STORAGE_DIR", tmp_path / "chroma")
         monkeypatch.setattr(config, "DATA_DIR", self.docs_dir)
         monkeypatch.setattr(config, "CHUNKS_PATH", self.chunks_path)
-        monkeypatch.setattr(
-            advanced_rag,
-            "BM25Retriever",
-            lambda: bm25_retriever.BM25Retriever(self.chunks_path),
-        )
         monkeypatch.setattr(advanced_rag, "_bm25", None)
         monkeypatch.setattr(advanced_rag, "_reranker", FakeReranker())
-        monkeypatch.setattr(ingest_router, "clear_cache", self._count_clear)
+        monkeypatch.setattr("src.llm.semantic_cache.clear_cache", self._count_clear)
         monkeypatch.setattr("src.ingestion.loader.load_documents", self._fake_load)
 
         self.store = store
@@ -82,15 +77,7 @@ class Stack:
         spec.loader.exec_module(module)
         module.DATA_DIR = self.docs_dir
         module.CHUNKS_PATH = self.chunks_path
-        module.load_directory = self._load_directory
         return module
-
-    def _load_directory(self, _directory) -> list[Document]:
-        return [
-            doc
-            for name in sorted(self._texts)
-            for doc in self._fake_load(self.docs_dir / name)
-        ]
 
     # -- the three operations the tests use ---------------------------------
 
@@ -103,7 +90,7 @@ class Stack:
 
     def api_ingest(self, name: str, text: str) -> None:
         path = self._write(f"{name}.pdf", text)
-        self.ingest_router._run_ingest(str(path), False)
+        self.ingest_router._run_ingest(str(path))
 
     def api_delete(self, name: str) -> None:
         self.ingest_router._run_delete(str(self.docs_dir / f"{name}.pdf"))
@@ -115,7 +102,7 @@ class Stack:
     # -- inspection -----------------------------------------------------------
 
     def restart_bm25(self) -> None:
-        """Simulates an app restart: BM25 is rebuilt from chunks.json."""
+        """Simulates an app restart: BM25 is rebuilt from Chroma."""
         self.mp.setattr(self.advanced_rag, "_bm25", None)
 
     def dense_count(self) -> int:
