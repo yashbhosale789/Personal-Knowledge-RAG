@@ -154,7 +154,7 @@ Sub-phases are numbered in execution order. Prefer one substantial sub-phase per
 
 **Status: close-out done 2026-10-28 except item 1 (partly evidenced).** Dataset `v1` = id `51bcd1e330`, corpus `c1` = id `9fc4650202`.
 
-- Item 1: 15 manual + 42 synthetic questions. `eval/runs/candidates_reviewed.jsonl` records 29 review decisions (15 accepted, 14 rejected), which covers 15 synthetic questions. **The other 27 synthetic questions have no review record**, and the owner does not recall how they were checked. Treat their labels as unverified until spot-checked; Q17's label is already suspect (see the failure analysis).
+- Item 1: 15 manual + 42 synthetic questions. `eval/runs/candidates_reviewed.jsonl` records 29 review decisions (15 accepted, 14 rejected), which covers 15 synthetic questions. **The other 27 synthetic questions have no review record**, and the owner does not recall how they were checked. Treat their labels as unverified until spot-checked; Q17's label is already suspect (see the failure analysis). Owner: 15.1, before dataset v2 is recorded.
 - Item 2: judge `gemini-3.5-flash-lite`, `eval/data/judge_calibration.json`: 10 good + 10 bad answers per metric (n = 20 each). AUC 1.0 for faithfulness, correctness and relevancy, 0 failed calls. Mean score good/bad: faithfulness 0.82/0.00, correctness 1.00/0.00, relevancy 0.83/0.54. Relevancy separates least.
 - Item 3: the 12-question test split is **frozen**: final reporting only, never for tuning. `eval/tools/assign_split` refuses to run once a test split exists.
 - Item 4: `validate_dataset` runs in `tests.yml`.
@@ -399,6 +399,18 @@ Quality bar: ESLint and type-check clean, component tests (Vitest or equivalent)
 
 Exit: usable on desktop and mobile widths, feedback round-trips and survives a deploy, CI green, `/query` contract tests still pass.
 
+### Post-14 additions (after the close, 2026-10-30)
+
+Not part of the 14.x exit; recorded so Phase 15 starts from what is actually deployed. Both deployed with `7889f26` (Build and Push Image run `41095455566`, build and deploy green). Tests on `main` at `7889f26`: 301 passed / 6 strict xfail, coverage 77.32%.
+
+- **PR #100 — chat UI and 5-turn chat memory** (merge `d779bab`). `QueryRequest` gains an optional `history` (at most `config.HISTORY_TURNS` = 5 turns of `query`, `rewritten_query`, `answer` ≤ `HISTORY_ANSWER_CHARS` = 500; extra fields rejected). It is additive: requests without it behave as before, and the `/query` response contract is unchanged (no version bump). With history, `condense_query` (`CONDENSE_SYSTEM`, LLM stage `rewrite`) turns the follow-up into a standalone question before the cache lookup and retrieval; its LLM call is added to the request's usage. If it fails, the raw follow-up is answered without a cache lookup or store, so it cannot match another chat's cached answer. History is untrusted and used only in the rewrite prompt; Langfuse retention for it is in `Data_Privacy.md`.
+- **PR #107 — "Field notes" UI redesign** (merge `7889f26`): serif answers, footnote-style sources, thumbs feedback, system light/dark. Frontend only.
+
+Decisions and limits:
+- This bends the 13/14 interim rule against changing retrieval behaviour: for follow-ups, retrieval now sees a condensed question. Accepted because single-turn queries (and so every eval run) take the unchanged path.
+- `CONDENSE_SYSTEM` is not part of `PROMPT_VERSION`: the cache and eval key on the standalone question, not on how it was derived.
+- Follow-up quality is **not evaluated**: the golden dataset has no multi-turn questions. A follow-up costs one extra LLM call before the first token. Revisit both in 15.2 (stage ablations) if chat use is material.
+
 ## Current phase
 
 ## Phase 15 — RAG pipeline hardening and scale
@@ -476,6 +488,7 @@ Count files and bytes per extension and sample a few of each. CSV and XLSX in pa
 
 - Keep the 5-PDF corpus `c1` as the CI corpus; CI never ingests the full set.
 - Re-run retrieval-only baselines on the scaled corpus `c2` (no LLM calls needed).
+- Spot-check the 27 synthetic questions that have no review record (13.0 item 1, Q17 first) and fix or drop bad labels before dataset v2 is recorded.
 - Re-audit every `unanswerable`, `adversarial` and `ambiguous` question against `c2`; new documents can make them answerable.
 - Add questions for the new documents, including new categories for tabular lookups, slide content and HTML pages (target at least 100 in total, with a larger held-out test split), and record `dataset v2 / corpus c2`.
 - Report `c1` and `c2` results side by side; do not overwrite `c1` history.
@@ -541,7 +554,7 @@ Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
 | Auth (shared key), rate limiting, HTTPS | Done — single-user by decision (one shared key) | Phases 9, 12; decision 13.5 (`Security.md`) |
 | Automated deployment, health check, rollback | Done, verified live; rollback drilled again 2026-10-29 | Phase 12, 13.5 |
 | Regression evaluation in CI | Partial — LLM-judge gate on 4 items, path-filtered and advisory; `c1` cannot discriminate variants | F-07, F-08 → 15.1, 15.2 |
-| Unit / API / integration tests in CI | Done — required `pytest` check, 250 passed, coverage 74.56% (PR #92) | 13.1 |
+| Unit / API / integration tests in CI | Done — required `pytest` check, 301 passed, coverage 77.32% (`main` at `7889f26`) | 13.1 |
 | Reproducible builds (pinned dependencies) | Done — lock files; image built on every pipeline PR | 13.1 |
 | Dependency / image vulnerability scanning | Partial — pip-audit, Dependabot and CodeQL done; no container image scan; prod torch 2.6.0 not audited (8 open advisories) | F-22, torch upgrade → 15.4 |
 | Prompt / model versioning | Done — `config.PROMPT_VERSION` in responses, logs, metrics, cache namespace and eval records | 13.2, PR #67 |
