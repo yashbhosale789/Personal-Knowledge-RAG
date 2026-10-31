@@ -1,343 +1,254 @@
 # Personal Knowledge OS — Production RAG System
 
+[![Tests](https://github.com/yashbhosale789/Personal-Knowledge-RAG/actions/workflows/tests.yml/badge.svg)](https://github.com/yashbhosale789/Personal-Knowledge-RAG/actions/workflows/tests.yml)
+[![Frontend](https://github.com/yashbhosale789/Personal-Knowledge-RAG/actions/workflows/frontend.yml/badge.svg)](https://github.com/yashbhosale789/Personal-Knowledge-RAG/actions/workflows/frontend.yml)
+[![Uptime](https://github.com/yashbhosale789/Personal-Knowledge-RAG/actions/workflows/uptime.yml/badge.svg)](https://github.com/yashbhosale789/Personal-Knowledge-RAG/actions/workflows/uptime.yml)
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
-[![Vector Store](https://img.shields.io/badge/VectorStore-ChromaDB-orange.svg)](https://www.trychroma.com/)
-[![Cache & Search](<https://img.shields.io/badge/Cache-Redis%20Stack-red.svg>)](https://redis.io/)
-[![CI/CD](<https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20Eval%20Gate-green.svg>)](https://github.com/yashbhosale789/RAG-Project/actions/workflows/eval-gate.yml)
-[![Deployed to AWS](https://img.shields.io/badge/Deployed%20to-AWS%20EC2-FF9900.svg?logo=amazon-aws)](https://aws.amazon.com/)
-[![License: Apache 2.0](<https://img.shields.io/badge/License-Apache%202.0-blue.svg>)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-An enterprise-informed, production-grade **Retrieval-Augmented Generation (RAG)** platform designed to ingest personal and organizational knowledge bases (PDFs, Markdown, DOCX, TXT) and provide strictly grounded, verifiable, and observable answers.
+A single-user **Retrieval-Augmented Generation** system that answers questions about a personal document collection with grounded, cited answers, and abstains when the documents do not support an answer. It runs live on a 2 GiB AWS EC2 instance on a $0 budget, with CI/CD, an evaluation harness, tracing, SLOs and alerting.
 
-The system combines local dense embeddings and sparse keyword retrieval with reciprocal rank fusion (RRF), cross-encoder reranking, context sufficiency gating, citation verification, Redis-backed semantic caching, Prometheus observability, and automated CI/CD evaluation regression gates.
+The focus is engineering discipline around a RAG pipeline rather than model novelty: every quality claim is measured on a versioned dataset, every request can be traced end to end, and every known defect is pinned by a failing test until it is fixed.
+
+**Live:** [yash-pkb-rag.duckdns.org](https://yash-pkb-rag.duckdns.org). The UI asks for the API key; this is a single-user system with one shared key, so the public link shows the UI but not answers.
+
+<!-- TODO: add a short demo GIF of a question, a streamed answer with sources, and thumbs feedback. -->
+
+**Status:** Phases 1–14 are closed (pipeline, deployment, LLMOps, feedback and React UI). Phase 15 (ingestion correctness and the full corpus) is next. See [Known limitations](#known-limitations) and the [roadmap](docs/architecture/roadmap.md).
 
 ---
 
-## Architecture Overview
+## Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Ingestion ["Ingestion Pipeline"]
-        Doc["Personal Documents<br/>PDF, DOCX, MD, TXT"] --> Chunker["Overlapping Recursive Chunker<br/>512 tokens / 64 overlap"]
-        Chunker --> Embedder["Dense Embeddings<br/>BAAI/bge-small-en-v1.5"]
-        Embedder --> Chroma[("Chroma Vector DB<br/>Deterministic Chunk IDs")]
-        Chunker --> BM25Index[("BM25 Sparse Index")]
+    subgraph Client ["Browser (React UI)"]
+        UI["Chat UI<br/>streamed answer, sources, thumbs feedback"]
     end
 
-    subgraph Query ["Query Resolution Pipeline"]
-        UserQuery["User Query"] --> RateLimit["Token Bucket Rate Limiter<br/>Redis"]
-        RateLimit --> CacheCheck{"Semantic Cache Hit?<br/>RediSearch Cosine ≥ 0.87"}
-        CacheCheck -- Yes --> CachedResp["Return Cached Response<br/>~15ms Latency"]
-        CacheCheck -- No --> Rewriter["Query Rewrite / Expansion"]
-    
-        Rewriter --> DenseSearch["Dense Chroma Retrieval<br/>Top-K Candidates"]
-        Rewriter --> SparseSearch["BM25 Sparse Retrieval<br/>Top-K Candidates"]
-    
-        DenseSearch & SparseSearch --> RRF["Reciprocal Rank Fusion<br/>RRF Merge & Deduplication"]
-        RRF --> Reranker["Cross-Encoder Reranker<br/>ms-marco-MiniLM-L-6-v2"]
-    
-        Reranker --> SufficiencyGate{"Context Sufficiency Gate<br/>Score Threshold Check"}
-        SufficiencyGate -- Insufficient --> Abstain["Abstain / Safe Refusal<br/>Zero Hallucination"]
-        SufficiencyGate -- Sufficient --> LLM["Grounded LLM Prompt<br/>Groq / Gemini / OpenRouter / Ollama"]
-    
-        LLM --> CitationGate["Citation Verification<br/>Verify [SOURCE N] References"]
-        CitationGate --> ConfidenceEngine["Confidence Scoring<br/>Answer vs Low-Confidence"]
-        ConfidenceEngine --> StoreCache["Store in Redis Semantic Cache"]
-        StoreCache --> FinalAnswer["Deliver Grounded Answer + Citations"]
+    subgraph Edge ["Caddy (TLS)"]
+        Caddy["Reverse proxy<br/>blocks /metrics and /ingest"]
     end
 
-    subgraph Telemetry ["Observability & Metrics"]
-        FinalAnswer -.-> Metrics["Prometheus Metrics Exporter"]
-        Metrics -.-> Grafana["Grafana Dashboards"]
+    subgraph Query ["FastAPI: /query and /query/stream"]
+        Auth["Bearer key + Redis rate limit"] --> Condense["Follow-up → standalone question<br/>(only with chat history)"]
+        Condense --> Cache{"Semantic cache hit?<br/>RediSearch cosine ≥ 0.87"}
+        Cache -- Yes --> Final["Answer + citations + request ID"]
+        Cache -- No --> Rewrite["Query rewrite"]
+        Rewrite --> Dense["Dense: Chroma<br/>bge-small-en-v1.5"]
+        Rewrite --> Sparse["Sparse: BM25"]
+        Dense & Sparse --> RRF["Reciprocal rank fusion"]
+        RRF --> Rerank["Cross-encoder rerank<br/>ms-marco-MiniLM-L-6-v2, top 5"]
+        Rerank --> Suff{"Sufficiency gate<br/>score floor + LLM judge"}
+        Suff -- Insufficient --> Abstain["Abstain"]
+        Suff -- Sufficient --> Gen["Grounded generation, streamed<br/>Groq gpt-oss-120b → OpenRouter → Gemini"]
+        Gen --> Verify["Citation verifier<br/>Groq qwen3.8-27b"]
+        Verify --> Conf["Confidence: high / low + caveat"]
+        Conf --> Final
     end
+
+    subgraph Stores ["State"]
+        Redis[("Redis Stack<br/>cache, rate limits, feedback grounding")]
+        SQLite[("SQLite on a named volume<br/>feedback")]
+    end
+
+    subgraph Telemetry ["Observability"]
+        Prom["Prometheus<br/>SLO recording rules"] --> Graf["Grafana<br/>dashboards + burn-rate email alerts"]
+        Langfuse["Langfuse Cloud<br/>per-request traces"]
+    end
+
+    UI --> Caddy --> Auth
+    UI -- "POST /feedback" --> Caddy
+    Final -.-> Prom
+    Final -.-> Langfuse
+```
+
+Ingestion: PDF, Markdown, DOCX and TXT → recursive character chunker (512 characters, 64 overlap) → embeddings into Chroma, plus `storage/chunks.json` for BM25. The production index is currently built into the image (see [Known limitations](#known-limitations)).
+
+---
+
+## What it does
+
+**Retrieval and answer quality**
+- Hybrid retrieval: dense (Chroma, `BAAI/bge-small-en-v1.5`) and BM25, merged with reciprocal rank fusion and reranked by a cross-encoder.
+- A sufficiency gate (cross-encoder score floor, then an LLM judge) abstains before generation when the evidence is missing.
+- Answers cite `[SOURCE N]`. A second model from a different family checks that each claim is supported; unsupported answers are marked low-confidence with a caveat.
+- Chat memory: the UI sends the last five turns, and a follow-up ("what about the SUV?") is rewritten into a standalone question before the cache and retrieval see it.
+
+**Serving**
+- `/query` (JSON) and `/query/stream` (server-sent events: tokens, then one final event with verification, confidence and per-chunk sources).
+- Provider retry and fallback (Groq → OpenRouter → Gemini; Ollama for local use). On the stream, fallback happens only before the first token.
+- Redis semantic cache, namespaced by prompt version and model, so a prompt or model change never serves an old answer.
+- `POST /feedback`: thumbs up/down and an optional comment, stored in SQLite with the prompt version, model, and the source, page and snippet of each chunk used (not just chunk IDs). Text is deleted after 90 days.
+
+**Front end**
+- React + TypeScript (Vite), served by FastAPI from the same origin as the API. Plain-text rendering and a Content-Security-Policy that allows only same-origin scripts and requests; the API key lives in `sessionStorage` only.
+
+**Observability and operations**
+- One request ID across the response, JSON logs, Prometheus metrics and the Langfuse trace.
+- Per-stage latency and per-LLM-stage token accounting (`rewrite`, `sufficiency`, `generate`, `citation_verify`), marked reported or estimated.
+- Provisional SLOs (99% non-5xx and 95% of `/query` within 10 s, over 28 days) with fast- and slow-burn alerts by email, plus app-down, provider-failure and fallback-rate alerts. All were fire-tested.
+- External uptime check every 10 minutes from GitHub Actions.
+- Container memory limits, Redis `maxmemory`, Docker log rotation, and a documented logging and retention policy.
+
+**Security**
+- Bearer key (fails closed), Redis rate limits, HTTPS via Caddy, `/metrics` and `/ingest` not reachable from the internet.
+- Prompt-injection scanning on API ingestion; retrieved text, chat history and feedback comments are treated as untrusted.
+- `bandit`, `ruff`, `pip-audit`, Dependabot and CodeQL in CI. One incident (committed keys, 2026-10-29) is written up in the roadmap, with its fixes.
+
+---
+
+## Evaluation
+
+All numbers: corpus `c1` (5 PDF car manuals, 40 chunks), dataset `v1` (57 questions: 45 dev, 12 frozen test), prompt version `938331ced9a6`. The judge is calibrated against hand-labelled good and bad answers (n = 20 per metric, AUC 1.0 for faithfulness, correctness and relevancy).
+
+**Retrieval** (37 answerable dev questions, no LLM calls):
+
+| Stage | Recall@5 | MRR |
+| --- | --- | --- |
+| Dense | 0.946 | 0.769 |
+| BM25 | 0.784 | 0.677 |
+| Fused (RRF) | 0.932 | 0.741 |
+| Reranked | 0.919 | **0.802** |
+
+The reranker improves ranking (MRR) but not recall here, and on a 40-chunk corpus most differences are not statistically distinguishable. Re-measuring on the full corpus is Phase 15.1.
+
+**End to end** (failure analysis, [report](docs/architecture/eval-failure-analysis-2026-10-28.md)): 34 of 45 dev questions are fully correct. All 8 questions that should abstain did abstain, so no answer was given without support. The largest failure group is over-abstention (4), then ranking (2), retrieval misses (2) and incomplete answers (2).
+
+**CI gate:** an LLM-judge regression gate on 4 CI questions (faithfulness ≥ 0.85, relevancy ≥ 0.75) runs on pipeline changes and weekly. It reports rather than blocks when free-tier rate limits cut a run short.
+
+Run it locally (from `rag-project/`):
+
+```powershell
+python -m eval.tools.validate_dataset      # dataset schema and evidence spans
+python -m eval.harness.retrieval_eval      # retrieval metrics, no LLM calls
+python -m eval.harness.generate            # answers for the golden dataset
+python -m eval.harness.judge               # LLM-judge scores
+python -m eval.harness.gate                # regression gate
+python -m eval.security.injection_eval     # prompt-injection resistance
 ```
 
 ---
 
-## Key Engineering Capabilities
+## Production deployment
 
-* **Hybrid Retrieval & Reranking:** Fuses dense vector similarity (`BAAI/bge-small-en-v1.5`) with sparse lexical matching (`BM25`) using Reciprocal Rank Fusion (RRF), followed by a high-precision cross-encoder reranker (`cross-encoder/ms-marco-MiniLM-L-6-v2`).
-* **Hallucination & Abstention Defense:**
-  * **Context Sufficiency Gate:** Evaluates whether retrieved chunks contain sufficient evidence *before* invoking generative LLMs, refusing to hallucinate on missing context.
-  * **Citation Verification:** Enforces inline citation tags (`[SOURCE N]`) in generation prompts and automatically verifies claims against source chunk indices.
-  * **Deterministic Chunk IDs:** Hashes source file paths and chunk offsets to prevent chunk duplication and ensure idempotent re-ingestion.
-* **Resilient Multi-Provider LLM Engine:** Supports Groq (Llama 3.3/3.1), Google Gemini, OpenRouter, and local Ollama instances with automated retry, exponential backoff, and transparent cross-provider fallback.
-* **Low-Latency Semantic Caching:** Integrated Redis Stack and RediSearch vector indexes compute cosine similarity against prior queries, serving semantic cache hits with sub-20ms latency.
-* **Enterprise CI/CD Eval Regression Gate:** Automated GitHub Actions workflows evaluate a golden evaluation dataset on every PR using LLM-as-a-judge and Ragas metrics, blocking regressions in faithfulness or answer relevance.
-* **Telemetry & Security:**
-  * Prometheus exposition (`/metrics`) tracking stage latencies, token consumption, cache hit rates, and error rates.
-  * Prompt injection detection filters on document ingestion.
-  * Static security analysis via `bandit` and linting via `ruff` in CI.
+- **Host:** one AWS EC2 `t3.small` (2 GiB) running Caddy, the app, Redis Stack, Prometheus and Grafana in Docker Compose, each with a memory limit.
+- **CD:** a merge to `main` that touches the app builds the image (UI included), pushes it to GHCR, and runs `rag-project/deploy.sh` on the instance through AWS Systems Manager, so no SSH port is open.
+- **Deploy script:** pulls the image, recreates only the app container and waits for it to be healthy, then clears the semantic cache and sends a warm-up query. If the new version is unhealthy, it redeploys the previous image automatically. Rollback has been drilled on production.
+- **Secrets:** GitHub OIDC is blocked by the account's managed policy, so deploys use a least-privilege key rotated every 90 days.
 
 ---
 
-## Repository Structure
+## Known limitations
 
-```text
-Personal Knowledge OS (RAG System)/
-├── rag-project/                  # Core RAG Application & Backend Engine
-│   ├── api/                      # FastAPI endpoints (/query, /ingest, /health, /metrics), auth, middleware
-│   ├── src/                      # Production Pipeline Source Code
-│   │   ├── embedding/            # Sentence-transformer embedding adapters
-│   │   ├── ingestion/            # File loaders (PDF, MD, DOCX, TXT) & chunkers
-│   │   ├── llm/                  # Provider clients, fallback, semantic cache, rate limiter
-│   │   ├── pipeline/             # Advanced RAG stages, sufficiency & citation gates
-│   │   ├── retrieval/            # Dense, BM25, RRF fusion, and cross-encoder reranking
-│   │   └── vectorstore/          # Chroma vector store persistence layer
-│   ├── eval/                     # Evaluation harness (generate, judge, gate), golden dataset, security evals
-│   ├── scripts/                  # CLI utilities (ingest, interactive query, inspect embeddings)
-│   ├── tests/                    # Unit, component, and pipeline integration test suites
-│   ├── docker-compose.yml        # Multi-container orchestration (App, Redis, Prometheus, Grafana)
-│   ├── deploy.sh                 # AWS SSM pull-and-deploy script; ships in the image with prod config
-│   └── Dockerfile                # Production container specification
-│
-├── docs/                         # Centralized Documentation & Architecture Hub
-│   ├── README.md                 # Documentation Index & Architecture Map
-│   ├── context/                  # Core AI Project Context Files (Claude & System Grounding)
-│   │   ├── Architecture.md       # Target architecture, grounding rules, and production DoD
-│   │   ├── Roadmap.md            # Detailed phase roadmap (Phases 1–12 closed, Phase 13 active)
-│   │   ├── Memory.md             # Consolidated durable project memory & verified facts
-│   │   └── Ponytail.md           # Senior lazy developer discipline (YAGNI, root cause, minimal diff)
-│   ├── architecture/             # High-level system architecture and roadmap
-│   │   ├── system-context.md     # Engineering principles, target architecture, quality metrics
-│   │   └── roadmap.md            # Master 21-phase evolution plan (Current: Phase 13)
-│   ├── runbooks/                 # Infrastructure operations & command guides
-│   │   └── redis-stack-guide.md  # Redis Stack CLI, semantic cache lifecycle, RediSearch
-│   ├── templates/                # Standardized engineering specifications & runbooks
-│   │   ├── development/          # API, Coding Standards, Configuration, Vector Store, Local Dev
-│   │   ├── engineering/          # Testing, Evaluation, Observability, Performance, Error Handling
-│   │   ├── operations/           # Deployment, CI/CD, Rollback, Runbooks, Cost Management
-│   │   └── security/             # Threat Model, Security Posture, Secrets, Privacy, Incident Response
-│   └── archive/                  # Historical phase reports (Phases 1–4) & learning journals
-│
-├── prompts/                      # Developer & AI Assistant Collaboration Workflows
-│   ├── README.md                 # Workflow guidelines & context usage
-│   └── workflows/                # Standardized prompts (Session Startup, Memory Update, Review)
-│
-├── postman/ & .postman/          # API Testing & Postman CLI Configuration
-│   ├── collections/              # Dev and Prod query/ingest test collections
-│   └── environments/             # Environment variable definitions
-│
-├── .github/workflows/            # CI/CD Automation Workflows
-│   ├── eval-gate.yml             # Pull-request evaluation regression gate
-│   ├── code-review.yml           # Static analysis (ruff linting + bandit security scan)
-│   └── build-push.yml            # Docker build, push to GHCR, and AWS SSM auto-deploy
-│
-├── .gitignore                    # Environment, storage, and build exclusion rules
-├── LICENSE                       # Apache 2.0 Open Source License
-└── SECURITY.md                   # Security vulnerability disclosure policy
-```
+These are deliberate, tracked in the [roadmap](docs/architecture/roadmap.md), and each is pinned by a strict `xfail` test where it is a code defect:
+
+- **Small corpus.** Production serves 5 PDFs (`c1`). The full corpus (about 1,190 files) and its formats arrive in Phase 15.1.
+- **Ingestion is not yet consistent.** BM25 is built from `chunks.json`, so documents ingested through the API never reach keyword search and deleted ones can still be retrieved. API ingest is therefore disabled in production, and the index is built into the image. Fixed in Phase 15.0.
+- **Single user.** One shared key; every key holder sees the whole corpus and shares one cache.
+- **Provisional SLOs.** Single-user traffic is too sparse to tune them; no load test yet (Phase 15.4).
+- **Free tiers.** Generation and verification both use Groq's free tier; the verifier degrades to a low-confidence, uncached answer if it fails.
 
 ---
 
-## Quickstart & Local Setup
+## Local setup
 
-### 1. Prerequisites
-
-- **Python:** Version `3.11`
-- **Docker:** Docker Desktop or Engine with Docker Compose
-- **Redis Stack:** For semantic caching and rate limiting (`redis/redis-stack:latest`)
-- **GPU (Optional):** NVIDIA CUDA 12.4 support (falls back to CPU automatically)
-
-### 2. Environment Configuration
-
-Navigate to [`rag-project/`](rag-project) and configure an isolated virtual environment:
+**Prerequisites:** Python 3.11, Docker, Node 22 (only for UI development), and a Groq API key (or Ollama for fully local use).
 
 ```powershell
 cd rag-project
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install --extra-index-url https://download.pytorch.org/whl/cu124 -r requirements.txt
+python -m pip install -r requirements-local.txt -r requirements-dev.txt   # CUDA 12.4 torch; see requirements.in for CPU
 ```
 
-Create a local `.env` configuration file inside `rag-project/`:
+Create `rag-project/.env`:
 
 ```dotenv
-API_KEY=your-secure-bearer-token
+API_KEY=a-long-random-token
 PIPELINE_PROVIDER=groq
 GROQ_API_KEY=your-groq-api-key
 EVAL_PROVIDER=groq
-AGENT_PROVIDER=groq
 REDIS_HOST=localhost
 REDIS_PORT=6379
 ```
 
-### 3. Start Supporting Infrastructure
-
-Run Redis Stack in Docker:
+Start Redis, build the index, and run the API:
 
 ```powershell
-docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
-docker exec -it redis-stack redis-cli ping
+docker compose up -d redis
+python scripts/ingest.py                         # documents in data/documents/
+uvicorn api.main:app --reload --port 8000
 ```
 
-### 4. Ingest Documents
-
-Place your source documents (PDF, Markdown, DOCX, TXT) into `rag-project/data/documents/` and execute the ingestion script:
+UI development (proxies `/query` and `/feedback` to port 8000):
 
 ```powershell
-python scripts/ingest.py
+cd frontend
+npm ci
+npm run dev
 ```
 
-### 5. Launch the Application Service
-
-**FastAPI Direct (Local Dev):**
-
-```powershell
-uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-**Docker Compose (Full Stack with Prometheus & Grafana):**
-
-```powershell
-docker compose up --build
-```
+Tests: `pytest -m "not slow"` from `rag-project/` (offline, no model downloads).
 
 ---
 
-## API Usage Reference
+## API
 
-Protected endpoints require the `Authorization: Bearer <API_KEY>` header.
+The query, feedback and ingest endpoints need `Authorization: Bearer <API_KEY>`.
 
-### 1. Query the Knowledge Base (`POST /query`)
+**`POST /query`**
 
 ```bash
 curl -X POST http://127.0.0.1:8000/query \
-  -H "Authorization: Bearer <API_KEY>" \
+  -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{
-    "query": "How do I perform maintenance on the braking system?",
-    "provider": "groq",
-    "return_contexts": true
-  }'
+  -d '{"query": "Where is the spare tyre on the Aventro Sedan?"}'
 ```
 
-**Example JSON Response:**
+The response (schema pinned by `tests/contracts/query_response.json`) carries `query_id`, `answer`, `sources`, `rewritten_query`, `sufficiency`, `citation_check`, `confidence` (`high` / `low`), `outcome` (`answer`, `answer_low_confidence`, `abstain`, `empty`), `prompt_version` and `latency_ms`. An optional `history` (up to 5 earlier turns) makes the query a follow-up.
 
-```json
-{
-  "query": "How do I perform maintenance on the braking system?",
-  "rewritten_query": "vehicle braking system maintenance inspection procedure",
-  "answer": "To perform maintenance on the braking system, first inspect the brake pad thickness [SOURCE 1]. If the pad lining is under 3mm, replace the pads immediately [SOURCE 2].",
-  "sources": ["vehicle_manual.pdf"],
-  "chunks_used": 2,
-  "provider": "groq",
-  "latency": 0.42,
-  "sufficiency": {
-    "is_sufficient": true,
-    "verdict": "sufficient",
-    "reasoning": "Retrieved context directly specifies pad inspection criteria."
-  },
-  "citation_check": {
-    "all_citations_valid": true,
-    "valid_citations": [1, 2],
-    "invalid_citations": []
-  },
-  "confidence": "high",
-  "outcome": "answer"
-}
-```
+**`POST /query/stream`:** same body; server-sent `token` events, then one `final` event (`tests/contracts/query_stream_final.json`) or one `error`.
 
-### 2. Ingest Document via API (`POST /ingest`)
+**`POST /feedback`:** `{"request_id": "...", "rating": "up" | "down", "comment": "optional"}`.
 
-```bash
-curl -X POST http://127.0.0.1:8000/ingest \
-  -H "Authorization: Bearer <API_KEY>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_path": "data/documents/manual.pdf",
-    "force_reingest": false
-  }'
-```
+**`POST /ingest`, `DELETE /ingest`:** local development only until Phase 15.0.
 
-### 3. Health & Telemetry (`GET /health`, `GET /metrics`)
+**`GET /health`, `GET /metrics`:** health check and Prometheus metrics (`/metrics` is not exposed publicly).
 
-```bash
-curl http://127.0.0.1:8000/health
-curl http://127.0.0.1:8000/metrics
+---
+
+## Repository layout
+
+```text
+rag-project/
+├── api/                  FastAPI app: routers (query, stream, feedback, ingest, health), auth, middleware
+├── src/                  Pipeline: ingestion, embedding, retrieval, llm (providers, cache, usage), pipeline stages
+├── frontend/             React + TypeScript UI (Vite, Vitest, Playwright)
+├── eval/                 Golden dataset, harness (retrieval, generate, judge, gate), security evals
+├── tests/                Unit, API, contract, integration, Redis and slow suites
+├── grafana/              Provisioned dashboard, datasource and alert rules
+├── prometheus-rules.yml  SLO recording rules
+├── docker-compose*.yml   Local and production stacks
+├── deploy.sh             Deploy and rollback script (ships in the image)
+└── Dockerfile            UI build stage + Python app
+docs/                     Architecture, roadmap, runbooks, engineering and security docs
+.github/workflows/        Tests, Code Quality, Dependency Audit, Frontend, Eval Regression Gate, Build and Push Image, Uptime
 ```
 
 ---
 
-## Production Cloud Deployment (AWS EC2)
+## Documentation
 
-The system is deployed live to AWS infrastructure following strict $0-budget and high-reliability design patterns:
-
-* **Live Demo:** Deployed to AWS EC2 with automated SSL/TLS via Caddy reverse proxy.
-* **Infrastructure:** 2 GB `t3.small` EC2 instance (Ubuntu 24.04 LTS) running containerized services (FastAPI app, Redis Stack, Prometheus, Caddy).
-* **Automated Reverse Proxy & TLS:** Caddy automatically issues and renews Let's Encrypt SSL/TLS certificates.
-* **Zero-Downtime Continuous Deployment (CD):**
-  * Qualifying merges to `main` trigger `.github/workflows/build-push.yml`, which builds and pushes the container image to GitHub Container Registry (GHCR).
-  * AWS Systems Manager (SSM) Run Command executes `rag-project/deploy.sh` remotely on the instance without requiring open public SSH ports.
-  * The deployment script verifies the image pull, switches the container, flushes the Redis semantic cache, executes a warm-up `/query`, and verifies health.
-  * **Automated Rollback:** If the new image fails health verification, the script automatically rolls back to the previous stable `.prev_image_tag`.
-
----
-
-## Automated Evaluation & Quality Engineering
-
-The system treats RAG quality as a first-class engineering discipline:
-
-| Metric                        | Target       | Evaluation Mechanism                                                         |
-| :---------------------------- | :----------- | :--------------------------------------------------------------------------- |
-| **Faithfulness**        | $\ge 0.85$ | Verifies that all generated claims are grounded in retrieved source context. |
-| **Answer Relevance**    | $\ge 0.80$ | Verifies that the answer directly addresses the original query.              |
-| **Context Sufficiency** | Gated        | Rejects unanswerable queries before calling the generative LLM.              |
-| **Citation Validity**   | $100\%$    | Validates that emitted `[SOURCE N]` brackets correspond to true indices.   |
-
-To execute the offline evaluation suite:
-
-```powershell
-# Run from rag-project/. Validate the golden dataset against the ingested chunks
-python -m eval.tools.validate_dataset
-
-# Run the pipeline against the golden evaluation dataset
-python -m eval.harness.generate
-
-# Score the answers with the LLM judge
-python -m eval.harness.judge
-
-# Verify quality against the regression gate thresholds
-python -m eval.harness.gate
-
-# Evaluate resistance to document-based prompt injection
-python -m eval.security.injection_eval
-```
-
----
-
-## Project Evolution & Roadmap
-
-This project is developed according to a comprehensive **21-Phase Production Blueprint**:
-
-- [x] **Phase 1–5 (Done):** Naive RAG $\rightarrow$ Advanced RAG (BM25 + RRF + Reranker) $\rightarrow$ Evaluation Framework $\rightarrow$ Agentic RAG $\rightarrow$ FastAPI Backend.
-- [x] **Phase 6–10 (Done):** Local LLMs (Ollama) $\rightarrow$ Prometheus Observability $\rightarrow$ RAG Quality Gates (Sufficiency & Citations) $\rightarrow$ Redis Security & Semantic Caching $\rightarrow$ Containerization & CI/CD Eval Gate.
-- [x] **Phase 11 (Done):** Pre-Deployment Hardening, Ruff/Bandit static security gates, vector store idempotent upsert audit.
-- [x] **Phase 12 (Done):** Cloud Deployment on AWS (EC2), Caddy reverse proxy, zero-downtime automated deployment via GitHub Actions & AWS SSM.
-- [ ] **Phase 13 (Current / In Progress):** LLMOps (Langfuse self-hosted tracing & cost metrics, prompt versioning, cross-encoder reranker comparison experiments, human feedback endpoint).
-- [ ] **Phase 14–16:** Graph RAG + Multimodal $\rightarrow$ Portfolio Extraction $\rightarrow$ React Streaming UI.
-- [ ] **Phase 17–21:** Kafka Event-Driven Ingestion $\rightarrow$ Kubernetes Orchestration $\rightarrow$ Multi-Agent Collaboration $\rightarrow$ Quantization / MoE Fine-tuning.
-
-For the detailed phase plan and architecture decisions, see [`docs/architecture/roadmap.md`](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/architecture/roadmap.md>).
-
----
-
-## Documentation Index
-
-Explore our comprehensive engineering documentation:
-
-- 📖 [**Documentation Hub**](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/README.md>)
-- 🧠 [**AI Project Context Hub**](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/context/Architecture.md>) — [Architecture](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/context/Architecture.md>), [Roadmap](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/context/Roadmap.md>), [Memory](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/context/Memory.md>), and [Ponytail](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/context/Ponytail.md>)
-- 📐 [**System Context & Architecture Target**](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/architecture/system-context.md>)
-- 🗺️ [**Project Roadmap**](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/architecture/roadmap.md>)
-- 🛠️ [**Redis Stack Runbook**](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/runbooks/redis-stack-guide.md>)
-- 📋 [**Engineering Scaffolding Templates**](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/docs/templates/README.md>)
-- 🤖 [**AI Collaboration Workflows**](<file:///D:/Development/GenAI/Personal%20Knowledge%20OS%20(RAG%20System)/prompts/README.md>)
+- [Roadmap and phase records](docs/architecture/roadmap.md): what was built, how it was verified, and the decisions behind it
+- [Eval failure analysis](docs/architecture/eval-failure-analysis-2026-10-28.md)
+- [System context](docs/architecture/system-context.md)
+- [Documentation hub](docs/README.md) and [engineering templates](docs/templates/README.md)
+- [Project memory](docs/context/Memory.md): durable decisions and lessons
+- [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
 ---
 
 ## License
 
-This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
+Apache License 2.0. See [LICENSE](LICENSE).
