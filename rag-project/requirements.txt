@@ -116,7 +116,7 @@ prometheus-client==0.26.0  # via -r requirements.in
 propcache==0.5.4          # via aiohttp, yarl
 protobuf==7.36.2          # via googleapis-common-protos, onnxruntime, opentelemetry-proto
 psutil==7.2.2             # via unstructured
-pyasn1==0.6.4             # via pyasn1-modules
+pyasn1==0.6.5             # via pyasn1-modules
 pyasn1-modules==0.4.2     # via google-auth
 pybase64==1.5.1           # via chromadb
 pycparser==3.12           # via cffi
@@ -124,7 +124,7 @@ pydantic==2.14.1          # via chromadb, fastapi, google-genai, groq, kubernete
 pydantic-core==2.50.1     # via pydantic
 pydantic-settings==2.16.1  # via chromadb, langchain-community
 pygments==2.21.0          # via rich
-pypdf==6.21.2             # via unstructured-client, -r requirements.in
+pypdf==6.21.4             # via unstructured-client, -r requirements.in
 pypdfium2==5.14.0         # via unstructured-client
 pypika==0.51.1            # via chromadb
 pyproject-hooks==1.3.3    # via build
