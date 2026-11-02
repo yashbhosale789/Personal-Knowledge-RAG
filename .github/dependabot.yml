@@ -4,7 +4,10 @@ updates:
     directory: "/rag-project"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    # 0 = no version-update PRs. The lock is built with uv (--python-version 3.11,
+    # --no-emit-package torch, see requirements.txt header); Dependabot re-resolves it
+    # for the wrong Python and pulls in CUDA torch (#118). Bump manually with uv.
+    open-pull-requests-limit: 0
     groups:
       python-minor-and-patch:
         update-types: ["minor", "patch"]
