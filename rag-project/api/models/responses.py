@@ -125,6 +125,16 @@ class IngestResponse(BaseModel):
     message: str
 
 
+class DocumentInfo(BaseModel):
+    name: str = Field(description="File name in the documents folder.")
+
+    chunks: int = Field(description="Chunks indexed for it (0: nothing retrievable).")
+
+
+class DocumentListResponse(BaseModel):
+    documents: list[DocumentInfo]
+
+
 class HealthResponse(BaseModel):
     status: str = Field(description="'ok' or 'degraded'.")
 

@@ -60,22 +60,40 @@ const MESSAGES: Record<number, string> = {
   429: "Rate limit reached. Wait a minute and try again.",
   502: "Every LLM provider failed. Try again shortly.",
   503: "The service is starting or unavailable. Try again shortly.",
+  409: "Another document is being processed. Try again shortly.",
+  413: "The file is larger than the 10 MB upload limit.",
 };
 
-async function post(path: string, apiKey: string, body: object): Promise<Response> {
+// The API's own message (e.g. why a document was rejected), when it sent a plain string.
+async function detail(res: Response): Promise<string | undefined> {
+  try {
+    const body = await res.json();
+    return typeof body?.detail === "string" ? body.detail : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function request(path: string, apiKey: string, init: RequestInit = {}): Promise<Response> {
   let res: Response;
   try {
-    res = await fetch(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify(body),
-    });
+    res = await fetch(path, { ...init, headers: { ...init.headers, Authorization: `Bearer ${apiKey}` } });
   } catch {
     throw new ApiError(0, "Network error: the server could not be reached.");
   }
-  if (!res.ok) throw new ApiError(res.status, MESSAGES[res.status] ?? `Request failed (${res.status}).`);
+  if (!res.ok) {
+    const message = MESSAGES[res.status] ?? (await detail(res)) ?? `Request failed (${res.status}).`;
+    throw new ApiError(res.status, message);
+  }
   return res;
 }
+
+const post = (path: string, apiKey: string, body: object) =>
+  request(path, apiKey, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
 /** Streams the answer to onToken as it is generated; resolves with the `final` event. */
 export async function streamQuery(
@@ -110,3 +128,23 @@ export async function streamQuery(
 export const postFeedback = async (apiKey: string, requestId: string, rating: Rating, comment: string) =>
   // An empty comment is omitted: the API stores it as no comment.
   (await post("/feedback", apiKey, { request_id: requestId, rating, comment: comment || undefined })).json();
+
+/** GET /documents (api/models/responses.py DocumentInfo). */
+export interface DocumentInfo {
+  name: string;
+  chunks: number;
+}
+
+export const listDocuments = async (apiKey: string): Promise<DocumentInfo[]> =>
+  (await (await request("/documents", apiKey)).json()).documents;
+
+/** Resolves with the number of chunks indexed. A document with the same name is replaced. */
+export async function uploadDocument(apiKey: string, file: File): Promise<number> {
+  const form = new FormData();
+  form.append("file", file);
+  return (await (await request("/documents", apiKey, { method: "POST", body: form })).json()).chunks_created;
+}
+
+export const deleteDocument = async (apiKey: string, name: string): Promise<void> => {
+  await request(`/documents/${encodeURIComponent(name)}`, apiKey, { method: "DELETE" });
+};

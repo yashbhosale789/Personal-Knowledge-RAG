@@ -29,8 +29,10 @@ class ProviderError(RAGException):
 
 
 class IngestError(RAGException):
-    def __init__(self, message, file_path: str):
-        super().__init__(message, status_code=422, details={"file_path": file_path})
+    def __init__(self, message, file_path: str, status_code: int = 422):
+        super().__init__(
+            message, status_code=status_code, details={"file_path": file_path}
+        )
 
 
 class QueryValidationError(RAGException):

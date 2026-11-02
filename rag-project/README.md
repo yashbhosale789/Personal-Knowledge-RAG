@@ -194,7 +194,19 @@ Invoke-RestMethod `
 
 `rating` is `up` or `down`; `comment` is optional (at most 1000 characters). Sending again for the same `request_id` replaces the rating and comment. The stored record takes the query, answer, model, prompt version and cited sources from what the server saved for that request, not from the client. Errors: `404` when the request ID is unknown or older than 24 hours, `429` above 30 requests a minute, `503` when Redis is down. Retention: `docs/templates/security/Data_Privacy.md`.
 
-### Ingest a PDF
+### Upload, list and delete documents
+
+What the UI's Documents panel calls. Keyed; upload and delete share a 10-a-minute limit.
+
+```powershell
+curl.exe -X POST http://127.0.0.1:8000/documents -H "Authorization: Bearer $env:API_KEY" -F "file=@manual.pdf"
+Invoke-RestMethod -Uri http://127.0.0.1:8000/documents -Headers $headers
+Invoke-RestMethod -Uri http://127.0.0.1:8000/documents/manual.pdf -Method Delete -Headers $headers
+```
+
+Upload rules: a plain file name ending in `.pdf` (a name with a path in it is rejected, not stripped), a `%PDF-` header, at most 10 MiB and 1,000,000 characters of extracted text (`config.MAX_UPLOAD_BYTES`, `MAX_UPLOAD_CHARS`). The file is saved to `data/documents/` and ingested like `/ingest` (injection scan, replace by name, cache clear). A rejected upload is removed, and a rejected same-name upload leaves the old file and its chunks in place. One document write runs at a time; a second gets `409`. Errors: `400` name or header, `413` size, `422` rejected or unreadable, `404` delete of an unknown name, `429` rate limit.
+
+### Ingest a PDF (local development; blocked at Caddy)
 
 ```powershell
 $body = @{ file_path = "data/documents/manual.pdf" } | ConvertTo-Json

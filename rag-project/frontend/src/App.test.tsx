@@ -114,10 +114,11 @@ describe("App", () => {
     expect(sentBody(fetch, 1)).toEqual({ query: "And how tight?", history: [] });
   });
 
-  it("keeps upload and clear database disabled until the storage fix", () => {
+  it("shows the documents panel only once a key is set", () => {
     render(<App />);
-    expect((screen.getByRole("button", { name: /Upload files/ }) as HTMLButtonElement).disabled).toBe(true);
-    expect((screen.getByRole("button", { name: /Clear database/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByText("Documents")).toBeNull();
+    saveKey();
+    expect(screen.getByText("Documents")).toBeTruthy();
   });
 
   it("clears a rejected key and asks for it again", async () => {

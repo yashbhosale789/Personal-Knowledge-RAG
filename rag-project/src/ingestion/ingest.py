@@ -13,7 +13,9 @@ class IngestRejected(Exception):
     The message is safe to show to the API caller."""
 
 
-def ingest_file(path: Path | str, *, notify: bool = True) -> list[Document]:
+def ingest_file(
+    path: Path | str, *, notify: bool = True, max_chars: int | None = None
+) -> list[Document]:
     """
     Scan, replace and index one file: injection scan -> delete_by_source -> chunk ->
     add_chunks -> index_changed(). Returns the chunks stored. Raises IngestRejected
@@ -21,6 +23,7 @@ def ingest_file(path: Path | str, *, notify: bool = True) -> list[Document]:
 
     notify=False is for batch callers, which must call index_changed() once at the
     end (one cache clear per run, not per file: an unreachable Redis costs seconds).
+    max_chars caps the extracted text (uploads); the check runs before anything is deleted.
     """
     from src.ingestion import loader
     from src.ingestion.chunker import chunk_documents
@@ -37,6 +40,11 @@ def ingest_file(path: Path | str, *, notify: bool = True) -> list[Document]:
         )
 
     full_text = "\n".join(doc.page_content for doc in docs)
+    if max_chars is not None and len(full_text) > max_chars:
+        raise IngestRejected(
+            f"Document too long: {len(full_text):,} characters of text; the limit is {max_chars:,}."
+        )
+
     scan_result = scan_for_injection(full_text)
 
     if scan_result["flagged"]:

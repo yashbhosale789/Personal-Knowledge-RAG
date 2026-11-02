@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Answer } from "./Answer";
 import { ApiError, MEMORY_TURNS, remember, streamQuery, type QueryResponse, type Turn } from "./api";
+import { Documents } from "./Documents";
 import { Feedback } from "./Feedback";
 
 // sessionStorage only: the key leaves with the tab and is never written to the build or localStorage.
@@ -116,7 +117,6 @@ export default function App() {
     }
   }
 
-  const soon = "Available after the storage fix (Phase 15.0)";
   return (
     <div className={menuOpen ? "app menu-open" : "app"}>
       <aside className="side" aria-label="Actions">
@@ -135,14 +135,7 @@ export default function App() {
         >
           Clear chat and memory
         </button>
-        <p className="group">Documents</p>
-        {/* shortcut: disabled until Phase 15.0 makes API ingest and delete persist (Interim rules, F-01/F-02). */}
-        <button type="button" className="act" disabled title={soon}>
-          Upload files <small>after 15.0</small>
-        </button>
-        <button type="button" className="act" disabled title={soon}>
-          Clear database <small>after 15.0</small>
-        </button>
+        {apiKey && <Documents key={apiKey} apiKey={apiKey} onUnauthorized={forgetKey} />}
         <div className="side-foot">
           <p>
             memory <b>{memory.length}/{MEMORY_TURNS}</b> turns

@@ -3,6 +3,11 @@
 	handle @blocked {
 		respond 404
 	}
+	# FastAPI spools a multipart body to disk before the key or size check runs: stop big ones here.
+	# Just above config.MAX_UPLOAD_BYTES (10 MiB) plus multipart overhead.
+	request_body /documents {
+		max_size 11MiB
+	}
 	handle {
 		reverse_proxy app:8000
 	}

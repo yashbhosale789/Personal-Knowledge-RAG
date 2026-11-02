@@ -21,6 +21,14 @@ CHUNK_SIZE = 512
 CHUNK_OVERLAP = 64
 CHUNKS_PATH = BASE_DIR / "storage" / "chunks.json"
 
+# Upload limits (POST /documents), measured 2026-11-02: in the 1 GiB container an upload at
+# MAX_UPLOAD_CHARS (2,107 chunks) took anon memory from 496 to 547 MiB, no OOM. But a 20 MB
+# text-dense PDF takes ~95 s and +500 MiB just to load, and Chroma refuses one add of more
+# than 5,461 chunks. Text, not bytes, sets the embedding work.
+# The Caddyfile caps /documents bodies just above MAX_UPLOAD_BYTES.
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+MAX_UPLOAD_CHARS = 1_000_000  # extracted text, ~2,200 chunks
+
 # Retrieval
 TOP_K = 5
 RRF_K = 60
@@ -249,6 +257,7 @@ RATE_LIMIT_PER_MINUTE = {
     "gemini": 10,
     "openrouter": 3,
     "feedback": 30,  # POST /feedback, not a provider
+    "documents": 10,  # POST and DELETE /documents
 }
 RATE_LIMIT_TTL_SECONDS = 120
 ENTITY_GROUPS = [{"sedan", "suv", "hatchback"}]

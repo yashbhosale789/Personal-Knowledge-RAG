@@ -37,6 +37,8 @@ numpy
 fastapi
 uvicorn[standard]
 pydantic
+# multipart form parsing for POST /documents (Phase 15.0 PR 2)
+python-multipart
 
 # Observability
 prometheus_client

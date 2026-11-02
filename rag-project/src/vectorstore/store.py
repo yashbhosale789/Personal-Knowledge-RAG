@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from collections import Counter
 
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
@@ -89,6 +90,12 @@ def all_chunks() -> list[dict]:
         key=lambda r: (r[1].get("source", ""), r[1].get("chunk_index", 0)),
     )
     return [{"text": text, "metadata": meta} for text, meta in rows]
+
+
+def chunk_counts() -> Counter[str]:
+    """Chunks per `source`. Metadata only: no text is read."""
+    metas = get_vectorstore()._collection.get(include=["metadatas"])["metadatas"]
+    return Counter(m.get("source", "") for m in metas)
 
 
 def delete_by_source(file_path: str) -> int:

@@ -559,3 +559,30 @@ input,
     animation: none !important;
   }
 }
+
+/* Documents panel (Phase 15.0 PR 2): a native disclosure; the list loads on first open. */
+.docs summary {
+  cursor: pointer;
+}
+
+.doc-list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.doc-list li {
+  padding: 6px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.doc-name {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.doc-list small {
+  margin-right: 8px;
+  color: var(--mute);
+}

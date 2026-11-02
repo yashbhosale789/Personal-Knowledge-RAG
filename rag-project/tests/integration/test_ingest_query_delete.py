@@ -107,6 +107,21 @@ def test_bm25_follows_api_ingest_and_delete_without_a_restart(stack):
     assert not any("plmokn" in t for t in stack.query("plmokn")["bm25"])
 
 
+def test_uploaded_document_is_retrievable_and_gone_after_delete(stack):
+    """15.0 PR 2: POST /documents then DELETE /documents/{name}, both search paths."""
+    stack.baked_ingest(tyre=TYRE)
+    stack.query("zyxqwv")  # BM25 built before the upload, so the reset must reach it
+    stack.upload("brake", BRAKE)
+    stages = stack.query("plmokn")
+    assert any("plmokn" in t for t in stages["dense"])
+    assert any("plmokn" in t for t in stages["bm25"])
+    stack.api_delete("brake")
+    stages = stack.query("plmokn")
+    leaked = [t for chunks in stages.values() for t in chunks if "plmokn" in t]
+    assert leaked == []
+    assert any("zyxqwv" in t for t in stack.query("zyxqwv")["bm25"])
+
+
 # --- F-03: script ingest has the API path's safeguards (fixed in 15.0) ------
 
 
