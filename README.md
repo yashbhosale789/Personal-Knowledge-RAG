@@ -212,7 +212,9 @@ The response (schema pinned by `tests/contracts/query_response.json`) carries `q
 
 **`POST /feedback`:** `{"request_id": "...", "rating": "up" | "down", "comment": "optional"}`.
 
-**`POST /ingest`, `DELETE /ingest`:** local development only until Phase 15.0.
+**`POST /documents`, `GET /documents`, `DELETE /documents/{name}`:** upload a PDF (multipart field `file`; a same-name upload replaces the old one), list the PDFs with their chunk counts, and delete one. Used by the UI; persisted on prod in named volumes (`docs/templates/operations/Backup_Recovery.md`).
+
+**`POST /ingest`, `DELETE /ingest`:** take a server file path; local development only (blocked at Caddy).
 
 **`GET /health`, `GET /metrics`:** health check and Prometheus metrics (`/metrics` is not exposed publicly).
 

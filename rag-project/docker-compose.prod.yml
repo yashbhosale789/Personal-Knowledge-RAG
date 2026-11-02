@@ -38,6 +38,10 @@ services:
     volumes:
       # Feedback SQLite (Phase 14.0): survives deploys and rollbacks; independent of the index.
       - feedback_data:/app/feedback
+      # The index and its PDFs (Phase 15.0 PR 2). An empty volume is seeded from the image's
+      # baked index on first mount; after that the volume wins. Re-seed: Backup_Recovery.md.
+      - chroma_data:/app/storage/chroma
+      - documents_data:/app/data/documents
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
@@ -109,3 +113,5 @@ volumes:
   prometheus_data:
   grafana_data:
   feedback_data:
+  chroma_data:
+  documents_data:

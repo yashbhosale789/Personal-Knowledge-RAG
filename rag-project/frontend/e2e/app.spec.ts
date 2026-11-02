@@ -56,3 +56,58 @@ test("chat: ask, open the sources, rate, ask a follow-up with memory", async ({ 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test("documents: list, upload a PDF, delete it after confirming", async ({ page, isMobile }) => {
+  const errors: string[] = [];
+  page.on("console", (msg) => msg.type() === "error" && errors.push(msg.text()));
+  page.on("pageerror", (err) => errors.push(err.message));
+
+  const long = "Owner's Manual - Adaptive Cruise Control and Lane Keeping Assist (2026 edition).pdf";
+  // A committed corpus PDF; CI runs from rag-project/frontend.
+  const upload = "Adjusting the Steering Wheel.pdf";
+  let docs = [{ name: long, chunks: 40 }];
+  const sent: Array<{ method: string; path: string; auth: string | undefined; multipart: boolean }> = [];
+  await page.route(/\/documents(\/.*)?$/, async (route) => {
+    const request = route.request();
+    const path = decodeURIComponent(new URL(request.url()).pathname);
+    const type = request.headers()["content-type"] ?? "";
+    sent.push({ method: request.method(), path, auth: request.headers()["authorization"], multipart: type.startsWith("multipart/form-data") });
+    if (request.method() === "POST") {
+      docs = [...docs, { name: upload, chunks: 9 }];
+      return route.fulfill({ json: { status: "success", file_path: upload, chunks_created: 9, message: "ok" } });
+    }
+    if (request.method() === "DELETE") {
+      docs = docs.filter((d) => `/documents/${d.name}` !== path);
+      return route.fulfill({ json: { status: "success", file_path: upload, chunks_deleted: 9, message: "ok" } });
+    }
+    await route.fulfill({ json: { documents: docs } });
+  });
+
+  await page.goto("/");
+  await page.getByLabel("API key").fill(KEY);
+  await page.getByRole("button", { name: "Save key" }).click();
+  if (isMobile) await page.getByRole("button", { name: "Menu" }).click();
+
+  await page.getByText("Documents", { exact: true }).click();
+  await expect(page.getByText(long)).toBeVisible();
+  await expect(page.getByText("40 chunks")).toBeVisible();
+
+  await page.getByLabel("PDF to upload").setInputFiles(`../data/documents/${upload}`);
+  await expect(page.getByText(`${upload}: 9 chunks indexed.`)).toBeVisible();
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: `Delete ${upload}` }).click();
+  await expect(page.getByText(`${upload} deleted.`)).toBeVisible();
+  await expect(page.getByRole("button", { name: `Delete ${upload}` })).toHaveCount(0);
+
+  const auth = `Bearer ${KEY}`;
+  expect(sent).toEqual([
+    { method: "GET", path: "/documents", auth, multipart: false },
+    { method: "POST", path: "/documents", auth, multipart: true },
+    { method: "GET", path: "/documents", auth, multipart: false },
+    { method: "DELETE", path: `/documents/${upload}`, auth, multipart: false },
+    { method: "GET", path: "/documents", auth, multipart: false },
+  ]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});

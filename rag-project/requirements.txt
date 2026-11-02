@@ -132,6 +132,7 @@ python-dateutil==3.0.0    # via kubernetes
 python-dotenv==1.2.4      # via pydantic-settings, uvicorn, -r requirements.in
 python-iso639==2026.7.23  # via unstructured
 python-magic==0.4.27      # via unstructured
+python-multipart==0.0.33  # via -r requirements.in
 python-oxmsg==0.0.2       # via unstructured
 pyyaml==6.0.3             # via chromadb, huggingface-hub, kubernetes, langchain-classic, langchain-community, langchain-core, transformers, uvicorn
 rank-bm25==0.2.2          # via -r requirements.in

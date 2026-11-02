@@ -6,6 +6,7 @@ is built from Chroma, and chunks.json is only the script's eval export.
 """
 
 import importlib.util
+import io
 import json
 from pathlib import Path
 
@@ -91,6 +92,11 @@ class Stack:
     def api_ingest(self, name: str, text: str) -> None:
         path = self._write(f"{name}.pdf", text)
         self.ingest_router._run_ingest(str(path))
+
+    def upload(self, name: str, text: str) -> None:
+        """POST /documents minus HTTP: the bytes are saved by the upload path itself."""
+        self._texts[f"{name}.pdf"] = text
+        self.ingest_router._run_upload(f"{name}.pdf", io.BytesIO(b"%PDF-1.4 upload"))
 
     def api_delete(self, name: str) -> None:
         self.ingest_router._run_delete(str(self.docs_dir / f"{name}.pdf"))
