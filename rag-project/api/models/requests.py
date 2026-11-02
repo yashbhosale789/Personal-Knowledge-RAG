@@ -67,8 +67,3 @@ class IngestRequest(BaseModel):
         description="Absolute or relative path to the document to ingest.",
         examples=["/data/documents/manual.pdf"],
     )
-
-    force_reingest: bool = Field(
-        default=False,
-        description="If true, re-ingest even if the document was previously processed.",
-    )

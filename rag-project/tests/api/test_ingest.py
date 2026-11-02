@@ -18,8 +18,7 @@ def data_dir(tmp_path, monkeypatch):
 def no_side_effects(monkeypatch):
     calls = {"deleted": [], "cache_clears": 0}
     monkeypatch.setattr(
-        ingest_router,
-        "clear_cache",
+        "src.llm.semantic_cache.clear_cache",
         lambda: calls.__setitem__("cache_clears", calls["cache_clears"] + 1) or 0,
     )
     from src.vectorstore import store

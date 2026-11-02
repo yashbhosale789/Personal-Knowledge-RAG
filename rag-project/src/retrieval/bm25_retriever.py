@@ -1,10 +1,8 @@
-import json
 import logging
-from pathlib import Path
 
 from rank_bm25 import BM25Okapi
 
-from config import CHUNKS_PATH, TOP_K
+from config import TOP_K
 
 logger = logging.getLogger(__name__)
 
@@ -13,25 +11,26 @@ class BM25Retriever:
     """
     Keyword retriever backed by BM25Okapi.
 
-    Loads pre-chunked text from chunks.json produced by ingest.py.
+    Built from the chunks stored in Chroma (the single source of truth, Phase 15.0),
+    so it never drifts from dense retrieval. Rebuilt after every ingest or delete.
     Tokenisation is whitespace split — sufficient for English prose.
     For production, swap in a proper tokenizer (spaCy, NLTK punkt).
     """
 
-    def __init__(self, chunks_path: Path = CHUNKS_PATH):
-        self._chunks = self._load_chunks(chunks_path)
+    def __init__(self, chunks: list[dict] | None = None):
+        if chunks is None:
+            from src.vectorstore.store import all_chunks
+
+            chunks = all_chunks()
+        self._chunks = chunks
         self._corpus = [c["text"] for c in self._chunks]
         self._tokenized = [doc.lower().split() for doc in self._corpus]
-        self._index = BM25Okapi(self._tokenized)
-        logger.info(f"BM25 index built over {len(self._chunks)} chunks")
-
-    def _load_chunks(self, path: Path) -> list[dict]:
-        if not path.exists():
-            raise FileNotFoundError(
-                f"Chunks.json not found at path {path}. Run scripts/ingest.py first."
-            )
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
+        # BM25Okapi divides by the corpus size, so an empty index has no BM25 object.
+        self._index = BM25Okapi(self._tokenized) if self._tokenized else None
+        if self._index is None:
+            logger.warning("BM25 index is empty: no chunks in the vector store")
+        else:
+            logger.info(f"BM25 index built over {len(self._chunks)} chunks")
 
     def retrieve(self, query: str, top_k: int = TOP_K) -> list[dict]:
         """
@@ -39,6 +38,9 @@ class BM25Retriever:
         Score is a raw BM25 float — only meaningful relative to other scores
         from this same query. Do not compare across queries.
         """
+        if self._index is None:
+            return []
+
         tokens = query.lower().split()
         scores = self._index.get_scores(tokens)
 

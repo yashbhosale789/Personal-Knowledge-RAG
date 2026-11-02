@@ -10,7 +10,7 @@ from api.core.auth import verify_api_key
 from api.core.exceptions import IngestError
 from api.models.requests import IngestRequest
 from api.models.responses import DeleteResponse, IngestResponse
-from src.llm.semantic_cache import clear_cache
+from src.ingestion.ingest import IngestRejected, index_changed, ingest_file
 from src.vectorstore.store import delete_by_source
 
 logger = logging.getLogger(__name__)
@@ -44,59 +44,11 @@ def _resolve_and_validate_path(file_path: str) -> Path:
     return resolved_path
 
 
-def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
-
-    # import os
-    # from pathlib import Path
-    # import config
-
-    from src.ingestion.chunker import chunk_documents
-    from src.ingestion.loader import load_documents
-    from src.pipeline.injection_scanner import scan_for_injection
-
-    # from src.embedding.embedder import get_embedding_model
-    # from src.vectorstore.store import get_vectorstore
-    from src.vectorstore.store import add_chunks
-
+def _run_ingest(file_path: str) -> IngestResponse:
     resolved_path = _resolve_and_validate_path(file_path)
 
     try:
-        # docs = load_documents(file_path)
-        docs = load_documents(resolved_path)
-
-        if not docs:
-            raise IngestError(
-                "No content could be extracted from this document. It may be corrupted or empty.",
-                file_path=file_path,
-            )
-
-        full_text = "\n".join(doc.page_content for doc in docs)
-        scan_result = scan_for_injection(full_text)
-
-        if scan_result["flagged"]:
-            logger.warning(
-                f"Ingest blocked after {file_path} - injection patterns detected: {scan_result['categories']}"
-            )
-            raise IngestError(
-                f"Document rejected: possible prompt injection detected ({','.join(scan_result['categories'])})",
-                file_path=file_path,
-            )
-
-        # chunks = chunk_documents(docs)
-        # embedder = get_embedding_model()
-        # store = get_vectorstore()
-        # store.add_documents(chunks, embedder)
-
-        delete_by_source(str(resolved_path)) 
-        chunks = chunk_documents(docs)
-        add_chunks(chunks)
-
-        try:
-            cleared_count = clear_cache()
-            logger.info(f"Cleared {cleared_count} cache entries after ingest.")
-
-        except Exception as e:  # noqa: BLE001
-            logger.warning(f"Cache cleare failed aftrer ingest (non-fatal): {e}")
+        chunks = ingest_file(resolved_path)
 
         return IngestResponse(
             status="success",
@@ -105,11 +57,8 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
             message=f"Successfully ingested {len(chunks)} chunks.",
         )
 
-    # except Exception as e:
-    #     raise IngestError(str(e), file_path=file_path)
-
-    except IngestError:
-        raise
+    except IngestRejected as e:
+        raise IngestError(str(e), file_path=file_path)
 
     except Exception:
         logger.exception(f"Ingest failed for {file_path}")
@@ -119,9 +68,7 @@ def _run_ingest(file_path: str, force_reingest: bool) -> IngestResponse:
 @router.post("/ingest", response_model=IngestResponse, status_code=200)
 async def ingest_endpoint(body: IngestRequest, _: None = Depends(verify_api_key)):
     try:
-        result = await run_in_threadpool(
-            _run_ingest, body.file_path, body.force_reingest
-        )
+        result = await run_in_threadpool(_run_ingest, body.file_path)
         return result
 
     except IngestError as e:
@@ -135,20 +82,12 @@ async def ingest_endpoint(body: IngestRequest, _: None = Depends(verify_api_key)
 
 
 def _run_delete(file_path: str) -> DeleteResponse:
-    from src.vectorstore.store import delete_by_source
-
     resolved_path = _resolve_and_validate_path(file_path)
 
     try:
         chunks_deleted = delete_by_source(str(resolved_path))
+        index_changed()  # before os.remove: Chroma has changed even if the remove fails
         os.remove(resolved_path)
-
-        try:
-            cleared_count = clear_cache()
-            logger.info(f"Cleared {cleared_count} cache entries after delete.")
-
-        except Exception as e:  # noqa: BLE001
-            logger.warning(f"Cache clear failed after delete (non-fatal): {e}")
 
         return DeleteResponse(
             status="success",

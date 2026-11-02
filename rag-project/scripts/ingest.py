@@ -7,9 +7,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.stdout.reconfigure(encoding="utf-8")
 
 from config import CHUNKS_PATH, DATA_DIR
-from src.ingestion.chunker import chunk_documents
-from src.ingestion.loader import load_directory
-from src.vectorstore.store import add_chunks
+from src.ingestion.ingest import IngestRejected, index_changed, ingest_file
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
@@ -17,6 +15,7 @@ logging.basicConfig(
 
 
 def save_chunks(chunks: list, path: Path) -> None:
+    """Eval export only (corpus id, dataset validation); serving never reads it."""
     path.parent.mkdir(parents=True, exist_ok=True)
     data = [
         {"text": chunk.page_content, "metadata": chunk.metadata} for chunk in chunks
@@ -25,33 +24,42 @@ def save_chunks(chunks: list, path: Path) -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-def main():
+def main() -> int:
+    """Ingests every PDF in DATA_DIR through the shared path. Returns the number of
+    failures (rejected files, or no documents at all)."""
     print(f"Loading documents from : {DATA_DIR}")
 
-    documents = load_directory(DATA_DIR)
-    if not documents:
+    # Sorted: the same order on every OS, so chunks.json (and the corpus id) is stable.
+    # key=str: Windows Path ordering is case-insensitive, Linux is not.
+    files = sorted(
+        (p for p in DATA_DIR.rglob("*") if p.suffix.lower() == ".pdf"), key=str
+    )
+    if not files:
         print("No documents found. Add files to data/documents/ and retry. Exiting.")
-        return
+        return 1
 
-    chunks = chunk_documents(documents)
-
-    print(f"\n[INFO] Embedding and storing {len(chunks)} chunks...\n")
-    add_chunks(chunks)
+    chunks, rejected = [], []
+    try:
+        for path in files:
+            try:
+                chunks.extend(ingest_file(path, notify=False))
+            except IngestRejected as e:
+                print(f"[REJECTED] {path.name}: {e}")
+                rejected.append(path.name)
+    finally:
+        index_changed()  # once per run, also after a crash mid-loop
 
     save_chunks(chunks, CHUNKS_PATH)
     print(f"[OK] Chunks saved to : {CHUNKS_PATH}")
 
-    print("\n[OK] Ingestion complete.")
-    print(f"   Documents loaded : {len(documents)}")
+    print("\nIngestion complete.")
+    print(f"   Files ingested   : {len(files) - len(rejected)} of {len(files)}")
     print(f"   Chunks produced  : {len(chunks)}")
     print("   Stored in : storage/chroma/")
-    print("\nSample chunk (first):")
-    print("-" * 60)
-    print(chunks[0].page_content[:300])
-    print("\nMetadata:", chunks[0].metadata)
-
-    print(f"Created {len(chunks)} chunks from {len(documents)} document(s)")
+    if rejected:
+        print(f"[FAIL] Rejected: {', '.join(rejected)}")
+    return len(rejected)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(1 if main() else 0)

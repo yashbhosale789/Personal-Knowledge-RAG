@@ -78,6 +78,19 @@ def add_chunks(chunks: list[Document]) -> None:
     logger.info(f"Stored {len(chunks)} chunks to vector store : {CHROMA_COLLECTION}")
 
 
+def all_chunks() -> list[dict]:
+    """
+    Every stored chunk as {text, metadata}, ordered by (source, chunk_index).
+    The fixed order keeps BM25 tie-breaking identical to the old chunks.json order.
+    """
+    got = get_vectorstore()._collection.get(include=["documents", "metadatas"])
+    rows = sorted(
+        zip(got["documents"], got["metadatas"]),
+        key=lambda r: (r[1].get("source", ""), r[1].get("chunk_index", 0)),
+    )
+    return [{"text": text, "metadata": meta} for text, meta in rows]
+
+
 def delete_by_source(file_path: str) -> int:
     """
     Remove all chunks whose 'source' metadata matches file_path exactly.
