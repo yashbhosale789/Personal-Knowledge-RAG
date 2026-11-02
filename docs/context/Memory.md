@@ -26,6 +26,12 @@
 - **Hard cost constraint:** $0 budget. Avoid recommendations that require paid plans or risk unexpected cloud charges.
 
 ## 2. Current status — highest priority
+
+### Phase 15.0 PR 1 (Ingestion correctness) — DONE 2026-11-02; next: 15.0 PR 2
+- PR #115 (merge `ed0e421`), deployed; prod log `BM25 index built over 40 chunks`. CI: 309 passed / 1 xfail (injection scanner), coverage 77.69%. F-01, F-03, F-27 fixed; F-02 (persistence) is PR 2. Retrieval on `c1` / `v1` / prompt `938331ced9a6` identical to `retrieval_baseline.json`, stage by stage. Detail: roadmap §15.0 "PR 1 done".
+- **Design:** Chroma is the single source of truth. BM25 is built from `store.all_chunks()` and dropped by `reset_bm25()` (locked) after every ingest/delete; the next query rebuilds it (~10 ms on `c1`). One ingest path: `src/ingestion/ingest.py` `ingest_file()` + `index_changed()`, used by `POST /ingest`, `DELETE /ingest` and `scripts/ingest.py`. `force_reingest` removed.
+- **Decision (2026-11-01):** `chunks.json` is still written by the script as an eval-only export (corpus ID, dataset validation, eval tools); serving never reads it. Do not re-ask.
+- **Carry into PR 2:** the BM25 reset is per process (one uvicorn worker). A script run inside a live container needs an app restart, so the re-seed procedure must say so. Interim rule "no `/ingest` on prod" stays until PR 2.
  
 ### Phase 11: Pre-deployment hardening — COMPLETE (2026-10-22)
 - Full-codebase security and reliability review completed.
@@ -106,7 +112,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 
 **Phase 13.1 (new numbering — "Test foundation and CI hygiene") — CLOSED 2026-10-28.** Repo made public (`yashbhosale789/Personal-Knowledge-RAG`); branch protection on `main` requires `pytest` and `lint-security` (path-filtered build and eval gate deliberately not required). Original notes from 2026-10-23 follow; the "open exit criteria" bullet below is resolved.
 - Suite in `rag-project/tests/` (`unit`, `api`, `integration`, `redis`, `slow`, `contracts`; live scripts moved to `tests/manual/`). Default run: **206 passed, 6 strict xfail, 3 deselected (`slow`)**, ~90 s, offline with an empty HF cache. Line coverage **65.55%**; CI floor `--cov-fail-under=65` (ratchet up only, never down). Measured over `src` and `api` (`.coveragerc`).
-- Known defects pinned with `xfail(strict=True)`: F-01 (API-ingested docs not in BM25; deleted docs stay retrievable), F-03 (script ingest: not idempotent for shrinking docs, no injection scan, no cache clear), plus the buried soft-injection case (INJ04) the regex scanner misses. Phase 15.0 removes each marker as its fix lands.
+- Known defects pinned with `xfail(strict=True)`: F-01 (API-ingested docs not in BM25; deleted docs stay retrievable), F-03 (script ingest: not idempotent for shrinking docs, no injection scan, no cache clear), plus the buried soft-injection case (INJ04) the regex scanner misses. Phase 15.0 removes each marker as its fix lands. (F-01/F-03 markers removed in #115, 2026-11-02; only INJ04 remains.)
 - F-05: BM25 and the reranker are now lazy (`get_bm25()` / `get_reranker()` / `warmup()` in `advanced_rag.py`), warmed at app startup. Verified behaviour-preserving: all four stage outputs (dense/bm25/fused/reranked, scores rounded to 4 dp) were byte-identical for the 54 cached rewrites before and after. Side effect: the eval fingerprint changed because `src/pipeline` was edited, so older local `eval/runs/` entries no longer match.
 - F-19: `verify_api_key` fails closed (401, never 500) when the key env var is unset or the presented key is non-ASCII. Startup already refused a missing/short key; both are now tested.
 - F-06: `requirements.in` (direct deps) -> `requirements.txt` (pinned lock, py3.11/Linux, torch family excluded because torch is installed first from the CPU index); `requirements-dev.in/.txt` for tooling. `requirements-local.txt` now reads `requirements.in`.

@@ -64,18 +64,18 @@ These are real, verified by code reading (see the findings file), and **not** sc
 
 | ID | Defect | Risk while deferred | Interim mitigation | Fixed in |
 | --- | --- | --- | --- | --- |
-| F-01 | BM25 ignores API-ingested documents; deleted documents remain retrievable | Deleted content can still reach the LLM; new documents are invisible to keyword search | Do not use `/ingest` or `DELETE /ingest` in production | 15.0 |
-| F-02 | Production index is baked into the image; API ingest/delete are not persisted | API changes vanish on deploy | Same as above; ingest only by rebuilding the image | 15.0 |
-| F-03 | Script/Docker ingest skips injection scan, delete-before-add, cache clear | Stale chunks; unscanned documents | Corpus stays the 5 reviewed PDFs | 15.0 |
+| F-01 | BM25 ignores API-ingested documents; deleted documents remain retrievable | Deleted content can still reach the LLM; new documents are invisible to keyword search | Do not use `/ingest` or `DELETE /ingest` in production | **Fixed** 15.0 PR 1 (#115, 2026-11-02) |
+| F-02 | Production index is baked into the image; API ingest/delete are not persisted | API changes vanish on deploy | Same as above; ingest only by rebuilding the image | 15.0 PR 2 |
+| F-03 | Script/Docker ingest skips injection scan, delete-before-add, cache clear | Stale chunks; unscanned documents | Corpus stays the 5 reviewed PDFs | **Fixed** 15.0 PR 1 (#115, 2026-11-02) |
 | F-09 / F-10 | Naive BM25 tokenizer; chunking never evaluated | Unknown retrieval-quality loss | None needed; measure in 15.2 | 15.2 |
 | F-07 / F-08 | Corpus too small to discriminate variants; 12-question test split | LLMOps numbers on `c1` are provisional | Label every result `c1`; do not tune on the test split | 15.1 |
 | F-14 | Cache entity guard hard-coded to `sedan/suv/hatchback` | Wrong cache hits on other domains | Single-domain corpus until 15.1 | 15.1 |
 | F-15 | Loader handles 4 formats and the ingest API only `.pdf` | None: the corpus is PDF only (decided 2026-10-31) | None | Closed by decision |
-| F-27 | Two separately maintained stores (Chroma and an in-memory BM25 built from `chunks.json`) are the root cause of F-01 | Same as F-01 | Same as F-01 | 15.0 |
+| F-27 | Two separately maintained stores (Chroma and an in-memory BM25 built from `chunks.json`) are the root cause of F-01 | Same as F-01 | Same as F-01 | **Fixed** 15.0 PR 1 (#115, 2026-11-02): Chroma is the single source of truth |
 
 ## Interim rules (until Phase 15 closes)
 
-- No `/ingest` or `DELETE /ingest` against production. The production corpus is the 5 PDFs baked into the image.
+- No `/ingest` or `DELETE /ingest` against production. The production corpus is the 5 PDFs baked into the image. (Still in force after PR 1: F-02, persistence, is fixed by PR 2.)
 - The frontend (Phase 14) must **not** expose upload or delete. Lifted by 15.0 PR 2.
 - Every evaluation result quoted in Phases 13 and 14 states `corpus c1` and the dataset version.
 - The 12-question test split stays frozen.
@@ -445,6 +445,14 @@ Note on terms: Chroma is not "in-memory"; it persists to disk (SQLite and index 
 
 Exit PR 1: the five F-01/F-03 strict xfails in `tests/integration/test_ingest_query_delete.py` removed and passing (the injection-scanner xfail is not 15.0's); retrieval on `c1` identical (`corpus c1`, dataset `v1`); `/query` and stream contracts unchanged; deployed.
 
+**PR 1 done 2026-11-02** (#115, merge `ed0e421`, deployed; prod log shows `BM25 index built over 40 chunks`). CI: 309 passed / 1 xfail (injection scanner, not 15.0), coverage 77.69%; eval gate, build and lint green.
+- **Evidence ($0, no LLM calls):** on corpus `c1` (`9fc4650202`), dataset `v1` (`51bcd1e330`), prompt `938331ced9a6`, after re-ingesting with the new script, `retrieval_eval` output is identical to `eval/runs/retrieval_baseline.json`, and every stage's chunks and scores (dense/bm25/fused/reranked) are identical for all 46 queries. `chunks.json` byte-identical. `/query` and stream contract snapshots unchanged.
+- **Rebuild cost:** about 10 ms warm on `c1` (Chroma read 6 ms). BM25 build alone, measured on replicated `c1` text: 57 ms at 1,200 chunks, 310 ms at 6,000. The Chroma read at those sizes is measured in 15.1.
+- **As built:** `store.all_chunks()` (ordered by source, chunk_index, so tie-breaking matches the old order); `BM25Retriever` builds from it (an empty index returns `[]`); `advanced_rag.reset_bm25()` behind a lock (a build that read Chroma before a write cannot be stored after that write's reset); `src/ingestion/ingest.py` `ingest_file(path, notify=True)` and `index_changed()` (cache clear + BM25 reset), called by `POST /ingest`, `DELETE /ingest` and `scripts/ingest.py`. The script processes PDFs sorted by path string, clears the cache once per run (an unreachable Redis costs about 49 s per call on Windows) and exits 1 on any rejected file, so a bad PDF fails the image build. `force_reingest` removed (old clients that send it are ignored).
+- **Deviation from the plan above:** the script still writes `chunks.json`, as an eval-only export. The corpus ID, `validate_dataset`, `retrieval_eval`, the candidate tools and the CI "Build chunks" step read it; nothing that serves queries does. Decided 2026-11-01.
+- **F-03 `source` check:** both paths already stored the same string for `c1`; `ingest_file` now resolves the path once, so they cannot drift.
+- **Limits carried into PR 2:** the BM25 reset is per process (one uvicorn worker today). Running the ingest script inside a live container does not reach the app's BM25, so the re-seed procedure must restart the app.
+
 #### PR 2 — Persistent index and PDF upload from the UI
 
 - **Volumes:** named volumes for Chroma (`/app/storage/chroma`) and the documents folder (`/app/data/documents`) in `docker-compose.prod.yml`. Docker fills an empty named volume from the image on first mount, so the image's index seeds production with no extra code. After that the volume wins: a PDF added to git later reaches prod only by uploading it or by a documented re-seed (remove the volumes, or re-run the ingest script in the container). A rollback to a pre-PR 2 image ignores the volumes and serves its own built-in index; uploads reappear on the next forward deploy.
@@ -524,7 +532,7 @@ Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
 | Area | Status | Owner / evidence |
 | --- | --- | --- |
 | Hybrid retrieval, reranking, grounded answers with citations, abstention | Done | Phases 2, 8 |
-| Prompt-injection defense | Partial — API path only | F-03 → 15.0 |
+| Prompt-injection defense | Partial — scanner on every ingest path since 15.0 PR 1 (API and script); soft injection (INJ04) still missed | F-03 fixed (#115) |
 | Auth (shared key), rate limiting, HTTPS | Done — single-user by decision (one shared key) | Phases 9, 12; decision 13.5 (`Security.md`) |
 | Automated deployment, health check, rollback | Done, verified live; rollback drilled again 2026-10-29 | Phase 12, 13.5 |
 | Regression evaluation in CI | Partial — LLM-judge gate on 4 items, path-filtered and advisory; `c1` cannot discriminate variants | F-07, F-08 → 15.1, 15.2 |
@@ -541,8 +549,8 @@ Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
 | Logging / retention policy and log rotation | Done — policy in `Data_Privacy.md`, rotation active; feedback text 90 days | 13.5, 14.0 |
 | User feedback loop | Done — `POST /feedback` (server-side grounding, SQLite on a named volume) and the UI thumbs + comment; round-trip and deploy survival verified on prod | 14.0, 14.1, PRs #95, #97 |
 | Usable front end | Done — React UI on the same origin, streaming answers with mapped citations, abstain/low-confidence display, feedback; verified on desktop and phone | 14.1, PRs #97, #98 |
-| Storage architecture fit for production | **Gap, deferred** — Chroma becomes the single source of truth; store choice deferred to the 15.1 measurements | F-27 → 15.0, 15.1 |
-| Ingestion correct and persistent | **Gap, deferred** | F-01, F-02, F-03 → 15.0 |
+| Storage architecture fit for production | Partial — Chroma is the single source of truth since 15.0 PR 1 (BM25 rebuilt from it); store choice deferred to the 15.1 measurements | F-27 fixed (#115); 15.1 |
+| Ingestion correct and persistent | Partial — correct since 15.0 PR 1; not persistent on prod until PR 2 | F-01, F-03 fixed (#115); F-02 → 15.0 PR 2 |
 | Supports the real corpus formats | Done by decision — the corpus is 100–150 PDFs; the loader also reads DOCX, MD and TXT | F-15, decided 2026-10-31 |
 | Evaluation that can discriminate variants | **Gap, deferred** | F-07, F-08 → 15.1 |
 | Corpus versioning and privacy decision | **Gap, deferred** | F-21 → 15.1 |
