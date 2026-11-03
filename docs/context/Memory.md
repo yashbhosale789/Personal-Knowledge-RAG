@@ -27,11 +27,14 @@
 
 ## 2. Current status — highest priority
 
-### Phase 15.0 PR 1 (Ingestion correctness) — DONE 2026-11-02; next: 15.0 PR 2
+### Phase 15.0 (Ingestion correctness and PDF upload) — DONE 2026-11-03; next: 15.1
+- **PR 2:** #123 (merge `276a5cb`), deployed by run `41461100222`. Chroma and the documents folder live in the named volumes `rag_chroma_data` and `rag_documents_data` (seeded from the image on first mount; after that the volume wins). `POST/GET/DELETE /documents` are live on prod and in the UI (Documents panel); `/ingest` stays Caddy-blocked. Prod check marked done by the user 2026-11-03; its output (A–I) was not shared, so individual results are not recorded. Detail: roadmap §15.0 "PR 2 done"; volumes, rollback and re-seed in `Backup_Recovery.md` (a script run needs the app stopped, re-seed B).
+- **Carry to 15.1:** Chroma refuses one add of more than 5,461 chunks; the script path has no text cap.
+
+#### PR 1
 - PR #115 (merge `ed0e421`), deployed; prod log `BM25 index built over 40 chunks`. CI: 309 passed / 1 xfail (injection scanner), coverage 77.69%. F-01, F-03, F-27 fixed; F-02 (persistence) is PR 2. Retrieval on `c1` / `v1` / prompt `938331ced9a6` identical to `retrieval_baseline.json`, stage by stage. Detail: roadmap §15.0 "PR 1 done".
 - **Design:** Chroma is the single source of truth. BM25 is built from `store.all_chunks()` and dropped by `reset_bm25()` (locked) after every ingest/delete; the next query rebuilds it (~10 ms on `c1`). One ingest path: `src/ingestion/ingest.py` `ingest_file()` + `index_changed()`, used by `POST /ingest`, `DELETE /ingest` and `scripts/ingest.py`. `force_reingest` removed.
 - **Decision (2026-11-01):** `chunks.json` is still written by the script as an eval-only export (corpus ID, dataset validation, eval tools); serving never reads it. Do not re-ask.
-- **Carry into PR 2:** the BM25 reset is per process (one uvicorn worker). A script run inside a live container needs an app restart, so the re-seed procedure must say so. Interim rule "no `/ingest` on prod" stays until PR 2.
  
 ### Phase 11: Pre-deployment hardening — COMPLETE (2026-10-22)
 - Full-codebase security and reliability review completed.

@@ -65,7 +65,7 @@ These are real, verified by code reading (see the findings file), and **not** sc
 | ID | Defect | Risk while deferred | Interim mitigation | Fixed in |
 | --- | --- | --- | --- | --- |
 | F-01 | BM25 ignores API-ingested documents; deleted documents remain retrievable | Deleted content can still reach the LLM; new documents are invisible to keyword search | Do not use `/ingest` or `DELETE /ingest` in production | **Fixed** 15.0 PR 1 (#115, 2026-11-02) |
-| F-02 | Production index is baked into the image; API ingest/delete are not persisted | API changes vanish on deploy | Same as above; ingest only by rebuilding the image | 15.0 PR 2 |
+| F-02 | Production index is baked into the image; API ingest/delete are not persisted | API changes vanish on deploy | Same as above; ingest only by rebuilding the image | **Fixed** 15.0 PR 2 (#123, 2026-11-02): index and documents in named volumes |
 | F-03 | Script/Docker ingest skips injection scan, delete-before-add, cache clear | Stale chunks; unscanned documents | Corpus stays the 5 reviewed PDFs | **Fixed** 15.0 PR 1 (#115, 2026-11-02) |
 | F-09 / F-10 | Naive BM25 tokenizer; chunking never evaluated | Unknown retrieval-quality loss | None needed; measure in 15.2 | 15.2 |
 | F-07 / F-08 | Corpus too small to discriminate variants; 12-question test split | LLMOps numbers on `c1` are provisional | Label every result `c1`; do not tune on the test split | 15.1 |
@@ -75,8 +75,7 @@ These are real, verified by code reading (see the findings file), and **not** sc
 
 ## Interim rules (until Phase 15 closes)
 
-- No `/ingest` or `DELETE /ingest` against production. The production corpus is the 5 PDFs baked into the image. (Still in force after PR 1: F-02, persistence, is fixed by PR 2.)
-- The frontend (Phase 14) must **not** expose upload or delete. Lifted by 15.0 PR 2.
+- `/ingest` and `DELETE /ingest` stay blocked at Caddy (local development only). Production documents change only through `/documents` (upload, list, delete; 15.0 PR 2).
 - Every evaluation result quoted in Phases 13 and 14 states `corpus c1` and the dataset version.
 - The 12-question test split stays frozen.
 - Do not change retrieval, chunking, reranking or storage behaviour in Phases 13 and 14, except the behaviour-preserving refactor in 13.1 and the prompt-version/cache-key change in 13.2.
@@ -465,6 +464,12 @@ Exit PR 1: the five F-01/F-03 strict xfails in `tests/integration/test_ingest_qu
 
 Exit PR 2: on prod, a PDF uploaded through the UI is answerable, survives a deploy and a rollback-then-forward, and a deleted one is no longer retrieved by either dense or keyword search; tests for size, type, name handling and the injection rejection; `/query` and stream contracts unchanged; the *Interim rules* about `/ingest` and upload lifted, and the checklist rows for storage, ingestion and backup/restore updated.
 
+**PR 2 done 2026-11-03.** PR #123 (merge `276a5cb`), deployed by run `41461100222`: volumes `rag_chroma_data` and `rag_documents_data` created and seeded from the image (5 PDFs, 40 chunks), Caddyfile synced. CI green (pytest, lint-security, build, frontend, eval, pip-audit, CodeQL); locally 336 passed / 16 skipped / 1 xfail, Vitest 26/26, Playwright 4/4. The pip-audit fix bumped pypdf 6.21.2 → 6.21.4 and pyasn1 0.6.4 → 0.6.5; extracted text and chunks are identical under both pypdf versions.
+- **Prod check:** run by the user on the instance (`prodcheck.sh`: upload → cited answer, rollback to `84a7aff` → forward, delete → abstain with BM25 and Chroma back to 40, feedback rows unchanged, Caddy 413 on a 12 MB body, `/ingest` 404) and marked done by the user on 2026-11-03. Its output was not shared, so the individual results (A–I) are not recorded here; the user's direct report is two `/query` calls answered normally after the deploy. A full local rehearsal of the same steps on the release image with a 1 GiB limit passed on 2026-11-02.
+- **As built:** one PR. Caps: 10 MiB per file and 1,000,000 extracted characters (`ingest_file(max_chars=)`, checked before the old chunks are deleted). Caddy `request_body /documents max_size 11MiB`, because FastAPI spools a multipart body to disk before the key check runs. One non-blocking lock around upload and delete (busy → 409). Unsafe names are rejected with 400, not stripped. Same name replaces the file, and a failed replace restores the previous one. `GET /documents` lists the PDFs on disk with their Chroma chunk counts. UI: a collapsible Documents panel whose list loads on first open; names render as plain text; CSP unchanged.
+- **Measured (local, 1 GiB limit):** a file at the character cap gives 2,107 chunks; anonymous memory 496 → 547 MiB, no OOM, about 90 s.
+- **Carry to 15.1:** Chroma refuses a single add of more than 5,461 chunks, and `add_chunks` sends one batch after `delete_by_source` has run. Upload cannot reach it (the character cap), but `scripts/ingest.py` has no cap, so one very large PDF (roughly 800 dense pages) would fail the build. Batch `add_chunks` if the full corpus has such a file.
+
 **Storage decision deferred** to the 15.1 measurements, on real-size data: on `c1` (40 chunks) every candidate fits in memory and answers in milliseconds, so a bake-off now cannot separate them. Triggers for revisiting: BM25 is too big or too slow to rebuild on the full PDF corpus, or ingest has to be transactional. The next step then is SQLite FTS5 + `sqlite-vec` (real BM25, transactional, no extra container), before PostgreSQL + pgvector. Not candidates: Pinecone, managed free-tier Postgres (Supabase, Neon) and Qdrant Cloud (documents leave the host, and free tiers pause or delete idle projects); Elasticsearch/OpenSearch, Milvus and Weaviate (too heavy for a 2 GiB host).
 
 ### Phase 15.1 — Full PDF corpus
@@ -549,13 +554,13 @@ Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
 | Logging / retention policy and log rotation | Done — policy in `Data_Privacy.md`, rotation active; feedback text 90 days | 13.5, 14.0 |
 | User feedback loop | Done — `POST /feedback` (server-side grounding, SQLite on a named volume) and the UI thumbs + comment; round-trip and deploy survival verified on prod | 14.0, 14.1, PRs #95, #97 |
 | Usable front end | Done — React UI on the same origin, streaming answers with mapped citations, abstain/low-confidence display, feedback; verified on desktop and phone | 14.1, PRs #97, #98 |
-| Storage architecture fit for production | Partial — Chroma is the single source of truth since 15.0 PR 1 (BM25 rebuilt from it); store choice deferred to the 15.1 measurements | F-27 fixed (#115); 15.1 |
-| Ingestion correct and persistent | Partial — correct since 15.0 PR 1; not persistent on prod until PR 2 | F-01, F-03 fixed (#115); F-02 → 15.0 PR 2 |
+| Storage architecture fit for production | Partial — Chroma is the single source of truth since 15.0 PR 1 (BM25 rebuilt from it); index and documents persisted in named volumes since PR 2; store choice deferred to the 15.1 measurements | F-27 fixed (#115); 15.1 |
+| Ingestion correct and persistent | Done — correct since 15.0 PR 1; persistent on prod in named volumes since PR 2; upload, list and delete from the UI | F-01, F-02, F-03 fixed (#115, #123) |
 | Supports the real corpus formats | Done by decision — the corpus is 100–150 PDFs; the loader also reads DOCX, MD and TXT | F-15, decided 2026-10-31 |
 | Evaluation that can discriminate variants | **Gap, deferred** | F-07, F-08 → 15.1 |
 | Corpus versioning and privacy decision | **Gap, deferred** | F-21 → 15.1 |
 | Load test and capacity statement | **Gap, deferred** | F-16 → 15.4 |
-| Backup / restore procedure | Partial — index rebuild documented (`Backup_Recovery.md`); revised when storage changes | 13.5 → 15.0 |
+| Backup / restore procedure | Done — both index volumes backed up and restored by hand, re-seed A/B and the rollback rules in `Backup_Recovery.md`; rehearsed locally 2026-11-02; revisit if storage changes | 15.0 PR 2 |
 
 ## Later roadmap — order: 16 → 17, after Phase 15
 
