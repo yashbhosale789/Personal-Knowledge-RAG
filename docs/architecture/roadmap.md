@@ -474,6 +474,8 @@ Exit PR 2: on prod, a PDF uploaded through the UI is answerable, survives a depl
 
 ### Phase 15.1 — Full PDF corpus
 
+**Status: DONE 2026-11-04.** PR 1 #125 (merge `81b7855`) and PR 2 #126 (merge `5fd003c`); CI green on both (pytest, lint-security, build, eval gate, CodeQL). `c2` stays offline; prod serves `c1`. Next: 15.2 on `c2` / `v2`.
+
 Addresses F-07, F-08, F-14, F-16, F-17, F-21.
 
 **Decided 2026-10-31: the corpus is PDF only** (sized at 100–150 files then; settled 2026-11-04 as every PDF in the source repository, 236 files). Including every file type would take it past 500 files in eight formats for little gain. The loader already handles PDF (and DOCX, MD and TXT), so no new loaders or format-specific chunking are needed, and the ingest API stays PDF only. Multi-format support (F-15) is closed by this decision; revisit only if the corpus changes.
@@ -490,7 +492,7 @@ Addresses F-07, F-08, F-14, F-16, F-17, F-21.
 2. **Cache entity guard:** replace or confine the hard-coded `sedan/suv/hatchback` heuristic (F-14), which breaks once the corpus is not only car manuals.
 3. **PDF extraction quality:** spot-check a few PDFs for broken text (the failure analysis found `A<U+202F>ventro`, a brand name split by narrow no-break spaces). Normalise whitespace at load time only if the check shows it matters.
 
-**PR 1 built 2026-11-04 (local; merge pending).** Two PRs; c2 stays offline, prod serves `c1`.
+**PR 1 done 2026-11-04** (#125, merge `81b7855`). Two PRs; c2 stays offline, prod serves `c1`.
 - **Corpus `c2`:** every `.pdf` under `datasets/` of `github.com/udayallu/RAG-Multi-Corpus` at `39071af3f4dd25e59f5c59a6f9b6e8e99cd643b3` (MIT): 236 files, 6,582,761 bytes, 5 companies (Aventro Motors 50, Cendara University 40, CloudWay-24 37, Velvera Technologies 38, ZX Bank 71). Committed to `rag-project/data/corpus_c2/<Company>/` with `LICENSE`, `SOURCE.md` and `SHA256SUMS`; each file's git blob hash equals the upstream tree entry. Four renames (one `:` Windows cannot store, three leading spaces → `_` as in `c1`), listed in `SOURCE.md`. Excluded from the image by `.dockerignore`. The five `c1` PDFs are byte-identical members of `c2`.
 - **Selection:** `RAG_CORPUS=c2` points `config.DATA_DIR`, `STORAGE_DIR` and `CHUNKS_PATH` at `data/corpus_c2`, `storage/chroma_c2` (gitignored) and `storage/chunks_c2.json`; unset is `c1` (CI, image, prod); any other value fails at import. Retrieval eval writes `eval/runs/retrieval_baseline_<corpus>.json`; `retrieval_baseline.json` is the frozen pre-15.1 `c1` record.
 - **Index (one pass, `RAG_CORPUS=c2 python scripts/ingest.py`):** 236/236 files, 2,221 chunks, about 4–8 min on the dev laptop (CPU embedding). Largest file 44 chunks, so the 5,461-chunk Chroma limit (line 471 carry) is not reached and `add_chunks` is **not** batched. Corpus id `c2` = `80f20e0aa4` (final, after `clean_text`).
@@ -522,7 +524,7 @@ Addresses F-07, F-08, F-14, F-16, F-17, F-21.
 
 Exit: `c2` ingested through the production path, measurements and the storage decision recorded, dataset v2 validated, baselines filed.
 
-**PR 2 built 2026-11-04 (local; merge pending).** CI stays on `c1` / `v1` (unchanged `golden_dataset.json`; `tests.yml` validates it against `c1`).
+**PR 2 done 2026-11-04** (#126, merge `5fd003c`). CI stays on `c1` / `v1` (unchanged `golden_dataset.json`; `tests.yml` validates it against `c1`).
 - **Dataset v2** = `eval/data/golden_dataset_c2.json`, id `a831d87d09` on corpus `c2` `80f20e0aa4`; selected by `RAG_CORPUS=c2` (`eval.paths.GOLDEN_PATH`). 79 questions: the 57 of v1 plus 22 new; 71 answerable; test split the same 12 ids. Validates against `c2` with no errors.
 - **Spot-check (13.0 item 1):** the unreviewed synthetic questions are Q31–Q57 (Q16–Q30 have accepted review records). Q17 and all 27 checked against the `c1` text: labels, ground truths and spans correct; no fixes. Q17's failure was the answer, not the label (step 1 of the seat guide is the distance from the pedals).
 - **Re-audit against `c2`** (every unanswerable, adversarial and ambiguous question, plus Q57): Q48 (battery capacity) and Q49 (airbags in a Sedan, test split) become `ambiguous`/answer with per-model spans; Q50 (is Roadside Assistance free) becomes answerable (priced per call or per year, `Parts-6.pdf`); Q13 and Q54 stay abstain with reworded ground truths; Q43 gains the service-center list; Q57's support number is in 30 Aventro files, all now `any_of` sources. The others are unchanged. Q49's label was changed although it is in the frozen test split: its v1 label is wrong on `c2`; split membership is unchanged.

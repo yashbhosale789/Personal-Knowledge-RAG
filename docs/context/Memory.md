@@ -27,7 +27,7 @@
 
 ## 2. Current status — highest priority
 
-### Phase 15.1 (Full PDF corpus c2) — PR 1 and PR 2 built 2026-11-04, merge pending
+### Phase 15.1 (Full PDF corpus c2) — DONE 2026-11-04 (PR 1 #125 `81b7855`, PR 2 #126 `5fd003c`, CI green); next: 15.2
 - **Corpus `c2`:** 236 PDFs from `udayallu/RAG-Multi-Corpus` @ `39071af` (MIT) in `rag-project/data/corpus_c2/<Company>/` with `LICENSE`, `SOURCE.md`, `SHA256SUMS`; `.dockerignore`d. Select with `RAG_CORPUS=c2` (own index `storage/chroma_c2`, export `storage/chunks_c2.json`, dataset `eval/data/golden_dataset_c2.json`, results `eval/runs/retrieval_baseline_c2.json`); unset = `c1`. Never copy c2 into `data/documents`. Ids: `c2` = `80f20e0aa4`, dataset `v2` = `a831d87d09`; `c1` = `2ef6192555` (was `9fc4650202` before `clean_text`), `v1` = `51bcd1e330` unchanged.
 - **Dataset v2 (PR 2):** v1 + c2 relabels (Q48, Q49 → ambiguous/answer; Q50 → answer; Q13, Q54 reworded; Q43, Q57 more sources) + 22 hand-checked upstream CSV questions (Q58–Q79, origin `upstream`, dev split). Q31–Q57 (the 27 unreviewed synthetic) and Q17 spot-checked: no label errors. Q49 is in the frozen test split; its label was corrected for c2 only (v1 unchanged). CI stays on `c1`/`v1`.
 - **Retrieval c1 → c2** (44 unchanged labels): dense R@5 0.90 → 0.81, BM25 0.80 → 0.72, reranked R@5 0.90 → 0.86, MRR 0.81 → 0.78. Full table roadmap §15.1 "PR 2 built". Weak spots for 15.2: CloudWay-24, brand-named queries.
