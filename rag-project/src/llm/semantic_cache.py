@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 import redis
 
@@ -18,7 +19,6 @@ from config import (
     CACHE_TTL_SECONDS,
     CITATION_VERIFIER_MODEL,
     EMBEDDING_DIAMENSION,
-    ENTITY_GROUPS,
     EVAL_PROVIDER,
     PROMPT_VERSION,
 )
@@ -138,18 +138,27 @@ def store_cache_entry(
         logger.warning("Redis unavailable — skipping cache write")
 
 
+# Words that never change what is asked. Deliberately tiny: "to"/"from", "not" and the
+# question words stay, because they do.
+_FILLER = frozenset(
+    {"a", "an", "the", "is", "are", "was", "were", "be", "do", "does", "did"}
+    | {"i", "me", "my", "we", "our", "you", "your", "s", "please"}
+)
+
+
+def _content_words(query: str) -> list[str]:
+    return [w for w in re.findall(r"[a-z0-9]+", query.lower()) if w not in _FILLER]
+
+
 def entity_mismatch(query_a: str, query_b: str) -> bool:
-    query_a_lower = query_a.lower()
-    query_b_lower = query_b.lower()
-
-    for group in ENTITY_GROUPS:
-        terms_in_a = {term for term in group if term in query_a_lower}
-        terms_in_b = {term for term in group if term in query_b_lower}
-
-        if terms_in_a and terms_in_b and terms_in_a != terms_in_b:
-            return True
-
-    return False
+    """
+    True unless both queries have the same content words in the same order (F-14).
+    Embedding similarity cannot tell "car loan" from "bike loan", or A350 from A380,
+    and no word list covers every domain, so any differing word is a miss.
+    shortcut: paraphrases ("spare wheel" for "spare tyre") miss too; upgrade to a
+    corpus-derived entity list only if cache_exact_repeat logs show paraphrase traffic.
+    """
+    return _content_words(query_a) != _content_words(query_b)
 
 
 def find_cached_answer(

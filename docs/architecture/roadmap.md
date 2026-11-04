@@ -69,7 +69,7 @@ These are real, verified by code reading (see the findings file), and **not** sc
 | F-03 | Script/Docker ingest skips injection scan, delete-before-add, cache clear | Stale chunks; unscanned documents | Corpus stays the 5 reviewed PDFs | **Fixed** 15.0 PR 1 (#115, 2026-11-02) |
 | F-09 / F-10 | Naive BM25 tokenizer; chunking never evaluated | Unknown retrieval-quality loss | None needed; measure in 15.2 | 15.2 |
 | F-07 / F-08 | Corpus too small to discriminate variants; 12-question test split | LLMOps numbers on `c1` are provisional | Label every result `c1`; do not tune on the test split | 15.1 |
-| F-14 | Cache entity guard hard-coded to `sedan/suv/hatchback` | Wrong cache hits on other domains | Single-domain corpus until 15.1 | 15.1 |
+| F-14 | Cache entity guard hard-coded to `sedan/suv/hatchback` | Wrong cache hits on other domains | Single-domain corpus until 15.1 | **Fixed** 15.1 PR 1 (2026-11-04): a hit needs the same content words in the same order |
 | F-15 | Loader handles 4 formats and the ingest API only `.pdf` | None: the corpus is PDF only (decided 2026-10-31) | None | Closed by decision |
 | F-27 | Two separately maintained stores (Chroma and an in-memory BM25 built from `chunks.json`) are the root cause of F-01 | Same as F-01 | Same as F-01 | **Fixed** 15.0 PR 1 (#115, 2026-11-02): Chroma is the single source of truth |
 
@@ -476,7 +476,7 @@ Exit PR 2: on prod, a PDF uploaded through the UI is answerable, survives a depl
 
 Addresses F-07, F-08, F-14, F-16, F-17, F-21.
 
-**Decided 2026-10-31: the corpus is PDF only, 100–150 files.** Including every file type would take it past 500 files in eight formats for little gain. The loader already handles PDF (and DOCX, MD and TXT), so no new loaders or format-specific chunking are needed, and the ingest API stays PDF only. Multi-format support (F-15) is closed by this decision; revisit only if the corpus changes.
+**Decided 2026-10-31: the corpus is PDF only** (sized at 100–150 files then; settled 2026-11-04 as every PDF in the source repository, 236 files). Including every file type would take it past 500 files in eight formats for little gain. The loader already handles PDF (and DOCX, MD and TXT), so no new loaders or format-specific chunking are needed, and the ingest API stays PDF only. Multi-format support (F-15) is closed by this decision; revisit only if the corpus changes.
 
 #### Index and measure
 
@@ -489,6 +489,27 @@ Addresses F-07, F-08, F-14, F-16, F-17, F-21.
 1. **Privacy** (F-21): the corpus is public test data (decided 2026-10-31), so it may be committed and shown in the demo. Confirm the source repository's license allows redistribution before committing it.
 2. **Cache entity guard:** replace or confine the hard-coded `sedan/suv/hatchback` heuristic (F-14), which breaks once the corpus is not only car manuals.
 3. **PDF extraction quality:** spot-check a few PDFs for broken text (the failure analysis found `A<U+202F>ventro`, a brand name split by narrow no-break spaces). Normalise whitespace at load time only if the check shows it matters.
+
+**PR 1 built 2026-11-04 (local; merge pending).** Two PRs; c2 stays offline, prod serves `c1`.
+- **Corpus `c2`:** every `.pdf` under `datasets/` of `github.com/udayallu/RAG-Multi-Corpus` at `39071af3f4dd25e59f5c59a6f9b6e8e99cd643b3` (MIT): 236 files, 6,582,761 bytes, 5 companies (Aventro Motors 50, Cendara University 40, CloudWay-24 37, Velvera Technologies 38, ZX Bank 71). Committed to `rag-project/data/corpus_c2/<Company>/` with `LICENSE`, `SOURCE.md` and `SHA256SUMS`; each file's git blob hash equals the upstream tree entry. Four renames (one `:` Windows cannot store, three leading spaces → `_` as in `c1`), listed in `SOURCE.md`. Excluded from the image by `.dockerignore`. The five `c1` PDFs are byte-identical members of `c2`.
+- **Selection:** `RAG_CORPUS=c2` points `config.DATA_DIR`, `STORAGE_DIR` and `CHUNKS_PATH` at `data/corpus_c2`, `storage/chroma_c2` (gitignored) and `storage/chunks_c2.json`; unset is `c1` (CI, image, prod); any other value fails at import. Retrieval eval writes `eval/runs/retrieval_baseline_<corpus>.json`; `retrieval_baseline.json` is the frozen pre-15.1 `c1` record.
+- **Index (one pass, `RAG_CORPUS=c2 python scripts/ingest.py`):** 236/236 files, 2,221 chunks, about 4–8 min on the dev laptop (CPU embedding). Largest file 44 chunks, so the 5,461-chunk Chroma limit (line 471 carry) is not reached and `add_chunks` is **not** batched. Corpus id `c2` = `96d53ee46c`.
+- **First pass rejected 13 files:** the injection scanner's `fake_role_label` matched spec labels (`Operating System:`, `Infotainment System:`, `Banking Assistant:`, `Voice/Assistant:`). The pattern now skips `system:`/`assistant:` directly after `<word> ` or `<word>/`; a role label on its own (line start, after punctuation, `[SYSTEM]:`) is still flagged, and `scanner_eval` is unchanged (INJ01–03 caught, INJ04 missed as before). Accepted gap: `the system: …` is no longer flagged; the prompt boundary remains the main defence.
+- **Measured** (local Docker, release image `rag:pr2`, `--memory 1g`, no Redis, no LLM calls; latency over 162 retrievals = 54 cached rewrites × 3):
+
+  | | `c1` (40 chunks) | `c2` (2,221 chunks) | Budget |
+  |---|---|---|---|
+  | Startup to `pipeline_ready` | 120 s (cold layers, ran first) | 65 s | compose `start_period` 300 s |
+  | App idle, cgroup anon | 373 MiB | 430 MiB | |
+  | After 162 retrievals, anon / process RSS | 414 / 720 MiB | 506 / 828 MiB | ~1.0 GiB |
+  | Chroma read (`all_chunks`) | 18 ms | 310 ms | |
+  | BM25 rebuild incl. Chroma read | 20 ms | 377 ms | |
+  | Retrieval p50 / p95 (dense + BM25 + RRF + rerank) | 280 / 373 ms | 288 / 401 ms | |
+
+  End-to-end `/query` adds the LLM stages (about 3–4 s, 13.5), which do not depend on corpus size; not re-measured, to save free-tier calls.
+- **Storage decision: keep Chroma.** At 55× the chunks, the BM25 rebuild after a write is under 0.4 s, memory is about half the limit and retrieval latency moved by under 30 ms at p95. None of the triggers (BM25 too big or slow, transactional ingest) fired; SQLite FTS5 + `sqlite-vec` stays the next step if one does.
+- **F-14 fixed:** the cache entity guard is no longer a word list. A cached answer is served only when both queries have the same content words in the same order (case, punctuation and a tiny filler list ignored; `to`/`from`/`not` kept). Covers every domain (`car loan` vs `bike loan`, `A350` vs `A380`, `One Pro` vs `One Ultra`); the cost is that paraphrases miss. `ENTITY_GROUPS` removed.
+- **Extraction:** no U+202F, U+00A0 or zero-width characters in `c2` (the `A<U+202F>ventro` of the failure analysis was not an extraction artifact). Found instead: capitals kerned away from their word (`V elvera`, `F eatures`: 31% of `c2` chunks; the brand split in 144 chunks), ligatures (`oﬃce`, 9% of chunks) and bullets extracted as U+FFFF (562). The keyword index splits on whitespace, so this matters: `loader.clean_text()` repairs all three at load time (tested). On `c1` it changes 15 of 40 chunks (same boundaries); retrieval on `c1` / `v1` shows no measurable difference (paired, all CIs include 0; fused recall@10 0.946 both). New `c1` corpus id `d6a67bbafd` (was `9fc4650202`).
 
 #### Evaluation after scaling (F-17)
 
