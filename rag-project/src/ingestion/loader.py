@@ -22,17 +22,19 @@ LOADER_MAP = {
 
 
 _LIGATURE = re.compile("[\ufb00-\ufb06]")
-# A capital kerned away from its word ("V elvera", "F eatures": 31% of c2 chunks, 15.1).
-# Not A/I (words) or X (a car trim), nor after a letter, digit, "-" or "&" ("3D", "R&D", "USB-C").
+# A capital kerned away from its word ("V elvera", "A ventro": a third of c2 chunks, 15.1).
+# "A" only before v/w/y (the AV/AW/AY kerning pairs; "A car" stays); never I (a word) or X (a car
+# trim), nor after a letter, digit, "-" or "&" ("3D", "R&D", "USB-C").
 # shortcut: still joins a real lone letter before a word ("R and", "grade B or", "RA W capture",
-# ~3 in c2); upgrade to a vocabulary check if a corpus has many.
-_SPLIT_CAPITAL = re.compile(r"(?<![\w&-])([B-HJ-WYZ]) (?=[a-z]{2})")
+# "A very", "A year": ~7 in c2); upgrade to a vocabulary check if a corpus has many.
+_SPLIT_CAPITAL = re.compile(r"(?<![\w&-])([B-HJ-WYZ]|A(?= [vwy])) (?=[a-z]{2})")
 
 
 def clean_text(text: str) -> str:
     """Undo PDF extraction artifacts that break keyword matching; nothing else changes."""
     text = _LIGATURE.sub(lambda m: unicodedata.normalize("NFKC", m.group()), text)
-    text = text.replace("\uffff", "\u2022")  # c2 bullets extract as U+FFFF; c1's are "•"
+    # c2 bullets extract as U+FFFF; c1's are "•".
+    text = text.replace("\uffff", "\u2022")
     return _SPLIT_CAPITAL.sub(r"\1", text)
 
 

@@ -151,7 +151,7 @@ def main() -> None:
     print("\nSLICES")
     for category in sorted({r["category"] for r in rows}):
         report_slice(category, [r for r in rows if r["category"] == category])
-    for origin in ("manual", "synthetic"):
+    for origin in ("manual", "synthetic", "upstream"):
         report_slice(origin, [r for r in rows if r["origin"] == origin])
     report_slice("brand in query", [r for r in rows if r["brand"]])
     report_slice("no brand", [r for r in rows if not r["brand"]])

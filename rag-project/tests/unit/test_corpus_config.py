@@ -6,7 +6,12 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-SHOW = "import config; print(config.DATA_DIR.name, config.STORAGE_DIR.name, config.CHUNKS_PATH.name)"
+SHOW = (
+    "import config; from eval import paths; print(config.DATA_DIR.name, config.STORAGE_DIR.name,"
+    " config.CHUNKS_PATH.name, paths.GOLDEN_PATH.name, paths.BASELINE_PATH.name)"
+)
+
+C1 = "documents chroma chunks.json golden_dataset.json retrieval_baseline_c1.json"
 
 
 def _config(corpus: str | None) -> subprocess.CompletedProcess:
@@ -27,12 +32,15 @@ def _config(corpus: str | None) -> subprocess.CompletedProcess:
 @pytest.mark.parametrize(
     ("corpus", "paths"),
     [
-        (None, "documents chroma chunks.json"),  # CI, image and prod
-        ("c1", "documents chroma chunks.json"),
-        ("c2", "corpus_c2 chroma_c2 chunks_c2.json"),
+        (None, C1),  # CI, image and prod
+        ("c1", C1),
+        (
+            "c2",
+            "corpus_c2 chroma_c2 chunks_c2.json golden_dataset_c2.json retrieval_baseline_c2.json",
+        ),
     ],
 )
-def test_corpus_selects_its_own_documents_index_and_export(corpus, paths):
+def test_corpus_selects_its_own_documents_index_dataset_and_results(corpus, paths):
     assert _config(corpus).stdout.split() == paths.split()
 
 
