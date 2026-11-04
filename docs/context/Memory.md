@@ -27,7 +27,19 @@
 
 ## 2. Current status — highest priority
 
-### Phase 15.0 (Ingestion correctness and PDF upload) — DONE 2026-11-03; next: 15.1
+### Phase 15.1 (Full PDF corpus c2) — PR 1 built 2026-11-04, merge pending; PR 2 (evaluation) next
+- **Corpus `c2`:** 236 PDFs from `udayallu/RAG-Multi-Corpus` @ `39071af` (MIT) in `rag-project/data/corpus_c2/<Company>/` with `LICENSE`, `SOURCE.md`, `SHA256SUMS`; `.dockerignore`d. Select with `RAG_CORPUS=c2` (own index `storage/chroma_c2`, export `storage/chunks_c2.json`); unset = `c1`. Never copy c2 into `data/documents`. Corpus ids: `c2` = `96d53ee46c`, `c1` = `d6a67bbafd` (was `9fc4650202` before `clean_text`).
+- **Measured (1 GiB, no LLM):** 2,221 chunks; idle anon 430 MiB, after queries 506 MiB anon / 828 MiB RSS; startup 65 s; BM25 rebuild incl. Chroma read 377 ms; retrieval p50/p95 288/401 ms. Table in roadmap §15.1.
+- **Decisions (2026-11-04):**
+  - **Privacy (F-21):** public synthetic test data, MIT, committed to git; may be shown in the demo. Offline only: not in the image, prod serves `c1`.
+  - **Storage:** keep Chroma; no trigger fired. Next step if one does: SQLite FTS5 + `sqlite-vec`.
+  - **F-14:** cache guard = same content words in the same order (`semantic_cache.entity_mismatch`); paraphrases miss by design. Revisit only if `cache_exact_repeat` logs show paraphrase traffic.
+  - **Extraction:** `loader.clean_text()` joins kerned capitals (`V elvera`), expands ligatures, maps U+FFFF bullets to `•`. No whitespace (U+202F/U+00A0) problem exists in c2. Known misjoins: `R and`, `grade B or`, `RA W` (~3).
+  - **Injection scanner:** `fake_role_label` skips `system:`/`assistant:` after `<word> ` or `<word>/` (spec labels rejected 13 c2 PDFs). Accepted gap: `the system: …` passes the regex.
+  - **No `add_chunks` batching:** the largest c2 file is 44 chunks.
+  - **Baselines:** `eval/runs/retrieval_baseline_<corpus>.json`; `retrieval_baseline.json` is the frozen pre-15.1 `c1` record. Do not overwrite it.
+
+### Phase 15.0 (Ingestion correctness and PDF upload) — DONE 2026-11-03
 - **PR 2:** #123 (merge `276a5cb`), deployed by run `41461100222`. Chroma and the documents folder live in the named volumes `rag_chroma_data` and `rag_documents_data` (seeded from the image on first mount; after that the volume wins). `POST/GET/DELETE /documents` are live on prod and in the UI (Documents panel); `/ingest` stays Caddy-blocked. Prod check marked done by the user 2026-11-03; its output (A–I) was not shared, so individual results are not recorded. Detail: roadmap §15.0 "PR 2 done"; volumes, rollback and re-seed in `Backup_Recovery.md` (a script run needs the app stopped, re-seed B).
 - **Carry to 15.1:** Chroma refuses one add of more than 5,461 chunks; the script path has no text cap.
 
@@ -185,7 +197,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 ### Technical lessons
 - All chunks and query embeddings must share the exact same embedding model and normalization.
 - Grounding prompts must strictly enforce context-only boundaries, emit `[SOURCE N]` citations, and explicitly abstain on missing evidence.
-- Semantic cache requires an entity guard in addition to the 0.87 cosine similarity threshold to prevent confusing semantically similar queries across different entities.
+- Semantic cache requires an entity guard in addition to the 0.87 cosine similarity threshold to prevent confusing semantically similar queries across different entities. Since 15.1 the guard is domain-free (same content words, same order), not a word list.
 - Ollama requires native `/api/chat` with `stream: false`; its OpenAI-compatible endpoint allocates excessive KV cache.
 - `create_cache_index()` must run on startup because fresh ephemeral Redis instances lack the RediSearch schema.
 - A new field in the cache index needs a new index name (`create_cache_index()` returns early if the name exists); drop the old index afterwards **without** `DD`, because both indexes cover the `cache:` prefix.

@@ -4,7 +4,10 @@ INJECTION_PATTERNS = [
     (r"ignore\s+(all\s+)?(previous|prior|above)\s+instructions?", "direct_override"),
     (r"disregard\s+(all\s+)?(previous|prior|above)\s+instructions?", "direct_override"),
     (r"\[\s*(system|end of context|end context)\s*\]", "fake_structural_tag"),
-    (r"\b(assistant|system)\s*:", "fake_role_label"),
+    # Not after "<word> " or "<word>/": spec labels like "Operating System:" or
+    # "Voice/Assistant:" are compound nouns, not role labels (they rejected 13 of the
+    # 236 c2 PDFs, 15.1).
+    (r"(?<![a-z] )(?<![a-z]/)\b(assistant|system)\s*:", "fake_role_label"),
     (r"supersedes?\s+all\s+(other\s+)?instructions?", "authority_hijack"),
     (r"you must (include|output|say|respond with)", "imperative_directive"),
 ]

@@ -7,10 +7,15 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent / ".env")
 
-# Paths
+# Paths. RAG_CORPUS=c2 (Phase 15.1) switches to the offline full corpus and its own index;
+# unset is c1, which CI, the image and prod use.
 BASE_DIR = Path(__file__).parent
-DATA_DIR = BASE_DIR / "data" / "documents"
-STORAGE_DIR = BASE_DIR / "storage" / "chroma"
+CORPUS = os.getenv("RAG_CORPUS", "c1")
+if CORPUS not in ("c1", "c2"):
+    raise ValueError(f"RAG_CORPUS must be c1 or c2, got {CORPUS!r}")
+_C2 = CORPUS == "c2"
+DATA_DIR = BASE_DIR / "data" / ("corpus_c2" if _C2 else "documents")
+STORAGE_DIR = BASE_DIR / "storage" / ("chroma_c2" if _C2 else "chroma")
 
 # Embeddings
 EMBEDDINGS_MODEL_NAME = "BAAI/bge-small-en-v1.5"
@@ -19,7 +24,7 @@ EMBEDDING_DIAMENSION = 384
 # Chunking
 CHUNK_SIZE = 512
 CHUNK_OVERLAP = 64
-CHUNKS_PATH = BASE_DIR / "storage" / "chunks.json"
+CHUNKS_PATH = BASE_DIR / "storage" / ("chunks_c2.json" if _C2 else "chunks.json")
 
 # Upload limits (POST /documents), measured 2026-11-02: in the 1 GiB container an upload at
 # MAX_UPLOAD_CHARS (2,107 chunks) took anon memory from 496 to 547 MiB, no OOM. But a 20 MB
@@ -260,7 +265,6 @@ RATE_LIMIT_PER_MINUTE = {
     "documents": 10,  # POST and DELETE /documents
 }
 RATE_LIMIT_TTL_SECONDS = 120
-ENTITY_GROUPS = [{"sedan", "suv", "hatchback"}]
 CACHE_INDEX_NAME = "semantic_cache_idx_v2"  # v2 adds the namespace tag
 CACHE_KEY_PREFIX = "cache:"
 CACHE_TTL_SECONDS = 86400  # 24 Hours

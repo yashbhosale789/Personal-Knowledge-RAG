@@ -1,4 +1,6 @@
 import logging
+import re
+import unicodedata
 from pathlib import Path
 
 from langchain_community.document_loaders import (
@@ -17,6 +19,21 @@ LOADER_MAP = {
     ".md": UnstructuredMarkdownLoader,
     ".docx": UnstructuredWordDocumentLoader,
 }
+
+
+_LIGATURE = re.compile("[\ufb00-\ufb06]")
+# A capital kerned away from its word ("V elvera", "F eatures": 31% of c2 chunks, 15.1).
+# Not A/I (words) or X (a car trim), nor after a letter, digit, "-" or "&" ("3D", "R&D", "USB-C").
+# shortcut: still joins a real lone letter before a word ("R and", "grade B or", "RA W capture",
+# ~3 in c2); upgrade to a vocabulary check if a corpus has many.
+_SPLIT_CAPITAL = re.compile(r"(?<![\w&-])([B-HJ-WYZ]) (?=[a-z]{2})")
+
+
+def clean_text(text: str) -> str:
+    """Undo PDF extraction artifacts that break keyword matching; nothing else changes."""
+    text = _LIGATURE.sub(lambda m: unicodedata.normalize("NFKC", m.group()), text)
+    text = text.replace("\uffff", "\u2022")  # c2 bullets extract as U+FFFF; c1's are "•"
+    return _SPLIT_CAPITAL.sub(r"\1", text)
 
 
 def load_documents(file_path: Path) -> list[Document]:
@@ -39,6 +56,7 @@ def load_documents(file_path: Path) -> list[Document]:
         docs = loader.load()
 
         for doc in docs:
+            doc.page_content = clean_text(doc.page_content)
             doc.metadata["source"] = str(file_path)
             doc.metadata["filename"] = str(file_path)
 

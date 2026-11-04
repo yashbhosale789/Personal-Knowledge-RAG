@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.stdout.reconfigure(encoding="utf-8")
 
-from config import CHUNKS_PATH, DATA_DIR
+from config import CHUNKS_PATH, DATA_DIR, STORAGE_DIR
 from src.ingestion.ingest import IngestRejected, index_changed, ingest_file
 
 logging.basicConfig(
@@ -55,7 +55,7 @@ def main() -> int:
     print("\nIngestion complete.")
     print(f"   Files ingested   : {len(files) - len(rejected)} of {len(files)}")
     print(f"   Chunks produced  : {len(chunks)}")
-    print("   Stored in : storage/chroma/")
+    print(f"   Stored in : {STORAGE_DIR}")
     if rejected:
         print(f"[FAIL] Rejected: {', '.join(rejected)}")
     return len(rejected)

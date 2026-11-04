@@ -4,7 +4,7 @@ import random
 from math import comb
 
 from eval.harness import store
-from eval.paths import GEN_PATH, JUDGE_PATH, RUNS_DIR
+from eval.paths import BASELINE_PATH, GEN_PATH, JUDGE_PATH, RUNS_DIR
 from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
 
 
@@ -37,7 +37,7 @@ def load(spec: str, golden: dict) -> dict[str, dict[str, float]]:
     kind, _, rest = spec.partition(":")
     name, _, extra = rest.partition("@")
     if kind == "ret":
-        return load_ret(name, extra or "retrieval_baseline.json")
+        return load_ret(name, extra or BASELINE_PATH.name)
     if kind == "gen":
         return load_gen(name, extra or store.fingerprint(), golden)
     raise SystemExit(

@@ -19,3 +19,5 @@ frontend/dist/
 frontend/test-results/
 frontend/playwright-report/
 web/
+# Corpus c2 (Phase 15.1): offline only, never in the image
+data/corpus_c2/
