@@ -1,8 +1,8 @@
 # Personal Knowledge OS — RAG Project Roadmap
 
-Last updated: 2026-10-29
+Last updated: 2026-11-04
 
-Current phase: **Phase 14 — Human feedback and React frontend** (Phase 13 closed 2026-10-29)
+Current phase: **Phase 15 — RAG pipeline hardening and scale** (15.0 and 15.1 closed; next 15.2)
 
 Detailed working plan (scope, exit criteria, risks): [`docs/architecture/roadmap.md`](../architecture/roadmap.md)
 
@@ -32,11 +32,11 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 | 10 | Containerization and CI/CD | Complete |
 | 11 | Pre-deployment hardening | Complete |
 | 12 | Deployment | Complete |
-| 13 | LLMOps foundations | Current |
-| 14 | Human feedback and React frontend | Planned |
-| 15 | RAG pipeline hardening and scale | Planned |
-| 16 | Graph RAG and Multimodal RAG | Planned |
-| 17 | Portfolio extraction | Planned |
+| 13 | LLMOps foundations | Complete |
+| 14 | Human feedback and React frontend | Complete |
+| 15 | RAG pipeline hardening and scale | Current |
+| 16 | RAG portfolio and reusable eval kit | Planned |
+| 17 | Multi-tenancy and RBAC | Planned |
 
 ## Foundation (Phases 1–6)
 
@@ -181,7 +181,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 - Feedback controls
 - Responsive layout, automated tests and CI build
 
-## Scale and advanced RAG (Phases 15–16)
+## Scale (Phase 15)
 
 ### Phase 15 — RAG pipeline hardening and scale
 
@@ -211,6 +211,7 @@ Scope trimmed 2026-10-31 for a single-user, $0 system: no storage migration now,
 #### 15.2 Retrieval tuning and stage ablations
 
 - Chunking and retrieval settings (retrieval-only, $0)
+- HNSW (Chroma default, untuned) vs exact brute-force top-k check ($0)
 - Pipeline-stage ablations, including skipping the rewrite for short, clear queries
 
 #### 15.3 Token and cache optimization
@@ -223,19 +224,28 @@ Scope trimmed 2026-10-31 for a single-user, $0 system: no storage migration now,
 - Provisional SLOs kept; memory limits re-checked
 - Production-readiness review, torch upgrade, container image scan
 
-### Phase 16 — Graph RAG and Multimodal RAG
+## Showcase (Phase 16)
 
-- Knowledge-graph-based retrieval
-- Multimodal document understanding
-- Delivered as a standalone project
+### Phase 16 — RAG portfolio and reusable eval kit
 
-## Showcase (Phase 17)
+- 16.0 Reusable eval kit, extracted from `eval/`; Production RAG reproduces its baseline through it
+- 16.1 Naive and Advanced RAG, from the owner's existing folders, updated to the same corpus
+- 16.2 Agentic RAG, from its existing folder
+- Those folders are moved into this project's root only while being updated, never committed here, then moved out to their own repository
+- 16.3 Graph RAG, with multi-hop questions
+- 16.4 Multimodal RAG, with image and table questions
+- 16.5 One cross-variant comparison table and a README per project
+- Production RAG is this live repository, not a frozen snapshot
 
-### Phase 17 — Portfolio extraction
+## Multi-user (Phase 17)
 
-- Standalone, portfolio-ready artifacts
-- Architecture documentation and evaluation write-up
-- Shared utilities where justified
+### Phase 17 — Multi-tenancy and RBAC
+
+- Portfolio demo on prod: `c2` split into 5 company tenants, demo keys per role
+- API key mapped to a tenant, user and role; principals and document access in SQLite
+- Tenant and document permissions enforced before ranking, in the semantic cache key, on `/documents`, traces and feedback
+- Roles viewer / editor / admin, plus per-document access inside a tenant
+- Supersedes the single-user decision (F-19). Detail: `docs/architecture/roadmap.md` Phase 17
 
 ## Learning tracks (outside the production path)
 

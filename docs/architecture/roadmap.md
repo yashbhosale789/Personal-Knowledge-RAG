@@ -1,12 +1,12 @@
 # Personal Knowledge OS — Detailed Roadmap (working plan)
 
-Last reconciled: 2026-10-29
+Last reconciled: 2026-11-04
 
-Current phase: **Phase 14 — Human feedback and React frontend** (Phase 13 closed 2026-10-29)
+Current phase: **Phase 15 — RAG pipeline hardening and scale** (15.0 closed 2026-11-03, 15.1 closed 2026-11-04; next 15.2). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
 
 Active development copy: `rag-project/`
 
-Phase order from here: **13 → 14 → 15 → 16 → 17**. Later engineering tracks are learning-only (see the end).
+Phase order from here: **15 → 16 → 17**. Later engineering tracks are learning-only (see the end).
 
 Review behind this revision: `docs/architecture/review-findings-2026-10-23.md` (findings are cited below as F-nn).
 
@@ -55,8 +55,9 @@ The owner chose to **finish LLMOps (Phase 13), then build the feedback endpoint 
 | 16 / 16.2 | 14 / 14.1 | Frontend |
 | 13.8 / 17.1 | 15.1 | Corpus scale-up |
 | 17 | 15 | RAG pipeline hardening and scale |
-| 14 | 16 | Graph RAG + Multimodal RAG |
-| 15 | 17 | Portfolio extraction |
+| 14 / 16 | 16.3, 16.4 | Graph RAG + Multimodal RAG (merged into Phase 16, 2026-11-04) |
+| 15 / 17 | 16 | Portfolio extraction → RAG portfolio and reusable eval kit |
+| 18 | 17 | Multi-tenancy and RBAC |
 
 ## Known deferred defects
 
@@ -548,7 +549,8 @@ Use the harness on corpus `c2`. Each experiment is a paired comparison with conf
 
 1. **Chunking:** size, overlap, page-boundary merging (F-10). Retrieval-only, $0.
 2. **Retrieval:** `TOP_K`, candidate-pool size, and the keyword tokenizer (old vs new). Retrieval-only, $0.
-3. **Stage ablations (F-11):** remove query rewriting, the sufficiency judge and citation verification one at a time; keep a stage only if it earns its latency, quota and quality. Also test skipping the rewrite only for short, unambiguous queries, and the follow-up condense step (post-14) if chat use is material.
+3. **ANN check:** dense retrieval uses Chroma's HNSW with default parameters, never tuned. On the `v2` questions, compare its top-k with an exact brute-force top-k over the same embeddings, at both `TOP_K` and the dense candidate pool (`TOP_K * 4`); report the overlap and any recall difference. If they match, record the default as confirmed; tune HNSW only if they differ. Retrieval-only, $0.
+4. **Stage ablations (F-11):** remove query rewriting, the sufficiency judge and citation verification one at a time; keep a stage only if it earns its latency, quota and quality. Also test skipping the rewrite only for short, unambiguous queries, and the follow-up condense step (post-14) if chat use is material.
 
 Dropped 2026-10-31: reranker alternatives, the no-retrieval / long-context baseline, agentic vs deterministic, and the embedding-model experiment.
 
@@ -605,15 +607,99 @@ Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
 
 ## Later roadmap — order: 16 → 17, after Phase 15
 
-Introduce each only when it adds demonstrable value, and confirm scope before starting.
+Confirm scope before starting each phase.
 
-### Phase 16 — Graph RAG + Multimodal RAG
+### Phase 16 — RAG portfolio and reusable eval kit
 
-Planned as a **separate standalone project**, not built inside this repository. **Entry condition:** the Phase 15.2 failure analysis on the scaled corpus shows multi-hop or relationship failures that retrieval changes do not fix, or the corpus has material content in images or tables that text extraction loses. Without that evidence the phase is a technology exercise and should be labeled as one. Technologies (LangChain, LangGraph, LlamaIndex, Langfuse) are chosen from the actual requirements, not in advance.
+Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phase 17 (Portfolio extraction). Output: six RAG variants as portfolio projects — Naive, Advanced, Production, Agentic, Graph and Multimodal RAG — measured with one shared eval kit, so they report comparable numbers in one table. Lightweight items for this repository (README accuracy, an architecture diagram, the evaluation write-up) are still produced during Phases 13–15, not deferred here.
 
-### Phase 17 — Portfolio extraction
+**Decisions (2026-11-04, do not re-ask):**
 
-Organize selected work into portfolio-ready standalone artifacts and shared utilities only where justified. Preserve existing phase snapshots as standalone portfolio artifacts; do not casually modify them after snapshotting. Lightweight portfolio items — README accuracy, an architecture diagram, and a short write-up of the evaluation findings — are produced during Phases 13, 14 and 15, not deferred to this phase.
+- **Production RAG is this live repository,** not a frozen snapshot. Phase 17 extends it, and its portfolio entry is updated then.
+- **Naive, Advanced and Agentic RAG start from the owner's existing project folders** (kept outside this repository; not in its git history). They are updated in place, not rebuilt. Agentic RAG may still need real build work: this repository has only its foundations (`src/agent/`), and agentic vs deterministic was dropped from 15.2.
+- **Those folders are never committed here.** Workflow: at the start of the sub-phase, move the folder into this project's root; update it (corpus `c2`, dataset `v2`, the eval kit); move it out again; it is published from its own separate repository. While a folder is in the root:
+  - add it to `.git/info/exclude` (local, not committed), so `git add` cannot pick it up;
+  - keep it out of the committed knowledge graph: exclude it from graphify, or run `graphify update .` only after it has been moved out;
+  - it is outside `rag-project/`, the Docker build context, so the image and CI are unaffected.
+- **Graph and Multimodal RAG are showcase builds.** The former evidence entry condition is dropped; each write-up says the project is a showcase, and each gets questions it should win (multi-hop for Graph; image and table questions for Multimodal).
+- Technologies (LangChain, LangGraph, LlamaIndex, Langfuse, …) are chosen from each project's requirements, not in advance.
+- **Free tier:** retrieval metrics for every variant ($0); LLM-judged runs on a small subset per project, with the call count stated before each run.
+
+#### 16.0 — Eval kit
+
+- Extract `rag-project/eval/` into a standalone package that every project uses. Today it imports this app directly (`retrieve_context`, `src.llm.client`, `config`, `src.vectorstore.store`, the citation pattern); replace those with an adapter interface: `retrieve(query) → ranked chunks with source and page`, `answer(query) → answer and contexts`.
+- Keep: dataset schema and validator, retrieval metrics, paired comparison with confidence intervals (`compare.py`), gate, judge (LLM client pluggable), dataset and corpus identifiers on every record. Add question categories (multi-hop, image, table).
+- Check first: dataset labels are chunk-independent (source and page, not chunk ID); otherwise variants that chunk differently cannot be compared.
+- Exit: Production RAG run through the kit reproduces its `c2` retrieval baseline exactly.
+
+#### 16.1 — Naive and Advanced RAG
+
+- The existing folders, moved in, updated to `c2` and dataset `v2`, measured with the kit, moved out to their own repositories.
+
+#### 16.2 — Agentic RAG
+
+- The existing folder, moved in and updated the same way as 16.1; compared with Production RAG on quality, latency and LLM calls per query.
+
+#### 16.3 — Graph RAG
+
+- Multi-hop questions added to the dataset (hand-checked, as in 15.1).
+
+#### 16.4 — Multimodal RAG
+
+- Needs a corpus with material image or table content; check whether `c2` has it before choosing one.
+
+#### 16.5 — Write-up
+
+- One cross-variant table (same corpus, dataset and metrics), stating which differences are distinguishable and which are not; a README and architecture diagram per project.
+- Each finished project is preserved as a standalone artifact; do not casually modify it afterwards. The live Production RAG repository is the exception.
+
+### Phase 17 — Multi-tenancy and RBAC
+
+Added 2026-11-04 (first numbered 18). Starts after Phase 16 and extends the live Production RAG repository; update its portfolio entry when done. It supersedes F-19 (single user, one shared key, every key holder sees the whole corpus): record the new decision in `Security.md` when the phase starts.
+
+**Goal:** a portfolio demo, live on prod, of tenant isolation and role and document permissions enforced at every pipeline stage, not only at authentication. No real outside users; $0 and the single `t3.small` still apply.
+
+**Decisions (2026-11-04, do not re-ask):**
+
+- **Identity:** a server-side map from API key to a principal `{tenant_id, user_id, role}`. `verify_api_key` returns the principal instead of the key hash; an unknown key is a 401. Cognito or other real sign-in is out of scope.
+- **Isolation:** one shared Chroma collection. Every chunk carries `tenant_id` and `doc_id`, and every read filters on them.
+- **RBAC:** roles `viewer` (query), `editor` (+ upload and delete in its tenant), `admin` (+ manage document access). Per-document access inside a tenant lives in a table, not in chunk metadata, and is resolved per request to a list of allowed doc IDs, so a revocation takes effect on the next query without rewriting chunks.
+- **Store:** SQLite on a named volume (the feedback store pattern) for principals and document access. Keys stored hashed; a small admin script manages them.
+- **Cache scope:** the semantic cache namespace adds `tenant_id` and an access-scope hash (hash of the sorted allowed doc IDs). Users with the same access share entries; a revocation changes the hash, so a cached answer holding snippets from a lost document is never served. Rejected: `tenant + user` (needs an explicit clear on every access change; a missed clear leaks).
+- **Prod:** deployed. `c2` is split by company into 5 tenants (ZX Bank, Aventro, Cendara, Velvera, CloudWay-24) with demo keys per role.
+- **Principle:** filter before ranking. Dense and BM25 apply the scope before their `top_k` cut; the reranker is never relied on to drop forbidden chunks.
+
+**Entry checks:**
+
+- The 15.4 memory re-check shows headroom for `c2` on prod (prod serves `c1` today).
+- Confirm the AWS plan and credit status (hard constraint above).
+- Confirm the installed Chroma version supports the `where` filters needed (`$and`, `$in` on `doc_id` with up to the largest tenant's document count, 71 in `c2`).
+
+#### PR 1 — Tenancy
+
+- Principal, SQLite store and admin script; every route receives the principal.
+- Ingest: `tenant_id` and `doc_id` in chunk metadata; `tenant_id` in `_chunk_id` (same path in two tenants must not collide); a documents folder per tenant; `delete_by_source` and `GET`/`DELETE /documents` scoped to `{tenant_id, source}`.
+- Retrieval: one `scope_filter(principal)` used by every read path — dense (`similarity_search(filter=…)`), BM25 (one index per tenant, rebuilt from Chroma with the tenant filter; keeps term statistics separate), the agent tool (`src/agent/tools.py`) and `/documents`. The eval harness passes an explicit eval principal; no unscoped call path remains.
+- Fail-closed check after fusion, before rerank: drop and log any chunk outside the principal's scope.
+- Cache namespace gains `tenant_id`; `index_changed()` clears only that tenant's entries.
+- Langfuse traces and feedback rows carry `tenant_id`; feedback reads are tenant-scoped.
+- Tests: two tenants with the same filename and different content — no cross-tenant chunk at the dense, BM25, fused or reranked stage; a tenant A cache entry misses for tenant B; a re-upload in A leaves B's chunk count unchanged; an unknown key gets 401.
+
+#### PR 2 — RBAC
+
+- Roles enforced per route (403 on a denied action); the UI shows tenant and role and hides upload and delete for viewers (the server still enforces).
+- Document access table; allowed doc IDs resolved per request; dense filters `doc_id $in […]`, BM25 masks scores before the `top_k` cut.
+- Access-scope hash in the cache namespace.
+- Tests: a viewer gets 403 on upload; a revoked document is not retrieved and the next query misses the cache; two users with the same access share a cache hit.
+
+**Exit:**
+
+- Isolation and RBAC tests green in CI; on prod, a question about another tenant's documents abstains, verified per role.
+- Retrieval eval run per tenant on `c2` and recorded as a new baseline; differences from the 15.2 baseline explained (per-tenant BM25 changes term statistics).
+- The 15.4 load test re-run on prod with several tenants; memory recorded.
+- `Security.md`, `Architecture.md` and `Data_Privacy.md` updated; F-19 marked superseded.
+
+**Out of scope:** real sign-in (Cognito), self-service tenant sign-up, a collection per tenant, an audit-log UI, a database migration.
 
 ### Later engineering tracks — learning only
 
