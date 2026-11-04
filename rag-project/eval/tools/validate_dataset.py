@@ -18,7 +18,7 @@ CATEGORIES = {
 }
 DIFFICULTIES = {"easy", "medium", "hard"}
 OUTCOMES = {"answer", "abstain"}
-ORIGINS = {"manual", "synthetic"}
+ORIGINS = {"manual", "synthetic", "upstream"}  # upstream: RAG-Multi-Corpus CSV (v2)
 SPLITS = {"dev", "test"}
 ENUMS = {
     "category": CATEGORIES,

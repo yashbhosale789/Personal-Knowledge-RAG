@@ -9,7 +9,10 @@ RUNS_DIR = EVAL_DIR / "runs"
 SECURITY_DIR = EVAL_DIR / "security"
 RUNS_DIR.mkdir(parents=True, exist_ok=True)
 
-GOLDEN_PATH = DATA_DIR / "golden_dataset.json"
+# Dataset v1 (corpus c1, CI) and v2 (corpus c2, 15.1): v2's labels cite c2-only files.
+GOLDEN_PATH = DATA_DIR / (
+    "golden_dataset_c2.json" if config.CORPUS == "c2" else "golden_dataset.json"
+)
 CALIBRATION_PATH = DATA_DIR / "judge_calibration.json"
 INJECTION_CASES_PATH = DATA_DIR / "injection_cases.json"
 

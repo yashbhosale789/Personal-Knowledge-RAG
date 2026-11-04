@@ -14,6 +14,11 @@ from src.ingestion.loader import clean_text
             "X Variant (From X for All Fuel Types)",
         ),
         ("Y our account", "Your account"),
+        ("call A ventro Motors Support", "call Aventro Motors Support"),
+        (
+            "A vailable at all A ventro Service Centers",
+            "Available at all Aventro Service Centers",
+        ),
         ("tra\ufb03c and o\ufb03ce", "traffic and office"),
         ("\uffff Fortis Hospital", "• Fortis Hospital"),
         # Real single letters and acronyms stay.

@@ -27,14 +27,16 @@
 
 ## 2. Current status — highest priority
 
-### Phase 15.1 (Full PDF corpus c2) — PR 1 built 2026-11-04, merge pending; PR 2 (evaluation) next
-- **Corpus `c2`:** 236 PDFs from `udayallu/RAG-Multi-Corpus` @ `39071af` (MIT) in `rag-project/data/corpus_c2/<Company>/` with `LICENSE`, `SOURCE.md`, `SHA256SUMS`; `.dockerignore`d. Select with `RAG_CORPUS=c2` (own index `storage/chroma_c2`, export `storage/chunks_c2.json`); unset = `c1`. Never copy c2 into `data/documents`. Corpus ids: `c2` = `96d53ee46c`, `c1` = `d6a67bbafd` (was `9fc4650202` before `clean_text`).
+### Phase 15.1 (Full PDF corpus c2) — PR 1 and PR 2 built 2026-11-04, merge pending
+- **Corpus `c2`:** 236 PDFs from `udayallu/RAG-Multi-Corpus` @ `39071af` (MIT) in `rag-project/data/corpus_c2/<Company>/` with `LICENSE`, `SOURCE.md`, `SHA256SUMS`; `.dockerignore`d. Select with `RAG_CORPUS=c2` (own index `storage/chroma_c2`, export `storage/chunks_c2.json`, dataset `eval/data/golden_dataset_c2.json`, results `eval/runs/retrieval_baseline_c2.json`); unset = `c1`. Never copy c2 into `data/documents`. Ids: `c2` = `80f20e0aa4`, dataset `v2` = `a831d87d09`; `c1` = `2ef6192555` (was `9fc4650202` before `clean_text`), `v1` = `51bcd1e330` unchanged.
+- **Dataset v2 (PR 2):** v1 + c2 relabels (Q48, Q49 → ambiguous/answer; Q50 → answer; Q13, Q54 reworded; Q43, Q57 more sources) + 22 hand-checked upstream CSV questions (Q58–Q79, origin `upstream`, dev split). Q31–Q57 (the 27 unreviewed synthetic) and Q17 spot-checked: no label errors. Q49 is in the frozen test split; its label was corrected for c2 only (v1 unchanged). CI stays on `c1`/`v1`.
+- **Retrieval c1 → c2** (44 unchanged labels): dense R@5 0.90 → 0.81, BM25 0.80 → 0.72, reranked R@5 0.90 → 0.86, MRR 0.81 → 0.78. Full table roadmap §15.1 "PR 2 built". Weak spots for 15.2: CloudWay-24, brand-named queries.
 - **Measured (1 GiB, no LLM):** 2,221 chunks; idle anon 430 MiB, after queries 506 MiB anon / 828 MiB RSS; startup 65 s; BM25 rebuild incl. Chroma read 377 ms; retrieval p50/p95 288/401 ms. Table in roadmap §15.1.
 - **Decisions (2026-11-04):**
   - **Privacy (F-21):** public synthetic test data, MIT, committed to git; may be shown in the demo. Offline only: not in the image, prod serves `c1`.
   - **Storage:** keep Chroma; no trigger fired. Next step if one does: SQLite FTS5 + `sqlite-vec`.
   - **F-14:** cache guard = same content words in the same order (`semantic_cache.entity_mismatch`); paraphrases miss by design. Revisit only if `cache_exact_repeat` logs show paraphrase traffic.
-  - **Extraction:** `loader.clean_text()` joins kerned capitals (`V elvera`), expands ligatures, maps U+FFFF bullets to `•`. No whitespace (U+202F/U+00A0) problem exists in c2. Known misjoins: `R and`, `grade B or`, `RA W` (~3).
+  - **Extraction:** `loader.clean_text()` joins kerned capitals (`A ventro`, `V elvera`; `A` only before v/w/y), expands ligatures, maps U+FFFF bullets to `•`. No U+202F/U+00A0 exists in c2; `A<U+202F>ventro` was this kerning split. Known misjoins: `R and`, `grade B or`, `RA W`, `A very`, `A year` (~7).
   - **Injection scanner:** `fake_role_label` skips `system:`/`assistant:` after `<word> ` or `<word>/` (spec labels rejected 13 c2 PDFs). Accepted gap: `the system: …` passes the regex.
   - **No `add_chunks` batching:** the largest c2 file is 44 chunks.
   - **Baselines:** `eval/runs/retrieval_baseline_<corpus>.json`; `retrieval_baseline.json` is the frozen pre-15.1 `c1` record. Do not overwrite it.
@@ -84,7 +86,7 @@ Phase 13 is split into sub-chats **13.0–13.6**, one plan step per chat.
 **Phase 13.0 (Evaluation foundation) — close-out 2026-10-28; item 1 partly evidenced**
 - Dataset `v1` = `51bcd1e330`, corpus `c1` = `9fc4650202` (`store.run_ids()`, written into every eval record beside the fingerprint). Test split (12) frozen.
 - Judge calibration: n = 20 per metric (10 good / 10 bad), AUC 1.0 on all three metrics.
-- 27 of 42 synthetic questions have no review record; labels unverified until spot-checked (owned by 15.1, before dataset v2).
+- 27 of 42 synthetic questions (Q31–Q57) had no review record; spot-checked in 15.1 PR 2 (2026-11-04) with Q17: no label errors on `c1`.
 - Failure analysis: `docs/architecture/eval-failure-analysis-2026-10-28.md` (saved `c83fff9ba7` answers + fresh retrieval run, $0).
 
 **13.0a Status:**
