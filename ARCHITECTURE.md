@@ -271,7 +271,7 @@ From `rag-project/config.py`:
 | Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` |
 | Chroma collection | `personal_kb` |
 | Semantic cache | cosine ≥ 0.87, TTL 24 h |
-| Pipeline model | Groq `openai/gpt-oss-120b` (`PIPELINE_PROVIDER`) |
+| Pipeline model | Groq `openai/gpt-oss-120b` (`PIPELINE_PROVIDER` in `config.py`; per request via `provider`) |
 | Citation verifier | Groq `qwen/qwen3.8-27b` (`EVAL_PROVIDER`) |
 | Chat history | 5 turns, answers truncated to 500 characters |
 | Rate limits (per minute) | groq 100, gemini 10, openrouter 3, feedback 30, documents 10 |
