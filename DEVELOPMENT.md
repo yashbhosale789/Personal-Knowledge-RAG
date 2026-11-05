@@ -21,12 +21,10 @@ Copy `.env.sample` to `.env` and fill it in. The minimum for local use:
 
 ```dotenv
 API_KEY=a-long-random-token          # at least 16 characters
-PIPELINE_PROVIDER=groq
 GROQ_API_KEY=your-groq-api-key
-EVAL_PROVIDER=groq
-REDIS_HOST=localhost
-REDIS_PORT=6379
 ```
+
+Optional: `OPENROUTER_API_KEY` and `GEMINI_API_KEY` (fallbacks), `HF_TOKEN`, the Langfuse keys, `EVAL_PROVIDER` (default `groq`) and `REDIS_HOST` (default `localhost`; the port is fixed at 6379).
 
 Generate a key with `python -c "import secrets; print(secrets.token_urlsafe(32))"`. Never commit `.env`.
 
@@ -40,7 +38,7 @@ uvicorn api.main:app --reload --port 8000        # API at http://127.0.0.1:8000,
 
 - **Full corpus:** set `RAG_CORPUS=c2` to use `data/corpus_c2/` (236 PDFs) with its own index (`storage/chroma_c2`). Indexing takes about 4–8 minutes on CPU.
 - **Tuning variants:** `RAG_CHUNK_SIZE`, `RAG_CHUNK_OVERLAP`, `RAG_CHUNK_MERGE_PAGES=1` and `RAG_TOP_K` select Phase 15.2 variants; they are refused unless `RAG_CORPUS=c2`.
-- **Providers:** `PIPELINE_PROVIDER` (`groq`, `openrouter`, `gemini`, `ollama`), `EVAL_PROVIDER` (judge and verifier) and `AGENT_PROVIDER` (agentic scripts) are independent. Model names live in `config.py`.
+- **Providers:** `PIPELINE_PROVIDER` (pipeline) and `AGENT_PROVIDER` (agentic scripts) are set in `config.py`, along with the model names; choices are `groq`, `openrouter`, `gemini` and `ollama`. `EVAL_PROVIDER` (judge and verifier) comes from `.env`. A `/query` request can override the pipeline provider with its `provider` field.
 
 ## Web UI
 
