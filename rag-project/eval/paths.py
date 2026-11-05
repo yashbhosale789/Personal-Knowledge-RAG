@@ -21,7 +21,9 @@ JUDGE_PATH = RUNS_DIR / "judgments.jsonl"
 REWRITES_PATH = RUNS_DIR / "rewrites.json"
 # One file per corpus (RAG_CORPUS). retrieval_baseline.json is the frozen c1 record from
 # before 15.1 (corpus 9fc4650202); nothing writes it any more.
-BASELINE_PATH = RUNS_DIR / f"retrieval_baseline_{config.CORPUS}.json"
+BASELINE_PATH = (
+    RUNS_DIR / f"retrieval_baseline_{config.CORPUS}{config.INDEX_VARIANT}.json"
+)
 CANDIDATES_PATH = RUNS_DIR / "candidates.jsonl"
 REVIEWED_PATH = RUNS_DIR / "candidates_reviewed.jsonl"
 
