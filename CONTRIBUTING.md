@@ -1,7 +1,8 @@
 # Contributing
 
 ## Before contributing
-- Read the README and relevant architecture/security documentation.
+- Read the [README](README.md), [ARCHITECTURE.md](ARCHITECTURE.md) and [SECURITY.md](SECURITY.md).
+- Set up and run the checks with [DEVELOPMENT.md](DEVELOPMENT.md): `pytest -m "not slow"` and `ruff check .` from `rag-project/`, plus `npm run lint; npm run typecheck; npm test` for UI changes.
 - Check the current roadmap and open issues.
 - Keep changes focused and explain the reason for the change.
 
