@@ -556,6 +556,63 @@ Dropped 2026-10-31: reranker alternatives, the no-retrieval / long-context basel
 
 Use the test split once, at the end. Exit: a written report stating which variants are distinguishable and which are not, with the chosen configuration and rationale.
 
+#### Plan (written 2026-11-05, before any run)
+
+Baseline reproduced first: `RAG_CORPUS=c2 python -m eval.harness.retrieval_eval` rewrote `retrieval_baseline_c2.json` byte-identically (dataset `a831d87d09`, corpus `80f20e0aa4`, prompt version `938331ced9a6`, cached rewrites).
+
+- **Tuning set:** the 61 answerable dev items of `v2` (the 10 answerable test items are not looked at until step 6). Slices, pointers only: company (Aventro 43, Cendara 5, CloudWay-24 5, Velvera 4, ZX Bank 4; company from the item, else from its sources' folder) and brand in query (12).
+- **Primary metric:** reranked recall@k and MRR (what generation receives). Also dense R@5, BM25 R@5, fused R@10, mean context characters handed to generation, rerank latency.
+- **Statistics:** paired on question id against the base run, `compare.py` (bootstrap 95% CI, sign test). A CI that includes 0 = not distinguishable.
+- **Decision rule:** change a setting only on a distinguishable dev improvement with no distinguishable loss on the other primary metric. Ties keep the current code.
+
+| # | Variant | What changes |
+|---|---|---|
+| 1 | ANN check | Chroma HNSW top-5 / top-20 vs exact cosine over the stored 2,221 vectors: set overlap and paired recall. Tune `ef_search` only if they differ. |
+| 2a–e | Chunk size × overlap | 256/64, 256/128, 512/128, 1024/64, 1024/128 (base 512/64). Own index each (`storage/chroma_c2_s<size>o<overlap>`, gitignored). |
+| 2f | Page merge | 512/64 with the pages of a file joined before splitting (today a chunk never crosses a page). |
+| 2g | Equal context | The 256 variants at `TOP_K` 10, so the context is about the base's 5 × 512 characters. |
+| 3a | `TOP_K` | 3, 8 (base 5); pools scale as in the code (first stage ×4, rerank input ×2). |
+| 3b | Rerank pool | rerank input 20 and 40 (first-stage depth 20 and 40) at `TOP_K` 5 (base 10 from depth 20). |
+| 3c | BM25 tokenizer | `\w+` on lowercased text (punctuation stripped); also that plus a trailing-`s` strip. No stemmer is installed (no NLTK; spaCy has no model), so no real stemming. |
+| 4 | Combined | The winners of 1–3, one run. |
+| 5 | Ablations (PR 2) | No rewrite (retrieval-only first, $0); then generate/judge for no rewrite, no sufficiency judge, no citation verifier, rewrite only for short queries. Condense step only with evidence of chat use. Call count per provider before each run. |
+| 6 | Test split | Chosen configuration vs base, once. |
+
+#### Results
+
+- **1. ANN check (done 2026-11-05):** dataset `a831d87d09`, corpus `80f20e0aa4`, prompt `938331ced9a6`, 61 dev items, `python -m eval.tools.ann_check`. Stored vectors have unit norm (min/max 1.0000). HNSW and exact cosine return identical sets for 61/61 queries at top-5 and top-20 (mean overlap 1.000); dense recall@5 0.779 and recall@20 0.910 for both. Not distinguishable, because they do not differ at all: the default HNSW (`ef_search` 100, `M` 16) is confirmed and not tuned.
+
+All rows below: dataset `a831d87d09`, prompt `938331ced9a6`, 61 answerable dev items, cached rewrites, paired against the base run `r152_base.json` (corpus `80f20e0aa4`, 512/64, `TOP_K` 5: context 2,262 characters, reranked R@5 0.820, MRR 0.721). Δ = variant − base with the bootstrap 95% CI and the sign test (wins/losses, p) from `compare.py`. **Better/worse** = CI excludes 0 and sign test p < 0.05; **n.d.** = not distinguishable. Result files `eval/runs/r152_*.json`. A rerun of the base gave identical metrics.
+
+- **2. Chunking (F-10).** Each variant has its own corpus id. Contains-evidence matching cannot favour small chunks unfairly here: the dev evidence spans are short (median 59, max 184 characters) and fit in some chunk for 112/112 spans at 512 and 1024, 110 at 256/128, 101 at 256/64. Chunk size is bounded by page length (page merge adds 2 chunks), so 1024 chunks average 681 characters, not 1,024.
+
+  | Variant | Corpus id | Chunks | Context chars | Reranked R@k | MRR | Δ R@k (vs base R@5) | Δ MRR | Verdict |
+  |---|---|---|---|---|---|---|---|---|
+  | 256/64 | `89ac44af60` | 4,573 | 1,116 | 0.563 | 0.507 | −0.257 [−0.369, −0.150] 1/21 | −0.214 [−0.316, −0.115] | worse |
+  | 256/128 | `ec41db926c` | 6,387 | 1,116 | 0.661 | 0.571 | −0.158 [−0.254, −0.077] 0/11 | −0.150 [−0.247, −0.056] | worse |
+  | 256/64, `TOP_K` 10 | `89ac44af60` | | 2,201 | 0.626 | 0.534 | −0.194 [−0.298, −0.093] 1/16 | −0.187 [−0.288, −0.091] | worse |
+  | 256/128, `TOP_K` 10 | `ec41db926c` | | 2,238 | 0.702 | 0.565 | −0.117 [−0.202, −0.049] 0/8 | −0.156 [−0.253, −0.064] | worse |
+  | 512/128 | `e3a2b7b41e` | 2,401 | 2,273 | 0.740 | 0.661 | −0.079 [−0.148, −0.022] 0/6 p 0.03 | −0.060 [−0.123, 0.000] p 0.06 | recall worse, MRR n.d. |
+  | 512/64, pages merged | `f4b9391056` | 2,223 | 2,255 | 0.803 | 0.705 | −0.016 [−0.049, 0.000] 0/1 | −0.016 | n.d. |
+  | 1024/64 | `663f7a683e` | 1,295 | 3,996 | 0.902 | 0.832 | +0.082 [+0.025, +0.156] 6/0 p 0.03 | +0.111 [+0.030, +0.197] 15/5 p 0.04 | better, at 1.77× the context |
+  | 1024/128 | `a2e0af635c` | 1,300 | 4,025 | 0.902 | 0.837 | +0.082 [+0.025, +0.156] 6/0 p 0.03 | +0.116 [+0.039, +0.198] 15/4 p 0.02 | better; same as 1024/64 |
+
+  First stage on 1024/64: dense R@5 0.779 → 0.910 (+0.131 [+0.057, +0.213]), BM25 R@5 0.656 → 0.779 (+0.123 [+0.022, +0.230]). Slices, pointers only: CloudWay-24 +0.40 (n = 5, 2/0), brand in query +0.125 (n = 12, 2/0); both CIs include 0. Rerank p50 rises from 30 to 52 ms (longer pairs).
+- **3. Retrieval knobs** (base chunking). Rerank latency re-timed on an idle machine: base p50 30 / p95 40 ms.
+
+  | Variant | Context chars | Rerank p50 / p95 ms | Metric | Δ (vs base R@5) | Verdict |
+  |---|---|---|---|---|---|
+  | `TOP_K` 3 | 1,372 | 22 / 30 | R@3 0.749 | −0.071 [−0.128, −0.025] 0/7 p 0.02; MRR −0.005 | worse |
+  | `TOP_K` 8 | 3,614 | 45 / 57 | R@8 0.852 | +0.033 [0.000, +0.074] 3/0 p 0.25; MRR +0.001 | n.d. |
+  | rerank input 20 (depth 20) | 2,264 | 56 / 75 | R@5 0.836 | +0.016 [0.000, +0.049] 1/0 | n.d. |
+  | rerank input 40 (depth 40) | 2,274 | 109 / 134 | R@5 0.831 | +0.011 [−0.016, +0.049] 1/1 | n.d. |
+  | BM25 `\w+` (F-09) | 2,253 | 30 / 45 | BM25 R@5 0.727; reranked R@5 0.820 | BM25 +0.071 [−0.016, +0.164] 9/3 p 0.15; reranked 0.000 | n.d. |
+  | BM25 `\w+` + plural strip | 2,258 | 30 / 45 | BM25 R@5 0.735; reranked R@5 0.820 | BM25 +0.079 [−0.011, +0.175] 9/3 p 0.15; reranked 0.000 | n.d. |
+  | No rewrite (raw question, 5a) | 2,269 | 31 / 40 | R@5 0.844 | +0.025 [0.000, +0.066] 2/0; MRR +0.011 [−0.036, +0.063] 5/4 | n.d. |
+
+  The tokenizer helps BM25 by itself, but the fused and reranked lists are unchanged, so by the decision rule `lower().split()` stays (F-09). A larger rerank pool costs 2–3.6× the rerank time for nothing measurable. The rewrite earns nothing measurable in retrieval: the raw question is no worse on any stage.
+- **4. Combined.** Only chunk size 1024 won, so the combined run is 1024/64 at `TOP_K` 3 (corpus `663f7a683e`), sized to the base's context: 2,380 characters, rerank p50 30 ms. Reranked R@3 0.885 vs base R@5 0.820: +0.066 [+0.016, +0.131], 5/0, sign test p 0.06, so `compare.py` says not distinguishable (the CI excludes 0, the sign test does not reach 0.05); MRR 0.825, +0.104 [+0.024, +0.189] 15/5 p 0.04, better. Dense R@5 +0.131 and BM25 R@5 +0.123, both better. At equal context, the 1024 gain is one distinguishable metric (MRR) plus one borderline (recall).
+
 ### Phase 15.3 — Token and cache optimization
 
 **Dropped as a build step (2026-10-31).** With one user there are few exact repeats or colliding rewrites, so L1 exact-match and L3 retrieval caches would rarely hit, and speculative generation spends free-tier Groq tokens on abstained queries to save about one round-trip.

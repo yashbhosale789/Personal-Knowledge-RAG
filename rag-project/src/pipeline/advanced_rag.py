@@ -128,17 +128,30 @@ def _feedback_chunks(chunks: list[dict], answer: str | None) -> list[dict]:
 
 
 def retrieve_context(
-    query: str, top_k: int = TOP_K, reranker: CrossEncoderReranker | None = None
+    query: str,
+    top_k: int = TOP_K,
+    reranker: CrossEncoderReranker | None = None,
+    *,
+    pool: int | None = None,
+    candidates: int | None = None,
+    keyword: BM25Retriever | None = None,
 ) -> dict[str, list[dict]]:
-    """Stages 2-4: dense + BM25 -> RRF -> rerank. Returns every stage so eval can inspect them."""
+    """Stages 2-4: dense + BM25 -> RRF -> rerank. Returns every stage so eval can inspect them.
+
+    pool (first-stage depth, default top_k*4), candidates (reranker input, default top_k*2)
+    and keyword (a BM25 index) exist for the 15.2 experiments. The reranker's own top_k
+    sets how many chunks reach generation."""
+    pool = pool or top_k * 4
     with timed("dense_retrieve") as obs:
-        dense = _dense_to_dicts(retrieve(query, top_k=top_k * 4), top_k * 4)
+        dense = _dense_to_dicts(retrieve(query, top_k=pool), pool)
         obs.update(input=query, output=_chunk_refs(dense, "rank"))
     with timed("bm25") as obs:
-        bm25 = get_bm25().retrieve(query, top_k=top_k * 4)
+        bm25 = (keyword or get_bm25()).retrieve(query, top_k=pool)
         obs.update(input=query, output=_chunk_refs(bm25, "score"))
     with timed("fusion") as obs:
-        fused = reciprocal_rank_fusion(ranked_lists=[dense, bm25], top_k=top_k * 2)
+        fused = reciprocal_rank_fusion(
+            ranked_lists=[dense, bm25], top_k=candidates or top_k * 2
+        )
         obs.update(output=_chunk_refs(fused, "rrf_scores"))
     with timed("rerank") as obs:
         reranked = (reranker or get_reranker()).rerank(query, candidates=fused)

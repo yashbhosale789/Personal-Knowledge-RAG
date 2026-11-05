@@ -21,10 +21,22 @@ STORAGE_DIR = BASE_DIR / "storage" / ("chroma_c2" if _C2 else "chroma")
 EMBEDDINGS_MODEL_NAME = "BAAI/bge-small-en-v1.5"
 EMBEDDING_DIAMENSION = 384
 
-# Chunking
-CHUNK_SIZE = 512
-CHUNK_OVERLAP = 64
-CHUNKS_PATH = BASE_DIR / "storage" / ("chunks_c2.json" if _C2 else "chunks.json")
+# Chunking. RAG_CHUNK_SIZE / RAG_CHUNK_OVERLAP / RAG_CHUNK_MERGE_PAGES=1 are Phase 15.2
+# experiments on c2 only: a non-default setting gets its own index and chunk export.
+CHUNK_SIZE = int(os.getenv("RAG_CHUNK_SIZE", "512"))
+CHUNK_OVERLAP = int(os.getenv("RAG_CHUNK_OVERLAP", "64"))
+CHUNK_MERGE_PAGES = os.getenv("RAG_CHUNK_MERGE_PAGES") == "1"
+INDEX_VARIANT = (
+    ""
+    if (CHUNK_SIZE, CHUNK_OVERLAP, CHUNK_MERGE_PAGES) == (512, 64, False)
+    else f"_s{CHUNK_SIZE}o{CHUNK_OVERLAP}{'m' if CHUNK_MERGE_PAGES else ''}"
+)
+if INDEX_VARIANT and not _C2:
+    raise ValueError("chunking variants (RAG_CHUNK_*) need RAG_CORPUS=c2")
+STORAGE_DIR = STORAGE_DIR.with_name(STORAGE_DIR.name + INDEX_VARIANT)
+CHUNKS_PATH = (
+    BASE_DIR / "storage" / (f"chunks_c2{INDEX_VARIANT}.json" if _C2 else "chunks.json")
+)
 
 # Upload limits (POST /documents), measured 2026-11-02: in the 1 GiB container an upload at
 # MAX_UPLOAD_CHARS (2,107 chunks) took anon memory from 496 to 547 MiB, no OOM. But a 20 MB

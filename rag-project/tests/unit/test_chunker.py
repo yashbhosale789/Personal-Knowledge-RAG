@@ -1,6 +1,7 @@
 from langchain_core.documents import Document
 
 import config
+from src.ingestion import chunker
 from src.ingestion.chunker import chunk_documents
 
 
@@ -37,3 +38,15 @@ def test_parent_metadata_is_carried_forward():
 
 def test_empty_input_gives_no_chunks():
     assert chunk_documents([]) == []
+
+
+def test_merge_pages_lets_a_chunk_cross_a_page_break(monkeypatch):
+    pages = [_doc("end of page one.", "a.pdf"), _doc("start of page two.", "a.pdf")]
+    assert len(chunk_documents(pages)) == 2
+    monkeypatch.setattr(chunker, "CHUNK_MERGE_PAGES", True)
+    merged = chunk_documents(pages + [_doc("other file", "b.pdf")])
+    assert [c.page_content for c in merged] == [
+        "end of page one.\n\nstart of page two.",
+        "other file",
+    ]
+    assert pages[0].page_content == "end of page one."  # inputs not mutated

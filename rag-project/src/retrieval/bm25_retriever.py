@@ -1,10 +1,15 @@
 import logging
+from collections.abc import Callable
 
 from rank_bm25 import BM25Okapi
 
 from config import TOP_K
 
 logger = logging.getLogger(__name__)
+
+
+def tokenize(text: str) -> list[str]:
+    return text.lower().split()
 
 
 class BM25Retriever:
@@ -17,14 +22,19 @@ class BM25Retriever:
     For production, swap in a proper tokenizer (spaCy, NLTK punkt).
     """
 
-    def __init__(self, chunks: list[dict] | None = None):
+    def __init__(
+        self,
+        chunks: list[dict] | None = None,
+        tokenizer: Callable[[str], list[str]] = tokenize,
+    ):
         if chunks is None:
             from src.vectorstore.store import all_chunks
 
             chunks = all_chunks()
         self._chunks = chunks
         self._corpus = [c["text"] for c in self._chunks]
-        self._tokenized = [doc.lower().split() for doc in self._corpus]
+        self._tokenize = tokenizer
+        self._tokenized = [tokenizer(doc) for doc in self._corpus]
         # BM25Okapi divides by the corpus size, so an empty index has no BM25 object.
         self._index = BM25Okapi(self._tokenized) if self._tokenized else None
         if self._index is None:
@@ -41,7 +51,7 @@ class BM25Retriever:
         if self._index is None:
             return []
 
-        tokens = query.lower().split()
+        tokens = self._tokenize(query)
         scores = self._index.get_scores(tokens)
 
         ranked_indices = sorted(

@@ -14,11 +14,16 @@ SHOW = (
 C1 = "documents chroma chunks.json golden_dataset.json retrieval_baseline_c1.json"
 
 
-def _config(corpus: str | None) -> subprocess.CompletedProcess:
+def _config(corpus: str | None, **extra: str) -> subprocess.CompletedProcess:
     # A fresh interpreter: reloading config in-process would leave stale `from config import` copies.
-    env = {k: v for k, v in os.environ.items() if k != "RAG_CORPUS"}
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if k != "RAG_CORPUS" and not k.startswith("RAG_CHUNK_")
+    }
     if corpus is not None:
         env["RAG_CORPUS"] = corpus
+    env.update(extra)
     return subprocess.run(
         [sys.executable, "-c", SHOW],
         cwd=ROOT,
@@ -47,3 +52,14 @@ def test_corpus_selects_its_own_documents_index_dataset_and_results(corpus, path
 def test_unknown_corpus_fails_instead_of_writing_into_c1():
     result = _config("c3")
     assert result.returncode != 0 and "RAG_CORPUS must be c1 or c2" in result.stderr
+
+
+def test_chunking_variant_gets_its_own_index_and_results():
+    out = _config("c2", RAG_CHUNK_SIZE="256", RAG_CHUNK_MERGE_PAGES="1").stdout.split()
+    assert out[1:3] == ["chroma_c2_s256o64m", "chunks_c2_s256o64m.json"]
+    assert out[4] == "retrieval_baseline_c2_s256o64m.json"
+
+
+def test_chunking_variant_is_refused_on_c1():
+    result = _config(None, RAG_CHUNK_SIZE="256")
+    assert result.returncode != 0 and "need RAG_CORPUS=c2" in result.stderr
