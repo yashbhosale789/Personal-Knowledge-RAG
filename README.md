@@ -14,11 +14,68 @@ The focus is engineering discipline around a RAG pipeline rather than model nove
 
 <!-- TODO: add a short demo GIF of a question, a streamed answer with sources, and thumbs feedback. -->
 
-**Status:** Phases 1–14 are closed (pipeline, deployment, LLMOps, feedback and React UI). Phase 15 (ingestion correctness and the full corpus) is next. See [Known limitations](#known-limitations) and the [roadmap](docs/architecture/roadmap.md).
+**Status:** Phases 1–14 are closed (pipeline, deployment, LLMOps, feedback and React UI), as are 15.0 (one consistent ingest path, UI document upload) and 15.1 (the full corpus, offline). Phase 15.2 (retrieval tuning) is in progress. See [Known limitations](#known-limitations) and the [roadmap](docs/architecture/roadmap.md).
 
 ---
 
 ## Architecture
+
+Four views: the whole system, the query pipeline, the ingestion pipeline, and delivery (CI/CD, deploy, eval gate, uptime).
+
+### System overview
+
+Everything runs on one EC2 instance in Docker Compose. Chroma, BM25 and both local models run inside the app process; only the LLMs, Langfuse and alert email are external.
+
+```mermaid
+flowchart LR
+    subgraph Client ["Browser (React UI)"]
+        UI["Chat: streamed answer, sources, thumbs feedback<br/>Documents: upload, list, delete PDFs"]
+    end
+
+    subgraph Host ["AWS EC2 t3.small · Docker Compose"]
+        Caddy["Caddy (TLS)<br/>blocks /metrics and /ingest<br/>caps uploads at 11 MiB"]
+
+        subgraph App ["FastAPI app (one uvicorn worker)"]
+            Static["React build<br/>same origin, CSP"]
+            QueryAPI["/query, /query/stream"]
+            DocsAPI["/documents"]
+            FeedbackAPI["/feedback"]
+            HealthAPI["/health"]
+            MetricsAPI["/metrics"]
+            Models["In-process: bge-small-en-v1.5 embedder,<br/>MiniLM cross-encoder, BM25 index"]
+        end
+
+        Chroma[("Chroma<br/>volume chroma_data")]
+        PDFs[("PDF files<br/>volume documents_data")]
+        SQLite[("SQLite feedback<br/>volume feedback_data")]
+        Redis[("Redis Stack<br/>semantic cache, rate limits,<br/>feedback grounding")]
+        Prom["Prometheus<br/>SLO recording rules"]
+        Graf["Grafana<br/>dashboards + alert rules"]
+    end
+
+    subgraph External ["External services"]
+        LLM["LLM providers<br/>Groq → OpenRouter → Gemini"]
+        Langfuse["Langfuse Cloud<br/>per-request traces"]
+        Mail["Alert email (SMTP)"]
+    end
+
+    UI --> Caddy
+    Caddy --> Static & QueryAPI & DocsAPI & FeedbackAPI & HealthAPI
+    QueryAPI --> Models
+    QueryAPI --> Chroma
+    QueryAPI <--> Redis
+    QueryAPI --> LLM
+    QueryAPI -.-> Langfuse
+    DocsAPI --> PDFs
+    DocsAPI --> Chroma
+    DocsAPI --> Redis
+    FeedbackAPI --> SQLite
+    FeedbackAPI --> Redis
+    Prom -- "scrapes (internal)" --> MetricsAPI
+    Prom --> Graf --> Mail
+```
+
+### Query pipeline
 
 ```mermaid
 flowchart TD
@@ -27,7 +84,7 @@ flowchart TD
     end
 
     subgraph Edge ["Caddy (TLS)"]
-        Caddy["Reverse proxy<br/>blocks /metrics and /ingest"]
+        Caddy["Reverse proxy"]
     end
 
     subgraph Query ["FastAPI: /query and /query/stream"]
@@ -36,7 +93,7 @@ flowchart TD
         Cache -- Yes --> Final["Answer + citations + request ID"]
         Cache -- No --> Rewrite["Query rewrite"]
         Rewrite --> Dense["Dense: Chroma<br/>bge-small-en-v1.5"]
-        Rewrite --> Sparse["Sparse: BM25"]
+        Rewrite --> Sparse["Sparse: BM25<br/>built from Chroma"]
         Dense & Sparse --> RRF["Reciprocal rank fusion"]
         RRF --> Rerank["Cross-encoder rerank<br/>ms-marco-MiniLM-L-6-v2, top 5"]
         Rerank --> Suff{"Sufficiency gate<br/>score floor + LLM judge"}
@@ -59,11 +116,73 @@ flowchart TD
 
     UI --> Caddy --> Auth
     UI -- "POST /feedback" --> Caddy
+    Caddy --> FeedbackRoute["FastAPI /feedback<br/>reads grounding from Redis"]
+    FeedbackRoute --> SQLite
+    FeedbackRoute -.-> Redis
+    Auth <-.-> Redis
+    Cache <-.-> Redis
     Final -.-> Prom
     Final -.-> Langfuse
 ```
 
-Ingestion: PDF, Markdown, DOCX and TXT → recursive character chunker (512 characters, 64 overlap) → embeddings into Chroma, plus `storage/chunks.json` for BM25. The production index is currently built into the image (see [Known limitations](#known-limitations)).
+### Ingestion pipeline
+
+Since Phase 15.0 every write goes through one function, `ingest_file()` (`rag-project/src/ingestion/ingest.py`), so Chroma, BM25 and the cache cannot drift apart.
+
+```mermaid
+flowchart TD
+    subgraph Entry ["Entry points"]
+        Upload["UI upload: POST /documents<br/>bearer key, rate limit, .pdf name,<br/>%PDF- header, 10 MiB cap"]
+        DevIngest["POST /ingest<br/>server path under data/documents/<br/>(local dev only, blocked at Caddy)"]
+        Batch["scripts/ingest.py<br/>every PDF in data/documents/, sorted"]
+    end
+
+    Upload --> Lock{"Write lock free?<br/>one write at a time"}
+    DevIngest --> Lock
+    Lock -- No --> Busy["409: try again shortly"]
+    Lock -- "Yes (upload)" --> Save["Save to documents_data volume<br/>same name: old file kept as backup"]
+    Save --> Load
+    Lock -- "Yes (/ingest)" --> Load
+    Batch --> Load
+
+    subgraph One ["ingest_file(): the one ingest path"]
+        Load["Load + clean text<br/>PyPDFLoader, ligature and split-capital fixes"] --> HasText{"Text extracted,<br/>within size cap?"}
+        HasText -- No --> Reject["Rejected before anything is deleted<br/>upload: old file restored"]
+        HasText -- Yes --> Scan{"Prompt-injection scan"}
+        Scan -- Flagged --> Reject
+        Scan -- Clean --> Replace["Delete this source's old chunks"]
+        Replace --> Chunk["Recursive character chunker<br/>512 characters, 64 overlap"]
+        Chunk --> Embed["Embed: bge-small-en-v1.5, 384-d"]
+        Embed --> Chroma[("Chroma<br/>collection personal_kb")]
+    end
+
+    Chroma --> Changed["index_changed()<br/>clear semantic cache, drop BM25 index"]
+    Changed --> Rebuild["Next query rebuilds BM25 from Chroma"]
+    Batch -.-> Snapshot["storage/chunks.json<br/>eval snapshot and corpus id"]
+
+    DeleteDoc["DELETE /documents/name<br/>or DELETE /ingest"] --> DelChunks["Delete chunks, then the file"]
+    DelChunks --> Changed
+```
+
+The loader also reads Markdown, DOCX and TXT, but the API and the batch script accept PDFs only. On first start in production, an empty `chroma_data` volume is seeded from the index built into the image; after that the volume is the source of truth.
+
+### Delivery and operations
+
+```mermaid
+flowchart LR
+    PR["Pull request"] --> CI["CI: pytest, ruff + bandit,<br/>pip-audit, CodeQL, frontend<br/>(lint, Vitest, Playwright)"]
+    PR --> Gate["Eval regression gate<br/>LLM judge, 4 CI questions"]
+    Weekly["Weekly schedule"] --> Gate
+    CI --> Main["Merge to main"]
+    Main --> Build["Build and Push Image<br/>UI build + Python app"]
+    Build --> GHCR[("GHCR")]
+    Build --> SSM["AWS Systems Manager<br/>no SSH port"]
+    SSM --> Deploy["deploy.sh on EC2<br/>pull image, recreate app, wait healthy"]
+    GHCR --> Deploy
+    Deploy -- Healthy --> Warm["Clear semantic cache,<br/>warm-up query, smoke test"]
+    Deploy -- Unhealthy --> Rollback["Redeploy previous image"]
+    Uptime["Uptime workflow<br/>every 10 minutes"] --> Health["GET /health<br/>through Caddy"]
+```
 
 ---
 
@@ -144,7 +263,6 @@ python -m eval.security.injection_eval     # prompt-injection resistance
 These are deliberate, tracked in the [roadmap](docs/architecture/roadmap.md), and each is pinned by a strict `xfail` test where it is a code defect:
 
 - **Small corpus.** Production serves 5 PDFs (`c1`). The full corpus (100–150 PDFs) is indexed in Phase 15.1.
-- **Ingestion is not yet consistent.** BM25 is built from `chunks.json`, so documents ingested through the API never reach keyword search and deleted ones can still be retrieved. API ingest is therefore disabled in production, and the index is built into the image. Fixed in Phase 15.0.
 - **Single user.** One shared key; every key holder sees the whole corpus and shares one cache.
 - **Provisional SLOs.** Single-user traffic is too sparse to tune them; no load test yet (Phase 15.4).
 - **Free tiers.** Generation and verification both use Groq's free tier; the verifier degrades to a low-confidence, uncached answer if it fails.
