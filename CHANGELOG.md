@@ -13,7 +13,11 @@ User-visible and operational changes, newest first. There are no versioned relea
 - **Chunking 1024 characters, overlap 64, `TOP_K` 3** (was 512/64, 5): better ranking at the same context size (MRR 0.72 → 0.83 on dev).
 - The golden dataset is v2 (79 questions); v1 moved to `eval/legacy/`. The eval gate's unanswerable question is now Q12 instead of Q13: on the full corpus Q13 is answered from a related warranty page (known issue F-29).
 - All four pipeline stages are kept: no ablation made a distinguishable difference.
+- LLM output cap raised from 512 to 1024 tokens: `gpt-oss` reasoning used part of the 512, and answers ended mid-sentence.
 - **Deploy:** production needs a backup and re-seed A (`Backup_Recovery.md`), because the index volume wins over the image. The eval gate's timeout is 30 minutes (indexing 236 PDFs).
+
+### Fixed
+- The answer view shows `**bold**` as bold (React elements; still no HTML rendered).
 
 ## 2026-11-04: Phase 15.1, full PDF corpus
 
