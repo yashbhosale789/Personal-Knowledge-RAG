@@ -111,7 +111,8 @@ def _call_openai_compatible(
         "model": model,
         "messages": messages,
         "temperature": 0.2,
-        "max_tokens": 512,
+        # gpt-oss spends part of this on reasoning; 512 cut prod answers mid-sentence (2026-11-06).
+        "max_tokens": 1024,
     }
     if on_token:
         payload["stream"] = True
