@@ -29,7 +29,7 @@ Retrieval only:
 - `python -m eval.tools.ann_check` compares Chroma's HNSW top-k with exact cosine on the dev items.
 - `compare.py` also takes `--company <name>` (from the item, else `data/source_company.json`), `--brand` and `--metric-b` (e.g. a `TOP_K` 3 run's `recall@3` against the base's `recall@5`).
 
-Every generation, judgment and retrieval record carries `dataset` and `corpus` ids (`store.run_ids()`). One corpus and one dataset since 2026-11-06: dataset `v2` (`data/golden_dataset.json`) = `a831d87d09` on corpus `281db7190c` (`data/documents/`, 236 PDFs at 1024/64), used by CI, production and offline runs. History: `v1` = `51bcd1e330` (`legacy/golden_dataset_v1.json`) on `c1` = `9fc4650202` / `2ef6192555` (the 5 car-manual PDFs, now part of the corpus); `v2` on `c2` = `80f20e0aa4` (the same 236 PDFs at 512/64). The 12-question test split is frozen: final reporting only, and it was used once in 15.2.
+Every generation, judgment and retrieval record carries `dataset` and `corpus` ids (`store.run_ids()`). One corpus and one dataset since 2026-11-06: dataset `v2` (`data/golden_dataset.json`) = `8f89d42be9` (since 2026-11-06: `a831d87d09` with the CI flag moved from Q13 to Q12; questions and labels unchanged, so 15.2 results on `a831d87d09` still apply) on corpus `281db7190c` (`data/documents/`, 236 PDFs at 1024/64), used by CI, production and offline runs. History: `v1` = `51bcd1e330` (`legacy/golden_dataset_v1.json`) on `c1` = `9fc4650202` / `2ef6192555` (the 5 car-manual PDFs, now part of the corpus); `v2` on `c2` = `80f20e0aa4` (the same 236 PDFs at 512/64). The 12-question test split is frozen: final reporting only, and it was used once in 15.2.
 
 Comparing two runs: `python -m eval.harness.compare gen:baseline gen:other faithfulness`.
 

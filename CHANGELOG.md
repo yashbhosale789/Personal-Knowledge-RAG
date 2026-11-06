@@ -11,7 +11,7 @@ User-visible and operational changes, newest first. There are no versioned relea
 ### Changed
 - **One corpus:** production, CI and evaluation all use the 236 PDFs in `data/documents/` (the 5 earlier PDFs are among them). `RAG_CORPUS` and `data/corpus_c2/` are removed. Four PDFs whose names occur in two companies are prefixed with the company name.
 - **Chunking 1024 characters, overlap 64, `TOP_K` 3** (was 512/64, 5): better ranking at the same context size (MRR 0.72 → 0.83 on dev).
-- The golden dataset is v2 (79 questions); v1 moved to `eval/legacy/`.
+- The golden dataset is v2 (79 questions); v1 moved to `eval/legacy/`. The eval gate's unanswerable question is now Q12 instead of Q13: on the full corpus Q13 is answered from a related warranty page (known issue F-29).
 - All four pipeline stages are kept: no ablation made a distinguishable difference.
 - **Deploy:** production needs a backup and re-seed A (`Backup_Recovery.md`), because the index volume wins over the image. The eval gate's timeout is 30 minutes (indexing 236 PDFs).
 

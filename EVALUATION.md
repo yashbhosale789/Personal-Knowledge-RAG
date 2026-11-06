@@ -14,7 +14,7 @@ One corpus and one dataset since 2026-11-06, used by CI, production and offline 
 | --- | --- |
 | Corpus | 236 PDFs from 5 fictional companies ([RAG-Multi-Corpus](https://github.com/udayallu/RAG-Multi-Corpus), MIT) in `data/documents/`, 1,295 chunks at 1024/64 |
 | Corpus id | `281db7190c` |
-| Dataset | `eval/data/golden_dataset.json` (v2, `a831d87d09`): 79 questions, 71 answerable; 67 dev, 12 frozen test |
+| Dataset | `eval/data/golden_dataset.json` (v2, `8f89d42be9` (since 2026-11-06: `a831d87d09` with the CI flag moved from Q13 to Q12; questions and labels unchanged, so 15.2 results on `a831d87d09` still apply)): 79 questions, 71 answerable; 67 dev, 12 frozen test |
 
 Earlier results name two corpora: `c1`, the 5 car-manual PDFs (now part of the corpus; id `2ef6192555`, dataset v1 `51bcd1e330`, kept in `eval/legacy/golden_dataset_v1.json`), and `c2`, the same 236 PDFs at 512/64 (`80f20e0aa4`).
 
@@ -66,7 +66,7 @@ On `c2` / `v2`, 61 answerable dev questions, each variant paired against the bas
 
 ## CI regression gate
 
-`.github/workflows/eval-gate.yml` runs an LLM-judge gate on 4 CI questions (faithfulness ≥ 0.85, relevancy ≥ 0.75) when pipeline code, config, data or the harness change, weekly, and on demand. A real regression fails it. A run cut short by free-tier rate limits is reported as a warning, not a failure.
+`.github/workflows/eval-gate.yml` runs an LLM-judge gate on 4 CI questions (Q01, Q06, Q09, Q12) (faithfulness ≥ 0.85, relevancy ≥ 0.75) when pipeline code, config, data or the harness change, weekly, and on demand. A real regression fails it. A run cut short by free-tier rate limits is reported as a warning, not a failure.
 
 ## Security evals
 
