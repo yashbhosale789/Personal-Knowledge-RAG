@@ -218,7 +218,7 @@
     "split": "dev",
     "ci": true,
     "question": "What is the warranty period for an Aventro Sedan?",
-    "ground_truth": "The document does not cover warranty information. This is outside the scope of the tyre-changing guide.",
+    "ground_truth": "The knowledge base gives no warranty period for a new Aventro Sedan. It lists warranties for parts (for example the engine assembly, 2 years or 50,000 km) and 6-12 months for certified pre-owned cars.",
     "expected_outcome": "abstain",
     "relevant": []
   },
@@ -797,6 +797,10 @@
       {
         "source": "Advice for Pregnant Women While in a Car.pdf",
         "evidence": "contact your local Aventro Motors Service Center"
+      },
+      {
+        "source": "Aventro Service Center Locations.pdf",
+        "evidence": "Aventro Service Center, Mumbai • Location: Andheri East, Mumbai, Maharashtra"
       }
     ],
     "note": "no city given; the corpus supports 'nearest center' plus a city list"
@@ -855,41 +859,78 @@
   },
   {
     "id": "Q48",
-    "category": "unanswerable",
+    "category": "ambiguous",
     "difficulty": "medium",
     "origin": "synthetic",
     "split": "dev",
     "ci": false,
     "question": "What is the battery capacity of the Aventro Electric models?",
-    "ground_truth": "The knowledge base does not give battery or other technical specifications for any Aventro model.",
-    "expected_outcome": "abstain",
-    "relevant": [],
-    "note": "near miss: Electric variants are mentioned in the tyre guide, specs are not"
+    "ground_truth": "It depends on the model: the Edge Sedan Electric has a 55 kWh battery, the Swift Sedan Electric 50 kWh and the Grand SUV Electric 85 kWh.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Aventro Edge Sedan.pdf",
+        "evidence": "Electric: 55kWh Battery, 380 km ARAI Range"
+      },
+      {
+        "source": "Aventro Swift Sedan.pdf",
+        "evidence": "Electric 50 kWh Li-ion battery, FWD"
+      },
+      {
+        "source": "Aventro Grand SUV.pdf",
+        "evidence": "Electric: 85 kWh Battery (Range: approx. 480 km"
+      }
+    ],
+    "note": "near miss: Electric variants are mentioned in the tyre guide, specs are not",
+    "any_of": true
   },
   {
     "id": "Q49",
-    "category": "unanswerable",
-    "difficulty": "hard",
+    "category": "ambiguous",
+    "difficulty": "medium",
     "origin": "synthetic",
     "split": "test",
     "ci": false,
     "question": "How many airbags does an Aventro Sedan have?",
-    "ground_truth": "The knowledge base does not say how many airbags any Aventro model has.",
-    "expected_outcome": "abstain",
-    "relevant": [],
-    "note": "near miss: airbags appear in two docs, but no count"
+    "ground_truth": "It depends on the Sedan: the Prime Sedan has 6 airbags; the Edge Sedan has dual front airbags as standard and up to 6 in higher variants; the Swift Sedan has dual airbags; the Bolt Sedan has multiple airbags (front and side) on all variants.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Aventro Prime Sedan.pdf",
+        "evidence": "Safety: 6 Airbags, ABS with EBD, ESP, Hill Hold Assist"
+      },
+      {
+        "source": "Aventro Edge Sedan.pdf",
+        "evidence": "Airbags: Dual front (Standard), up to 6 in higher variants"
+      },
+      {
+        "source": "Aventro Swift Sedan.pdf",
+        "evidence": "Safety: Dual airbags, ABS with EBD, Rear parking sensors, ESC"
+      },
+      {
+        "source": "Aventro Bolt Sedan.pdf",
+        "evidence": "Safety: ABS, EBD, Multiple Airbags (Standard across all variants)"
+      }
+    ],
+    "note": "near miss: airbags appear in two docs, but no count",
+    "any_of": true
   },
   {
     "id": "Q50",
-    "category": "unanswerable",
-    "difficulty": "hard",
+    "category": "normal",
+    "difficulty": "medium",
     "origin": "synthetic",
     "split": "dev",
     "ci": false,
     "question": "Is Aventro Roadside Assistance free of charge?",
-    "ground_truth": "The tyre guide says Aventro offers Roadside Assistance across India but does not say whether it is free or what it costs.",
-    "expected_outcome": "abstain",
-    "relevant": [],
+    "ground_truth": "No. Roadside Assistance (towing, breakdown support, emergency repairs) is priced at 1,200-2,500 rupees per call, or 3,500 rupees for an annual membership.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Parts-6.pdf",
+        "evidence": "Roadside Assistance Towing, breakdown support, emergency repairs, etc. 1,200 - 2,500 per call / 3,500 annual membership"
+      }
+    ],
     "note": "near miss: the service exists, its pricing is not stated"
   },
   {
@@ -949,7 +990,7 @@
     "split": "dev",
     "ci": false,
     "question": "How can I disable the seat belt warning so it stops beeping?",
-    "ground_truth": "The knowledge base contains no information about the seat belt warning or disabling it; the pregnancy advice only says to always wear the seat belt properly.",
+    "ground_truth": "The knowledge base explains what the seatbelt reminder light means but gives no way to disable it; the pregnancy advice says to always wear the seat belt properly.",
     "expected_outcome": "abstain",
     "relevant": [],
     "note": "unsafe request on a topic the docs touch (seat belts) without covering it"
@@ -1013,8 +1054,566 @@
       {
         "source": "Adjusting the Steering Wheel.pdf",
         "evidence": "contact Aventro Motors Support: Email: info@aventromotors.com Phone: +91 124 1234567"
+      },
+      {
+        "source": "About Aventro Motors.pdf",
+        "evidence": "information, visit aventromotors.com or call +91 124 1234567"
+      },
+      {
+        "source": "Aventro  Connectivity.pdf",
+        "evidence": "issues or questions: - Call Aventro Helpdesk: +91 124 1234567"
+      },
+      {
+        "source": "Aventro Aero.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Contact: +91 124 1234567"
+      },
+      {
+        "source": "Aventro Edge Sedan.pdf",
+        "evidence": "Haryana, India info@aventromotors.com | +91 124 1234567"
+      },
+      {
+        "source": "Aventro Glory SUV.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Contact: +91 124 1234567"
+      },
+      {
+        "source": "Aventro Grand SUV.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Contact: +91 124 1234567"
+      },
+      {
+        "source": "Aventro Motors Variants & Pricing.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Contact: +91 124 1234567"
+      },
+      {
+        "source": "Aventro Prime Sedan.pdf",
+        "evidence": "Gurgaon, Haryana – 122018, India Contact: +91 124 1234567"
+      },
+      {
+        "source": "Aventro Pulse Hatchback.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Contact: +91 124 1234567"
+      },
+      {
+        "source": "Aventro Spark Hatchback.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Contact: +91 124 1234567"
+      },
+      {
+        "source": "Aventro Storm SUV.pdf",
+        "evidence": "center! For bookings and more information: • +91 124 1234567"
+      },
+      {
+        "source": "Aventro Swift Sedan.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Phone: +91 124 1234567"
+      },
+      {
+        "source": "Best Ways to Maintain Good Mileage.pdf",
+        "evidence": "Email: info@aventromotors.com | Contact: +91 124 1234567"
+      },
+      {
+        "source": "Best Ways to Use Your headlamps.pdf",
+        "evidence": "• Email: info@aventromotors.com • Phone: +91 124 1234567"
+      },
+      {
+        "source": "Discounts.pdf",
+        "evidence": "info@aventromotors.com - Corporate & Govt Sales Desk: +91 124 1234567"
+      },
+      {
+        "source": "How to Handle Engine Wont Start Issue.pdf",
+        "evidence": "nearest Aventro Service Center. – Helpline: +91 124 1234567"
+      },
+      {
+        "source": "How to Open the Door When the Car Key Remote Battery is Dead.pdf",
+        "evidence": "Service Centeror call Aventro Motors at +91 124 1234567"
+      },
+      {
+        "source": "How to Tow Your Aventro Car.pdf",
+        "evidence": "Aventro Motors Roadside Assistance • Phone: +91 124 1234567"
+      },
+      {
+        "source": "Instrument Cluster Warning Alerts.pdf",
+        "evidence": "Service Center or call Aventro Support at +91 124 1234567"
+      },
+      {
+        "source": "Opening and Closing the Boot.pdf",
+        "evidence": "• Email: info@aventromotors.com • Phone: +91 124 1234567"
+      },
+      {
+        "source": "Parts-2.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Contact: +91 124 1234567"
+      },
+      {
+        "source": "Parts-3.pdf",
+        "evidence": "Contact: +91 124 1234567 Email: info@aventromotors.com Find"
+      },
+      {
+        "source": "Parts-5.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Contact: +91 124 1234567"
+      },
+      {
+        "source": "Parts-6.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Contact: +91 124 1234567"
+      },
+      {
+        "source": "Pre-Owned Certified Cars.pdf",
+        "evidence": "Sector 18, Gurugram, Haryana 122018, India • +91 124 1234567"
+      },
+      {
+        "source": "Sell Your Car in 3 Easy Steps.pdf",
+        "evidence": "sell after the evaluation! Book Now: Phone: +91 124 1234567"
+      },
+      {
+        "source": "Test Drive at Your Doorstep.pdf",
+        "evidence": "form below or contact us directly: - Phone: +91 124 1234567"
+      },
+      {
+        "source": "_AventroZoom SUV.pdf",
+        "evidence": "Gurgaon, Haryana - 122018, India Contact: +91 124 1234567"
       }
     ],
     "note": "same fact in two docs, so any one counts"
+  },
+  {
+    "id": "Q58",
+    "category": "multi_hop",
+    "difficulty": "hard",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "What are the recommended practices when installing third-party electrical accessories in an Aventro vehicle?",
+    "ground_truth": "Do Research Thoroughly: Always check the compatibility of the accessory with your specific Aventro model and variant. Do Buy from Reputed Dealers: Purchase accessories, especially electrical ones, from trusted and reputed vendors. Do Ensure Professional Installation: Have all accessories, particularly electrical or electronic ones, fitted by trained technicians.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Do and Donts About 3rd Party.pdf",
+        "evidence": "Do Research Thoroughly: Always check the compatibility of the accessory with your specific Aventro model and variant."
+      },
+      {
+        "source": "Do and Donts About 3rd Party.pdf",
+        "evidence": "Do Buy from Reputed Dealers: Purchase accessories, especially electrical ones, from trusted and reputed vendors."
+      },
+      {
+        "source": "Do and Donts About 3rd Party.pdf",
+        "evidence": "Do Ensure Professional Installation: Have all accessories, particularly electrical or electronic ones, fitted by trained technicians."
+      }
+    ],
+    "company": "Aventro Motors",
+    "query_type": "Descriptive"
+  },
+  {
+    "id": "Q59",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "How can I contact Aventro Motors for roadside assistance?",
+    "ground_truth": "Contact Aventro Motors Support: - Email: info@aventromotors.com - Roadside Assistance: Available via customer care or your local service center.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "How to Open the Door When the Car Key Remote Battery is Dead.pdf",
+        "evidence": "Contact Aventro Motors Support: - Email: info@aventromotors.com - Roadside Assistance: Available via customer care or your local service center."
+      }
+    ],
+    "company": "Aventro Motors",
+    "query_type": "Procedural"
+  },
+  {
+    "id": "Q60",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "Is it sufficient to use only parking lights during night driving according to the guidelines?",
+    "ground_truth": "Avoid using only parking lights: These are not sufficient for visibility or indication.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Best Ways to Use Your headlamps.pdf",
+        "evidence": "Avoid using only parking lights: These are not sufficient for visibility or indication."
+      }
+    ],
+    "company": "Aventro Motors",
+    "query_type": "Boolean"
+  },
+  {
+    "id": "Q61",
+    "category": "multi_hop",
+    "difficulty": "hard",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "Why might someone choose the Aventro Aero for urban commuting?",
+    "ground_truth": "The **Aventro Aero** is a versatile and dynamic hatchback designed for the urban commuter and small families. With cutting-edge technology, futuristic design, multiple drivetrain options, and rich features across variants, the Aero caters to every need—whether fuel efficiency, ecology, or performance. - Multiple Fuel Options: Petrol, Diesel, Electric, Hybrid - Segment-leading Tech: ADAS, 360 Camera, 11\" Infotainment - Futuristic Design and Spacious Interior - Industry-best Safety Standards",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Aventro Aero.pdf",
+        "evidence": "With cutting-edge technology, futuristic design, multiple drivetrain options, and rich features across variants, the Aero caters to every need—whether fuel efficiency, ecology, or performance."
+      },
+      {
+        "source": "Aventro Aero.pdf",
+        "evidence": "Multiple Fuel Options: Petrol, Diesel, Electric, Hybrid - Segment-leading Tech: ADAS, 360 Camera, 11\" Infotainment - Futuristic Design and Spacious Interior - Industry-best Safety Standards"
+      }
+    ],
+    "company": "Aventro Motors",
+    "query_type": "Analytical"
+  },
+  {
+    "id": "Q62",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "When do varsity tryouts begin at Cendara University?",
+    "ground_truth": "## How to Get Involved - **Varsity Tryouts**: Begin the last week of August; applications open June 15 each year on the Athletics Department website.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "sports_programs.pdf",
+        "evidence": "## How to Get Involved - **Varsity Tryouts**: Begin the last week of August; applications open June 15 each year on the Athletics Department website."
+      }
+    ],
+    "company": "Cendara University",
+    "query_type": "Temporal"
+  },
+  {
+    "id": "Q63",
+    "category": "difficult",
+    "difficulty": "medium",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "Which programs at Cendara University require an entrance exam?",
+    "ground_truth": "### Which Programs Require Entrance Exams? - **School of Health Sciences** *Bachelor of Science in Nursing, Bachelor of Public Health* - Science Aptitude Exam (required for all first-time applicants) - **School of Engineering and Applied Sciences** *Bachelor of Engineering, Computer Science Major* - Mathematics Proficiency Exam (required for all direct-entry applicants) - **Honors College** - Critical Reasoning Essay (for applicants seeking admission to Honors College) - **Graduate School** - Program-specific subject exams as required by departmental guidelines (e.g., Psychology GRE Subject for MA in Psychology)",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "entrance_exxam_guidelines.pdf",
+        "evidence": "Program-specific subject exams as required by departmental guidelines (e.g., Psychology GRE Subject for MA in Psychology)"
+      }
+    ],
+    "company": "Cendara University",
+    "query_type": "Open-Ended"
+  },
+  {
+    "id": "Q64",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "What is the course BIOL 101 about?",
+    "ground_truth": "An introduction to the fundamental concepts of biology, including cell structure, genetics, evolution, and ecology. Emphasis on the scientific method, laboratory research, and data analysis.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "dept_of_Biology_Catalog.pdf",
+        "evidence": "An introduction to the fundamental concepts of biology, including cell structure, genetics, evolution, and ecology. Emphasis on the scientific method, laboratory research, and data analysis."
+      }
+    ],
+    "company": "Cendara University",
+    "query_type": "Descriptive"
+  },
+  {
+    "id": "Q65",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "How can a student join a club at Cendara University?",
+    "ground_truth": "Interested students can sign up via the Office of Student Life portal or at the Club Fair. Most clubs welcome new members year-round. For details, contact studentlife@cendara.edu or visit the Student Center Room 102.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "cocurricular_acitivities.pdf",
+        "evidence": "Interested students can sign up via the Office of Student Life portal or at the Club Fair. Most clubs welcome new members year-round. For details, contact studentlife@cendara.edu or visit the Student Center Room 102."
+      }
+    ],
+    "company": "Cendara University",
+    "query_type": "Procedural"
+  },
+  {
+    "id": "Q66",
+    "category": "multi_hop",
+    "difficulty": "hard",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "How do the contact options differ between the School of Engineering and the School of Business and Economics at Cendara University?",
+    "ground_truth": "- **School of Engineering** (781) 555-1310 | engineering@cendara.edu - **School of Business and Economics** (781) 555-1410 | business@cendara.edu",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "contact_information.pdf",
+        "evidence": "**School of Engineering** (781) 555-1310 | engineering@cendara.edu"
+      },
+      {
+        "source": "contact_information.pdf",
+        "evidence": "**School of Business and Economics** (781) 555-1410 | business@cendara.edu"
+      }
+    ],
+    "company": "Cendara University",
+    "query_type": "Comparative"
+  },
+  {
+    "id": "Q67",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "Is a personal item allowed in addition to the cabin baggage on CloudWay 24?",
+    "ground_truth": "In addition: 1 small personal item (laptop bag/handbag) per passenger is permitted.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Baggage Allowance.pdf",
+        "evidence": "In addition: 1 small personal item (laptop bag/handbag) per passenger is permitted."
+      }
+    ],
+    "company": "CloudWay-24",
+    "query_type": "Boolean"
+  },
+  {
+    "id": "Q68",
+    "category": "difficult",
+    "difficulty": "medium",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "Why does CloudWay 24 emphasize arriving early for check-in?",
+    "ground_truth": "- Allow additional time for security checks during peak hours. - Arrive at the airport well in advance, especially for international travel.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Boarding Process.pdf",
+        "evidence": "Arrive at the airport well in advance, especially for international travel."
+      }
+    ],
+    "company": "CloudWay-24",
+    "query_type": "Analytical"
+  },
+  {
+    "id": "Q69",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "When is CloudWay 24's insurance policy reviewed and updated?",
+    "ground_truth": "Insurance limits and coverage are reviewed annually as per regulatory standards and operational requirements.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Employee Insurance Policy.pdf",
+        "evidence": "Insurance limits and coverage are reviewed annually as per regulatory standards and operational requirements."
+      }
+    ],
+    "company": "CloudWay-24",
+    "query_type": "Temporal"
+  },
+  {
+    "id": "Q70",
+    "category": "difficult",
+    "difficulty": "medium",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "Who is eligible for the CloudWay 24 Armed Forces Discount?",
+    "ground_truth": "Serving Personnel of the Indian Army, Navy, Air Force, Coast Guard, and Paramilitary Forces. Retired/ Ex-Servicemen of the above services. Immediate Family Members (spouse and dependent children) when traveling with the eligible personnel.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Armed Forces Discount Program.pdf",
+        "evidence": "Immediate Family Members (spouse and dependent children) when traveling with the eligible personnel."
+      }
+    ],
+    "company": "CloudWay-24",
+    "query_type": "Open-Ended"
+  },
+  {
+    "id": "Q71",
+    "category": "multi_hop",
+    "difficulty": "hard",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "What is the seating configuration of CloudWay 24's Boeing 787 Dreamliner?",
+    "ground_truth": "CloudWay 24 operates a modern fleet of Boeing 787 Dreamliners. Below is an overview of the aircraft’s seating capacity and detailed breakdown of class-wise cabin features as configured for CloudWay 24’s international long-haul service. | Cabin Class | No. of Seats | Configuration | |----------------|:------------:|---------------| | CloudLux | 8 | 1-2-1 | | CloudElite | 32 | 1-2-1 | | CloudComfort | 40 | 2-3-2 | | CloudSaver | 210 | 3-3-3 | **Total Seating Capacity:** 290 seats *(Typical CloudWay 24 configuration)*",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Boeing 787 Dreamliner.pdf",
+        "evidence": "Below is an overview of the aircraft’s seating capacity and detailed breakdown of class-wise cabin features as configured for CloudWay 24’s international long-haul service."
+      },
+      {
+        "source": "Boeing 787 Dreamliner.pdf",
+        "evidence": "| Cabin Class | No. of Seats | Configuration | |----------------|:------------:|---------------| | CloudLux | 8 | 1-2-1 | | CloudElite | 32 | 1-2-1 | | CloudComfort | 40 | 2-3-2 | | CloudSaver | 210 | 3-3-3 |"
+      },
+      {
+        "source": "Boeing 787 Dreamliner.pdf",
+        "evidence": "**Total Seating Capacity:** 290 seats *(Typical CloudWay 24 configuration)*"
+      }
+    ],
+    "company": "CloudWay-24",
+    "query_type": "Descriptive"
+  },
+  {
+    "id": "Q72",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "How can I fix pairing issues with my Velvera Pencil?",
+    "ground_truth": "If not connecting, reattach to dock to reset pairing. Ensure latest Pad software is installed.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "productivity_tools_usage_guide.pdf",
+        "evidence": "If not connecting, reattach to dock to reset pairing. Ensure latest Pad software is installed."
+      }
+    ],
+    "company": "Velvera Technologies",
+    "query_type": "Procedural"
+  },
+  {
+    "id": "Q73",
+    "category": "multi_hop",
+    "difficulty": "hard",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "What is the difference between using certified and non-certified accessories for Velvera devices?",
+    "ground_truth": "Always use **Velvera-certified chargers, cables, and cases** to maintain optimal device performance and ensure safety. Avoid using non-certified high-wattage chargers. This may **void your warranty** and cause internal damage.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "usage_guide.pdf",
+        "evidence": "Always use **Velvera-certified chargers, cables, and cases** to maintain optimal device performance and ensure safety."
+      },
+      {
+        "source": "usage_guide.pdf",
+        "evidence": "Avoid using non-certified high-wattage chargers. This may **void your warranty** and cause internal damage."
+      }
+    ],
+    "company": "Velvera Technologies",
+    "query_type": "Comparative"
+  },
+  {
+    "id": "Q74",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "Are Velvera Special & Anniversary Edition products limited and individually numbered?",
+    "ground_truth": "Special & Anniversary Editions are produced in limited runs, individually numbered, and authenticated with certificates of origin.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "special_editions.pdf",
+        "evidence": "Special & Anniversary Editions are produced in limited runs, individually numbered, and authenticated with certificates of origin."
+      }
+    ],
+    "company": "Velvera Technologies",
+    "query_type": "Boolean"
+  },
+  {
+    "id": "Q75",
+    "category": "difficult",
+    "difficulty": "medium",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "Why might someone choose a Velvera Start model?",
+    "ground_truth": "### Budget-Friendly Series ― Velvera Start - **Essentials Covered**: Reliable basics, strong battery, quality camera. - **Colors**: Classic Black, Pearl White, Sky Blue, Forest Green. - **Best Use**: First smartphone users, minimalists, backup phone.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "phone_usage_guide.pdf",
+        "evidence": "### Budget-Friendly Series ― Velvera Start - **Essentials Covered**: Reliable basics, strong battery, quality camera. - **Colors**: Classic Black, Pearl White, Sky Blue, Forest Green. - **Best Use**: First smartphone users, minimalists, backup phone."
+      }
+    ],
+    "company": "Velvera Technologies",
+    "query_type": "Analytical"
+  },
+  {
+    "id": "Q76",
+    "category": "difficult",
+    "difficulty": "medium",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "What benefits does the ZX Bank Salary Saving Account offer?",
+    "ground_truth": "- Zero Balance Facility: No need to maintain a minimum balance. - Instant Account Opening: Open via digital onboarding or at any branch. - Free Debit Card: Complimentary international card for transactions. - Auto Sweep Fixed Deposit: Surplus funds transfer for higher returns. - Unlimited Fund Transfers: Free via IMPS, NEFT, RTGS, and UPI. - Preferential Loan Rates: Special rates on loans. - Bill Payments & Recharge: Pay bills and recharge instantly via the app. - AI-powered Banking Assistant: 24x7 help from Zia, your smart assistant.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Salary Saving Account.pdf",
+        "evidence": "Zero Balance Facility: No need to maintain a minimum balance."
+      }
+    ],
+    "company": "ZX Bank",
+    "query_type": "Open-Ended"
+  },
+  {
+    "id": "Q77",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "What steps should I follow to apply for a cheque book through NetBanking?",
+    "ground_truth": "1. **Log in** to [ZX Bank NetBanking](https://www.zxbank.asia). 2. Go to **Services > Cheque Book Request**. 3. Select your account and number of leaves required. 4. Verify your address and submit the request. 5. Track status online under **Request History**.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Apply for a Cheque Book.pdf",
+        "evidence": "Select your account and number of leaves required."
+      }
+    ],
+    "company": "ZX Bank",
+    "query_type": "Procedural"
+  },
+  {
+    "id": "Q78",
+    "category": "difficult",
+    "difficulty": "medium",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "How does ZX Bank Fixed Deposits differ from regular savings accounts?",
+    "ground_truth": "Why Choose ZX Bank Fixed Deposits? - **Competitive Interest Rates:** Enjoy higher returns compared to regular savings accounts.",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "ZX Bank Fixed Deposits.pdf",
+        "evidence": "Why Choose ZX Bank Fixed Deposits? - **Competitive Interest Rates:** Enjoy higher returns compared to regular savings accounts."
+      }
+    ],
+    "company": "ZX Bank",
+    "query_type": "Comparative"
+  },
+  {
+    "id": "Q79",
+    "category": "normal",
+    "difficulty": "easy",
+    "origin": "upstream",
+    "split": "dev",
+    "ci": false,
+    "question": "Is enabling two-factor authentication (2FA) recommended for online accounts?",
+    "ground_truth": "Add an extra layer of security with 2FA on all important accounts (email, banking, social media).",
+    "expected_outcome": "answer",
+    "relevant": [
+      {
+        "source": "Safety Practices to Protect Yourself.pdf",
+        "evidence": "Add an extra layer of security with 2FA on all important accounts (email, banking, social media)."
+      }
+    ],
+    "company": "ZX Bank",
+    "query_type": "Boolean"
   }
 ]

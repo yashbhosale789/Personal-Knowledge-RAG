@@ -25,7 +25,7 @@ permissions:
 jobs:
   eval:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30  # indexing the 236-PDF corpus takes ~4-8 min on CPU (2026-11-06)
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
     defaults:
@@ -92,7 +92,7 @@ jobs:
           python -m eval.harness.gate --variant ci | tee gate.txt
           code=${PIPESTATUS[0]}
           {
-            echo "### Eval gate (corpus c1)"
+            echo "### Eval gate"
             echo '```'
             cat gate.txt
             echo '```'

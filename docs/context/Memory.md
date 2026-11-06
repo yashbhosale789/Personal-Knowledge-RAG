@@ -27,12 +27,12 @@
 
 ## 2. Current status — highest priority
 
-### Phase 15.2 (Retrieval tuning and stage ablations) — EXPERIMENTS DONE 2026-11-06; 3 owner decisions open
+### Phase 15.2 (Retrieval tuning and stage ablations) — DONE 2026-11-06 (shipping PR open; prod re-seed pending)
 
 - **Retrieval (dev n = 61, dataset `a831d87d09`, prompt `938331ced9a6`):** HNSW = exact; only chunk size 1024 wins. **Chosen for `c2`: 1024/64, `TOP_K` 3** (corpus `663f7a683e`, about the same context as today; MRR +0.104 better, R@3 +0.066 borderline). The tokenizer stays `lower().split()` (F-09 closed by measurement). Full tables in roadmap §15.2.
 - **Stages (dev n = 67, generation fp `77cea887f6`):** no ablation distinguishable. Rewrite earns nothing; the sufficiency LLM tier costs ~40% of `gpt-oss` tokens and catches nothing the generator would not refuse itself; the verifier is kept (separate `qwen` quota, its flag marked the 2 weakest answers). **Owner decided 2026-11-06: keep all stages** (architecture unchanged; do not re-propose removing them without new evidence).
 - **Test split used once** (2026-11-05/06): n.d. everywhere at n = 12, same direction as dev. Do not use it again for tuning.
-- **Open owner decisions:** ship 1024/64 at `TOP_K` 3 to `c1`/prod (re-index, CI gate, re-seed B); prod to `c2`. (Stage removals: decided no.) `RAG_CHUNK_*` and `RAG_TOP_K` work only with `RAG_CORPUS=c2`.
+- **Shipped 2026-11-06 (owner: yes to both, one corpus):** `c1` ⊂ `c2` byte-for-byte, so `RAG_CORPUS`, `data/corpus_c2/`, `chroma_c2` and dataset `golden_dataset_c2.json` are gone. `data/documents/` = all 236 PDFs (flat; 4 name clashes prefixed `<Company> - `), defaults 1024/64, `TOP_K` 3; dataset v2 = `golden_dataset.json` (`a831d87d09`), v1 in `eval/legacy/`; corpus id `281db7190c` (1,295 chunks); baseline `retrieval_baseline_current.json` (R@3 0.88, MRR 0.83). `source_company.json` keeps the company of each PDF for `compare --company`. Prod: backup, then re-seed A (owner uploaded nothing). Experiment knobs `RAG_CHUNK_*` / `RAG_TOP_K` remain; a non-default chunking gets its own index.
 - **Ops lessons:** Groq `gpt-oss-120b` free tier = 200k tokens/day, ~2,500 tokens per pipeline run, so ~80 runs/day. On this machine, run one heavy eval job at a time (background job, waited on in the foreground); startup takes ~5 min.
 
 ### Phase 15.1 (Full PDF corpus c2) — DONE 2026-11-04 (PR 1 #125 `81b7855`, PR 2 #126 `5fd003c`, CI green); next: 15.2

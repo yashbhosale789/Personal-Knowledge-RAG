@@ -81,7 +81,7 @@ flowchart TD
         Rewrite --> Dense["Dense: Chroma<br/>bge-small-en-v1.5"]
         Rewrite --> Sparse["Sparse: BM25<br/>built from Chroma"]
         Dense & Sparse --> RRF["Reciprocal rank fusion"]
-        RRF --> Rerank["Cross-encoder rerank<br/>ms-marco-MiniLM-L-6-v2, top 5"]
+        RRF --> Rerank["Cross-encoder rerank<br/>ms-marco-MiniLM-L-6-v2, top 3"]
         Rerank --> Suff{"Sufficiency gate<br/>score floor + LLM judge"}
         Suff -- Insufficient --> Abstain["Abstain"]
         Suff -- Sufficient --> Gen["Grounded generation, streamed<br/>Groq gpt-oss-120b → OpenRouter → Gemini"]
@@ -137,7 +137,7 @@ flowchart TD
         HasText -- Yes --> Scan{"Prompt-injection scan"}
         Scan -- Flagged --> Reject
         Scan -- Clean --> Replace["Delete this source's old chunks"]
-        Replace --> Chunk["Recursive character chunker<br/>512 characters, 64 overlap"]
+        Replace --> Chunk["Recursive character chunker<br/>1024 characters, 64 overlap"]
         Chunk --> Embed["Embed: bge-small-en-v1.5, 384-d"]
         Embed --> Chroma[("Chroma<br/>collection personal_kb")]
     end
@@ -184,9 +184,9 @@ flowchart LR
 | Semantic cache | `src/llm/semantic_cache.py` | RediSearch vector lookup, cosine ≥ 0.87, 24 h TTL. Namespaced by prompt version and model, so a prompt or model change never serves an old answer. A hit also needs the same content words in the same order, so `car loan` never matches `bike loan`. |
 | Rewrite | `src/pipeline/query_rewriter.py` | LLM rewrite of the question for retrieval. |
 | Dense | `src/retrieval/retriever.py` | Chroma HNSW over `BAAI/bge-small-en-v1.5` (384-d) embeddings. Default HNSW parameters, confirmed identical to exact search in Phase 15.2. |
-| Sparse | `src/retrieval/bm25_retriever.py` | In-memory BM25 built from the chunks Chroma stores; dropped after every write and rebuilt on the next query (about 0.4 s at 2,221 chunks). |
+| Sparse | `src/retrieval/bm25_retriever.py` | In-memory BM25 built from the chunks Chroma stores; dropped after every write and rebuilt on the next query (about 0.4 s at 2,221 chunks, measured in 15.1; the corpus is 1,295 chunks at 1024/64). |
 | Fusion | `src/retrieval/fusion.py` | Reciprocal rank fusion (k = 60) of the dense and sparse lists. |
-| Rerank | `src/retrieval/reranker.py` | `cross-encoder/ms-marco-MiniLM-L-6-v2`, top 5 of 10. |
+| Rerank | `src/retrieval/reranker.py` | `cross-encoder/ms-marco-MiniLM-L-6-v2`, top 3 of 6 (`TOP_K` 3, rerank input `TOP_K × 2`). |
 | Sufficiency gate | `src/pipeline/context_sufficiency.py` | Cross-encoder score floor, then an LLM judge. Abstains before generation when the evidence is missing. |
 | Generation | `src/llm/client.py` | Grounded answer citing `[SOURCE N]`, streamed. Retry and fallback Groq → OpenRouter → Gemini (Ollama locally); on the stream, fallback happens only before the first token. |
 | Citation verifier | `src/pipeline/citation_verification.py` | A second model from a different family (Groq `qwen/qwen3.8-27b`) checks that each claim is supported. |
@@ -264,10 +264,10 @@ From `rag-project/config.py`:
 
 | Setting | Default |
 | --- | --- |
-| Corpus (`RAG_CORPUS`) | `c1` (5 PDFs, production and CI); `c2` (236 PDFs) for offline evaluation |
+| Corpus | `data/documents/`: 236 PDFs (production, CI and evaluation) |
 | Embedding model / dimension | `BAAI/bge-small-en-v1.5` / 384 |
-| Chunk size / overlap | 512 / 64 characters (`RAG_CHUNK_SIZE`, `RAG_CHUNK_OVERLAP`; variants need `c2`) |
-| Retrieval top-k | 5 (`RAG_TOP_K`; variants need `c2`); first-stage pool `TOP_K × 4` |
+| Chunk size / overlap | 1024 / 64 characters, chosen in Phase 15.2 (`RAG_CHUNK_SIZE`, `RAG_CHUNK_OVERLAP` for offline experiments) |
+| Retrieval top-k | 3, chosen in Phase 15.2 (`RAG_TOP_K` for offline experiments); first-stage pool `TOP_K × 4` |
 | Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` |
 | Chroma collection | `personal_kb` |
 | Semantic cache | cosine ≥ 0.87, TTL 24 h |
@@ -302,7 +302,7 @@ From `rag-project/config.py`:
 │   ├── tests/                    Unit, API, contract, integration, Redis, slow and manual checks
 │   ├── scripts/                  Batch ingest, CLI query, agentic query, embedding inspection
 │   ├── experiments/              One-off measurements (cache threshold)
-│   ├── data/                     Corpus c1 (documents/) and c2 (corpus_c2/, MIT, with SHA256SUMS)
+│   ├── data/                     The corpus (documents/: 236 PDFs, MIT, with SHA256SUMS)
 │   ├── grafana/                  Provisioned dashboard, datasource, alert rules and contact point
 │   ├── prometheus*.yml           Scrape config and SLO recording rules
 │   ├── docker-compose*.yml       Local and production stacks
@@ -321,8 +321,7 @@ From `rag-project/config.py`:
 
 These are deliberate and tracked in the [roadmap](docs/architecture/roadmap.md):
 
-- **Small production corpus.** Production serves `c1` (5 PDFs). The full corpus `c2` (236 PDFs) is evaluated offline.
-- **Tuned configuration not shipped.** Phase 15.2 chose 1024-character chunks at `TOP_K` 3 for `c2`; production and CI stay on 512/64 at `TOP_K` 5 until the owner decides to re-index `c1`.
+- **Synthetic corpus.** The 236 PDFs are public test documents about fictional companies, not personal notes.
 - **Single user.** One shared key; every key holder sees the whole corpus and shares one cache.
 - **Provisional SLOs.** Single-user traffic is too sparse to tune them; no load test yet (Phase 15.4).
 - **Free tiers.** Generation and verification both use Groq's free tier; the verifier degrades to a low-confidence, uncached answer if it fails.

@@ -7,36 +7,27 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent / ".env")
 
-# Paths. RAG_CORPUS=c2 (Phase 15.1) switches to the offline full corpus and its own index;
-# unset is c1, which CI, the image and prod use.
+# Paths: one corpus since Phase 15.2 (the former c1's 5 PDFs are part of it).
 BASE_DIR = Path(__file__).parent
-CORPUS = os.getenv("RAG_CORPUS", "c1")
-if CORPUS not in ("c1", "c2"):
-    raise ValueError(f"RAG_CORPUS must be c1 or c2, got {CORPUS!r}")
-_C2 = CORPUS == "c2"
-DATA_DIR = BASE_DIR / "data" / ("corpus_c2" if _C2 else "documents")
-STORAGE_DIR = BASE_DIR / "storage" / ("chroma_c2" if _C2 else "chroma")
+DATA_DIR = BASE_DIR / "data" / "documents"
 
 # Embeddings
 EMBEDDINGS_MODEL_NAME = "BAAI/bge-small-en-v1.5"
 EMBEDDING_DIAMENSION = 384
 
-# Chunking. RAG_CHUNK_SIZE / RAG_CHUNK_OVERLAP / RAG_CHUNK_MERGE_PAGES=1 are Phase 15.2
-# experiments on c2 only: a non-default setting gets its own index and chunk export.
-CHUNK_SIZE = int(os.getenv("RAG_CHUNK_SIZE", "512"))
+# Chunking: 1024/64 chosen in Phase 15.2 (roadmap §15.2). RAG_CHUNK_SIZE / RAG_CHUNK_OVERLAP /
+# RAG_CHUNK_MERGE_PAGES=1 are offline experiments: a non-default setting gets its own index
+# and chunk export, so it never touches storage/chroma.
+CHUNK_SIZE = int(os.getenv("RAG_CHUNK_SIZE", "1024"))
 CHUNK_OVERLAP = int(os.getenv("RAG_CHUNK_OVERLAP", "64"))
 CHUNK_MERGE_PAGES = os.getenv("RAG_CHUNK_MERGE_PAGES") == "1"
 INDEX_VARIANT = (
     ""
-    if (CHUNK_SIZE, CHUNK_OVERLAP, CHUNK_MERGE_PAGES) == (512, 64, False)
+    if (CHUNK_SIZE, CHUNK_OVERLAP, CHUNK_MERGE_PAGES) == (1024, 64, False)
     else f"_s{CHUNK_SIZE}o{CHUNK_OVERLAP}{'m' if CHUNK_MERGE_PAGES else ''}"
 )
-if INDEX_VARIANT and not _C2:
-    raise ValueError("chunking variants (RAG_CHUNK_*) need RAG_CORPUS=c2")
-STORAGE_DIR = STORAGE_DIR.with_name(STORAGE_DIR.name + INDEX_VARIANT)
-CHUNKS_PATH = (
-    BASE_DIR / "storage" / (f"chunks_c2{INDEX_VARIANT}.json" if _C2 else "chunks.json")
-)
+STORAGE_DIR = BASE_DIR / "storage" / f"chroma{INDEX_VARIANT}"
+CHUNKS_PATH = BASE_DIR / "storage" / f"chunks{INDEX_VARIANT}.json"
 
 # Upload limits (POST /documents), measured 2026-11-02: in the 1 GiB container an upload at
 # MAX_UPLOAD_CHARS (2,107 chunks) took anon memory from 496 to 547 MiB, no OOM. But a 20 MB
@@ -47,9 +38,7 @@ MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 MAX_UPLOAD_CHARS = 1_000_000  # extracted text, ~2,200 chunks
 
 # Retrieval
-TOP_K = int(os.getenv("RAG_TOP_K", "5"))  # RAG_TOP_K: a Phase 15.2 experiment, c2 only
-if TOP_K != 5 and not _C2:
-    raise ValueError("RAG_TOP_K needs RAG_CORPUS=c2")
+TOP_K = int(os.getenv("RAG_TOP_K", "3"))  # 3 chosen in Phase 15.2; RAG_TOP_K for offline experiments
 RRF_K = 60
 RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 

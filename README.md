@@ -50,14 +50,16 @@ Documents go in through the UI (PDF upload) or a batch script. Both use one inge
 
 ## Results
 
-| | 5-PDF corpus (`c1`, production) | 236-PDF corpus (`c2`) |
-| --- | --- | --- |
-| Reranked recall@5 | **0.90** | **0.81** |
-| Reranked MRR | 0.82 | 0.72 |
-| Correct abstentions (dev) | 8 / 8 | — |
-| Fully correct answers (dev) | 34 / 45 | — |
+On the 236-PDF corpus that production serves (1024-character chunks, `TOP_K` 3):
 
-On `c2`, retrieval tuning found a configuration with distinguishably better ranking (MRR 0.72 → 0.83 on dev). Method, confidence intervals and every experiment: **[EVALUATION.md](EVALUATION.md)**.
+| | |
+| --- | --- |
+| Reranked recall@3 | **0.88** |
+| Reranked MRR | **0.83** |
+| Correct abstentions (dev) | 5 / 6 |
+| Fully correct answers (dev) | 38 / 61 |
+
+Retrieval tuning (Phase 15.2) chose this configuration for distinguishably better ranking at the same context size (MRR 0.72 → 0.83 on dev). Method, confidence intervals and every experiment: **[EVALUATION.md](EVALUATION.md)**.
 
 ## Tech stack
 
@@ -147,7 +149,7 @@ LANGFUSE_TRACING_ENVIRONMENT=development
 # ALERT_EMAIL=inbox@example.com
 ```
 
-Also read from the environment, with defaults: `REDIS_HOST` (`localhost`; Redis uses port 6379) and `RAG_CORPUS` (`c1`). The pipeline provider and model names are set in `rag-project/config.py` (Groq by default); a request can override the provider with its `provider` field. Tuning variables such as `RAG_TOP_K` are in [DEVELOPMENT.md](DEVELOPMENT.md#run).
+Also read from the environment, with defaults: `REDIS_HOST` (`localhost`; Redis uses port 6379). The pipeline provider and model names are set in `rag-project/config.py` (Groq by default); a request can override the provider with its `provider` field. Tuning variables such as `RAG_TOP_K` are in [DEVELOPMENT.md](DEVELOPMENT.md#run).
 
 </details>
 

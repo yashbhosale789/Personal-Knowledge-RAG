@@ -3,9 +3,14 @@ import json
 import random
 from math import comb
 
-import config
 from eval.harness import store
-from eval.paths import BASELINE_PATH, GEN_PATH, JUDGE_PATH, RUNS_DIR
+from eval.paths import (
+    BASELINE_PATH,
+    GEN_PATH,
+    JUDGE_PATH,
+    RUNS_DIR,
+    SOURCE_COMPANY_PATH,
+)
 from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
 
 
@@ -47,7 +52,7 @@ def load(spec: str, golden: dict) -> dict[str, dict[str, float]]:
 
 
 def company(item: dict, folders: dict[str, str]) -> str:
-    """The item's company, else the folder of its sources (corpus_c2/<Company>/)."""
+    """The item's company, else the company of its sources (eval/data/source_company.json)."""
     found = {folders.get(r["source"], "?") for r in item["relevant"]}
     return item.get("company") or "/".join(sorted(found))
 
@@ -117,7 +122,7 @@ def main() -> None:
     }
     a, b = load(args.a, golden), load(args.b, golden)
 
-    folders = {p.name: p.parent.name for p in config.DATA_DIR.rglob("*.pdf")}
+    folders = json.loads(SOURCE_COMPANY_PATH.read_text(encoding="utf-8"))
 
     def in_split(qid: str) -> bool:
         item = golden[qid]

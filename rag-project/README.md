@@ -10,7 +10,7 @@ The application: FastAPI API, RAG pipeline, React UI, evaluation harness, tests 
 | `eval/` | Golden datasets, harness and tools ([eval/README.md](eval/README.md)) |
 | `tests/` | Unit, API, contract, integration, Redis, slow and manual checks |
 | `scripts/` | Batch ingest and CLI queries |
-| `data/` | Corpora `c1` (`documents/`) and `c2` (`corpus_c2/`) |
+| `data/` | The corpus: 236 PDFs in `documents/` (MIT, with `SOURCE.md` and `SHA256SUMS`) |
 | `grafana/`, `prometheus*.yml` | Dashboards, alert rules and SLO recording rules |
 | `docker-compose*.yml`, `Dockerfile`, `Caddyfile`, `deploy.sh` | Local and production stacks |
 
