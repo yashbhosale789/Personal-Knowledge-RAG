@@ -33,7 +33,11 @@ function Verdict({ result }: { result: QueryResponse }) {
   return null;
 }
 
-/** The answer as plain text, with each [SOURCE N] marker shown as a footnote number on the word before it. */
+// The LLM writes Markdown bold; render only that, as React elements (still no HTML).
+const bold = (text: string) =>
+  text.split(/\*\*([^*\n]+)\*\*/).map((part, j) => (j % 2 ? <strong key={j}>{part}</strong> : part));
+
+/** The answer as plain text, with **bold** and each [SOURCE N] marker shown as a footnote number on the word before it. */
 export function AnswerText({ text }: { text: string }) {
   return (
     <p className="answer-text">
@@ -43,7 +47,7 @@ export function AnswerText({ text }: { text: string }) {
             {part}
           </sup>
         ) : (
-          part
+          bold(part)
         ),
       )}
     </p>

@@ -2,7 +2,7 @@
 
 Last reconciled: 2026-11-04
 
-Current phase: **Phase 15 — RAG pipeline hardening and scale** (15.0 closed 2026-11-03, 15.1 closed 2026-11-04; next 15.2). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
+Current phase: **Phase 15 — RAG pipeline hardening and scale** (15.0 closed 2026-11-03, 15.1 closed 2026-11-04, 15.2 closed 2026-11-06; next 15.4). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
 
 Active development copy: `rag-project/`
 
@@ -387,7 +387,7 @@ Decided 2026-10-30:
 - **Stack:** Vite + React + TypeScript in `rag-project/frontend/`, plain CSS; runtime dependencies are only `react` and `react-dom`. Vitest + Testing Library for components, one Playwright e2e test against the production build with the API mocked (desktop and mobile viewports).
 - **Hosting:** the build ships in the app image (Dockerfile `web` stage, so Node runs only in CI) and FastAPI serves `/` and `/assets` (`api/main.py` `mount_web`); every other path behaves as before. Chosen over a Caddy-served folder synced by `deploy.sh` because it needs no change to `deploy.sh`, compose or the Caddyfile, and a rollback rolls the UI back with the image. Caddy still fronts it on the same origin, so no CORS.
 - **API key:** typed into the UI, kept in `sessionStorage` only. A 401 clears it.
-- **Rendering:** plain text only (React escapes it; no markdown library). The production build adds a `<meta>` Content-Security-Policy allowing only same-origin scripts, styles and requests, so injected markup could neither run nor send the key elsewhere.
+- **Rendering:** plain text only (React escapes it; no markdown library). Since 2026-11-06 `**bold**` in an answer is shown as bold, built as React `<strong>` elements, so no HTML is ever parsed. The production build adds a `<meta>` Content-Security-Policy allowing only same-origin scripts, styles and requests, so injected markup could neither run nor send the key elsewhere.
 - **Citations:** `/query` returns `sources` as unique filenames only; the chunk behind each `[SOURCE N]` marker is not in the response. PR 1 shows the markers as text plus the filename list, leaving `/query` unchanged; the streaming route's final event carries the per-chunk `source`, `page`, snippet and `cited` flag so PR 2 maps markers to them.
 
 Decisions to record before building (original brief):
@@ -653,7 +653,7 @@ With both recommended removals, a query makes 1 `gpt-oss` call instead of 3, plu
 
 **Test split (once):** chosen vs base is n.d. on every retrieval and generation metric at n = 12, in the same direction as dev. No result reverses.
 
-**Phase status:** experiments 1–6 done. Three owner decisions are open: (1) ship 1024/64 at `TOP_K` 3 to `c1`/prod (re-index, CI gate, re-seed B); (2) whether prod moves to `c2`; (3) the two stage removals above. **Decided 2026-11-06: (3) no.** The owner keeps all four stages, so the pipeline architecture and API response stay unchanged. The measurements stay on record. **(1) and (2) yes, together, in one corpus:** the 5 `c1` PDFs are byte-identical members of `c2`, so `c1`/`c2` and `RAG_CORPUS` are removed. `data/documents/` holds all 236 PDFs (flat; 4 cross-company name clashes prefixed with the company), the defaults are 1024/64 and `TOP_K` 3, dataset v2 becomes `golden_dataset.json` (id unchanged, `a831d87d09`; v1 moved to `eval/legacy/`), and CI, the image and prod use it. New corpus id `281db7190c`, 1,295 chunks. Its retrieval baseline (`retrieval_baseline_current.json`) equals the 15.2 chosen run question by question: reranked R@3 0.88, MRR 0.83 (n = 71). Prod moves by a backup plus re-seed A (no uploads to keep).
+**Phase status: CLOSED 2026-11-06.** PR #134 (merge `18e88f7`) merged and deployed; prod backed up and re-seeded (A), cache flushed; owner-checked: 236 PDFs listed, tyre and ZX Bank queries cite the right PDFs, app 476 MiB of 1 GiB. Experiments 1–6 done. Three owner decisions are open: (1) ship 1024/64 at `TOP_K` 3 to `c1`/prod (re-index, CI gate, re-seed B); (2) whether prod moves to `c2`; (3) the two stage removals above. **Decided 2026-11-06: (3) no.** The owner keeps all four stages, so the pipeline architecture and API response stay unchanged. The measurements stay on record. **(1) and (2) yes, together, in one corpus:** the 5 `c1` PDFs are byte-identical members of `c2`, so `c1`/`c2` and `RAG_CORPUS` are removed. `data/documents/` holds all 236 PDFs (flat; 4 cross-company name clashes prefixed with the company), the defaults are 1024/64 and `TOP_K` 3, dataset v2 becomes `golden_dataset.json` (id `8f89d42be9` after the CI flag moved Q13 → Q12, F-29; v1 moved to `eval/legacy/`), and CI, the image and prod use it. New corpus id `281db7190c`, 1,295 chunks. Its retrieval baseline (`retrieval_baseline_current.json`) equals the 15.2 chosen run question by question: reranked R@3 0.88, MRR 0.83 (n = 71). Prod moves by a backup plus re-seed A (no uploads to keep).
 
 ### Phase 15.3 — Token and cache optimization
 
