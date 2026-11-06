@@ -21,6 +21,11 @@ describe("Answer", () => {
     expect(screen.getByText(/first/).textContent).toBe("Park safely first1. <b>x</b> 2 ** 3");
   });
 
+  it("shows Markdown list items as bullets, keeping indentation and inline asterisks", () => {
+    render(<Answer result={answer({ answer: "Steps:\n   * **Park** first\n- Jack up\nA * B" })} />);
+    expect(screen.getByText(/Steps/).textContent).toBe("Steps:\n   • Park first\n• Jack up\nA * B");
+  });
+
   it("expands the sources with file, page, snippet and a cited mark", () => {
     render(<Answer result={answer()} />);
     const chip = screen.getByRole("button", { name: /2 sources/ });

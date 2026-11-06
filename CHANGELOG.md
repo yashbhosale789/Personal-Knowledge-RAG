@@ -17,7 +17,7 @@ User-visible and operational changes, newest first. There are no versioned relea
 - **Deploy:** production needs a backup and re-seed A (`Backup_Recovery.md`), because the index volume wins over the image. The eval gate's timeout is 30 minutes (indexing 236 PDFs).
 
 ### Fixed
-- The answer view shows `**bold**` as bold (React elements; still no HTML rendered).
+- The answer view shows `**bold**` as bold and `* ` / `- ` list items as `•` bullets (React elements; still no HTML rendered).
 
 ## 2026-11-04: Phase 15.1, full PDF corpus
 

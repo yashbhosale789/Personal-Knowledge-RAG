@@ -37,11 +37,11 @@ function Verdict({ result }: { result: QueryResponse }) {
 const bold = (text: string) =>
   text.split(/\*\*([^*\n]+)\*\*/).map((part, j) => (j % 2 ? <strong key={j}>{part}</strong> : part));
 
-/** The answer as plain text, with **bold** and each [SOURCE N] marker shown as a footnote number on the word before it. */
+/** The answer as plain text, with **bold**, "* " / "- " list items as bullets, and each [SOURCE N] marker shown as a footnote number on the word before it. */
 export function AnswerText({ text }: { text: string }) {
   return (
     <p className="answer-text">
-      {text.split(/\s*\[SOURCE (\d+)\]/).map((part, i) =>
+      {text.replace(/^(\s*)[*-] /gm, "$1• ").split(/\s*\[SOURCE (\d+)\]/).map((part, i) =>
         i % 2 ? (
           <sup key={i} className="cite" title={`Source ${part}`}>
             {part}
