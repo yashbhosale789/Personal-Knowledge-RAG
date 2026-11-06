@@ -69,7 +69,7 @@ These are real, verified by code reading (see the findings file), and **not** sc
 | F-02 | Production index is baked into the image; API ingest/delete are not persisted | API changes vanish on deploy | Same as above; ingest only by rebuilding the image | **Fixed** 15.0 PR 2 (#123, 2026-11-02): index and documents in named volumes |
 | F-03 | Script/Docker ingest skips injection scan, delete-before-add, cache clear | Stale chunks; unscanned documents | Corpus stays the 5 reviewed PDFs | **Fixed** 15.0 PR 1 (#115, 2026-11-02) |
 | F-09 / F-10 | Naive BM25 tokenizer; chunking never evaluated | Unknown retrieval-quality loss | None needed; measure in 15.2 | **Measured** 15.2 PR 1 (2026-11-05, `c2`): F-09 `\w+` tokenizer not distinguishable after fusion and rerank, so `lower().split()` stays (closed by measurement). F-10: 1024/64 chunks are distinguishably better; chosen at `TOP_K` 3 for `c2`, not shipped to `c1`/prod yet (owner decision) |
-| F-11 | No stage ablations and no no-retrieval baseline | Stages may not earn their latency and quota | None needed | **Measured** 15.2 (2026-11-06, `c2` dev n = 67): no ablation distinguishable. Rewrite and the sufficiency LLM tier earn nothing measurable; removal awaits the owner (API response change). No-retrieval baseline dropped 2026-10-31 |
+| F-11 | No stage ablations and no no-retrieval baseline | Stages may not earn their latency and quota | None needed | **Measured** 15.2 (2026-11-06, `c2` dev n = 67): no ablation distinguishable. Rewrite and the sufficiency LLM tier earn nothing measurable; the owner decided 2026-11-06 to keep all stages (architecture unchanged). Closed by measurement and decision. No-retrieval baseline dropped 2026-10-31 |
 | F-07 / F-08 | Corpus too small to discriminate variants; 12-question test split | LLMOps numbers on `c1` are provisional | Label every result `c1`; do not tune on the test split | **Addressed** 15.1 PR 2 (2026-11-04): corpus `c2` (2,221 chunks) and dataset `v2` (79 questions, 71 answerable); test split still 12 |
 | F-14 | Cache entity guard hard-coded to `sedan/suv/hatchback` | Wrong cache hits on other domains | Single-domain corpus until 15.1 | **Fixed** 15.1 PR 1 (2026-11-04): a hit needs the same content words in the same order |
 | F-15 | Loader handles 4 formats and the ingest API only `.pdf` | None: the corpus is PDF only (decided 2026-10-31) | None | Closed by decision |
@@ -652,7 +652,7 @@ With both recommended removals, a query makes 1 `gpt-oss` call instead of 3, plu
 
 **Test split (once):** chosen vs base is n.d. on every retrieval and generation metric at n = 12, in the same direction as dev. No result reverses.
 
-**Phase status:** experiments 1–6 done. Three owner decisions are open: (1) ship 1024/64 at `TOP_K` 3 to `c1`/prod (re-index, CI gate, re-seed B); (2) whether prod moves to `c2`; (3) the two stage removals above (API response change).
+**Phase status:** experiments 1–6 done. Three owner decisions are open: (1) ship 1024/64 at `TOP_K` 3 to `c1`/prod (re-index, CI gate, re-seed B); (2) whether prod moves to `c2`; (3) the two stage removals above. **Decided 2026-11-06: (3) no.** The owner keeps all four stages, so the pipeline architecture and API response stay unchanged. The measurements stay on record.
 
 ### Phase 15.3 — Token and cache optimization
 

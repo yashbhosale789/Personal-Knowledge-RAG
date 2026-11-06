@@ -30,9 +30,9 @@
 ### Phase 15.2 (Retrieval tuning and stage ablations) — EXPERIMENTS DONE 2026-11-06; 3 owner decisions open
 
 - **Retrieval (dev n = 61, dataset `a831d87d09`, prompt `938331ced9a6`):** HNSW = exact; only chunk size 1024 wins. **Chosen for `c2`: 1024/64, `TOP_K` 3** (corpus `663f7a683e`, about the same context as today; MRR +0.104 better, R@3 +0.066 borderline). The tokenizer stays `lower().split()` (F-09 closed by measurement). Full tables in roadmap §15.2.
-- **Stages (dev n = 67, generation fp `77cea887f6`):** no ablation distinguishable. Rewrite earns nothing; the sufficiency LLM tier costs ~40% of `gpt-oss` tokens and catches nothing the generator would not refuse itself; the verifier is kept (separate `qwen` quota, its flag marked the 2 weakest answers). Recommendation: drop the single-turn rewrite and the sufficiency LLM tier. Not done: API response change, owner decides; re-run dev generation once on the combination first.
+- **Stages (dev n = 67, generation fp `77cea887f6`):** no ablation distinguishable. Rewrite earns nothing; the sufficiency LLM tier costs ~40% of `gpt-oss` tokens and catches nothing the generator would not refuse itself; the verifier is kept (separate `qwen` quota, its flag marked the 2 weakest answers). **Owner decided 2026-11-06: keep all stages** (architecture unchanged; do not re-propose removing them without new evidence).
 - **Test split used once** (2026-11-05/06): n.d. everywhere at n = 12, same direction as dev. Do not use it again for tuning.
-- **Open owner decisions:** ship 1024/64 at `TOP_K` 3 to `c1`/prod (re-index, CI gate, re-seed B); prod to `c2`; the two stage removals. `RAG_CHUNK_*` and `RAG_TOP_K` work only with `RAG_CORPUS=c2`.
+- **Open owner decisions:** ship 1024/64 at `TOP_K` 3 to `c1`/prod (re-index, CI gate, re-seed B); prod to `c2`. (Stage removals: decided no.) `RAG_CHUNK_*` and `RAG_TOP_K` work only with `RAG_CORPUS=c2`.
 - **Ops lessons:** Groq `gpt-oss-120b` free tier = 200k tokens/day, ~2,500 tokens per pipeline run, so ~80 runs/day. On this machine, run one heavy eval job at a time (background job, waited on in the foreground); startup takes ~5 min.
 
 ### Phase 15.1 (Full PDF corpus c2) — DONE 2026-11-04 (PR 1 #125 `81b7855`, PR 2 #126 `5fd003c`, CI green); next: 15.2
