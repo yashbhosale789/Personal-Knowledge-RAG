@@ -15,6 +15,12 @@ describe("Answer", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 
+  it("shows **bold** as bold text, never as HTML", () => {
+    render(<Answer result={answer({ answer: "**Park safely** first [SOURCE 1]. <b>x</b> 2 ** 3" })} />);
+    expect(screen.getByText("Park safely").tagName).toBe("STRONG");
+    expect(screen.getByText(/first/).textContent).toBe("Park safely first1. <b>x</b> 2 ** 3");
+  });
+
   it("expands the sources with file, page, snippet and a cited mark", () => {
     render(<Answer result={answer()} />);
     const chip = screen.getByRole("button", { name: /2 sources/ });
@@ -40,7 +46,8 @@ describe("Answer", () => {
     );
     expandSources(/1 source/);
     expect(container.querySelector("img, b, script")).toBeNull();
-    expect(screen.getByText('<img src=x onerror="alert(1)"> **bold**')).toBeTruthy();
+    expect(screen.getByText(/onerror/).textContent).toBe('<img src=x onerror="alert(1)"> bold');
+    expect(screen.getByText("bold").tagName).toBe("STRONG");
     expect(screen.getByText("<script>alert(1)</script>")).toBeTruthy();
   });
 

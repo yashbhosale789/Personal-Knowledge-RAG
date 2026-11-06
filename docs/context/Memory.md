@@ -27,7 +27,7 @@
 
 ## 2. Current status — highest priority
 
-### Phase 15.2 (Retrieval tuning and stage ablations) — DONE 2026-11-06 (shipping PR open; prod re-seed pending)
+### Phase 15.2 (Retrieval tuning and stage ablations) — CLOSED 2026-11-06 (PR #134 `18e88f7` deployed; prod re-seeded A and owner-checked: 236 PDFs, right citations, app 476 MiB)
 
 - **Retrieval (dev n = 61, dataset `a831d87d09`, prompt `938331ced9a6`):** HNSW = exact; only chunk size 1024 wins. **Chosen for `c2`: 1024/64, `TOP_K` 3** (corpus `663f7a683e`, about the same context as today; MRR +0.104 better, R@3 +0.066 borderline). The tokenizer stays `lower().split()` (F-09 closed by measurement). Full tables in roadmap §15.2.
 - **Stages (dev n = 67, generation fp `77cea887f6`):** no ablation distinguishable. Rewrite earns nothing; the sufficiency LLM tier costs ~40% of `gpt-oss` tokens and catches nothing the generator would not refuse itself; the verifier is kept (separate `qwen` quota, its flag marked the 2 weakest answers). **Owner decided 2026-11-06: keep all stages** (architecture unchanged; do not re-propose removing them without new evidence).
