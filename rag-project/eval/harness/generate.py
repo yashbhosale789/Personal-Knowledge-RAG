@@ -3,6 +3,7 @@ import json
 import sys
 import time
 from datetime import UTC, datetime
+from unittest import mock
 
 import requests
 
@@ -12,6 +13,7 @@ from eval.harness.retrieval_eval import get_rewrite, load_rewrites
 from eval.paths import GEN_PATH as RESULTS_PATH
 from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
 from src.llm.client import model_name
+from src.pipeline import advanced_rag
 from src.pipeline.advanced_rag import (
     retrieve_context,
     run_advanced_rag_pipeline,
@@ -29,12 +31,32 @@ def is_refusal(out: dict) -> bool:
     )
 
 
-def run_pipeline(question: str, rewrite: str) -> dict:
+def _always_sufficient(query, chunks, provider=None) -> dict:
+    return {
+        "sufficient": True,
+        "reason": "ablated",
+        "tier": "ablated",
+        "ce_score": None,
+    }
+
+
+# Phase 15.2 stage ablations (F-11). "no_rewrite" queries with the question itself (see
+# main); the citation verifier and rewrite-only-short ablations are read off these runs.
+ABLATIONS = {"no_sufficiency": ("check_sufficiency", _always_sufficient)}
+
+
+def run_pipeline(question: str, rewrite: str, variant: str = "baseline") -> dict:
+    stage, stub = ABLATIONS.get(variant, (None, None))
     for attempt in range(3):
         try:
-            return run_advanced_rag_pipeline(
-                question, return_contexts=True, rewritten=rewrite
-            )
+            if stage is None:
+                return run_advanced_rag_pipeline(
+                    question, return_contexts=True, rewritten=rewrite
+                )
+            with mock.patch.object(advanced_rag, stage, stub):
+                return run_advanced_rag_pipeline(
+                    question, return_contexts=True, rewritten=rewrite
+                )
         except requests.exceptions.HTTPError as e:
             if e.response.status_code != 429 or attempt == 2:
                 raise
@@ -154,17 +176,18 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="run only items with ci=true, ignoring --split",
     )
+    p.add_argument("--ids", nargs="+", help="only these question ids (within --split)")
     return p.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     golden = json.loads(DEFAULT_DATASET.read_text(encoding="utf-8"))
-    # items = [i for i in golden if args.split == "all" or i["split"] == args.split]
     items = [
         i
         for i in golden
         if (i["ci"] if args.ci_only else args.split in ("all", i["split"]))
+        and (not args.ids or i["id"] in args.ids)
     ]
     fp = store.fingerprint()
     done = {
@@ -189,8 +212,12 @@ def main() -> int:
     for n, (item, variant) in enumerate(pending, 1):
         started = time.monotonic()
         try:
-            rewrite = get_rewrite(item["question"], cache)
-            out = run_pipeline(item["question"], rewrite)
+            rewrite = (
+                item["question"]
+                if variant == "no_rewrite"
+                else get_rewrite(item["question"], cache)
+            )
+            out = run_pipeline(item["question"], rewrite, variant)
         except Exception as e:  # noqa: BLE001
             if (
                 isinstance(e, requests.exceptions.HTTPError)

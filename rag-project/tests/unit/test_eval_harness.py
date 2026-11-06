@@ -342,3 +342,17 @@ def test_run_ids_ignore_formatting_but_track_content(tmp_path):
 
     golden.write_text('[{"id": "Q01", "q": "b"}]', encoding="utf-8")
     assert store.run_ids(golden, chunks)["dataset"] != ids["dataset"]
+
+
+def test_no_sufficiency_ablation_stubs_only_that_stage(monkeypatch):
+    from eval.harness import generate
+    from src.pipeline import advanced_rag
+
+    monkeypatch.setattr(
+        generate,
+        "run_advanced_rag_pipeline",
+        lambda q, **kw: advanced_rag.check_sufficiency(q, []),
+    )
+    assert generate.run_pipeline("q", "q")["tier"] == "empty"  # the real check
+    assert generate.run_pipeline("q", "q", "no_sufficiency")["tier"] == "ablated"
+    assert advanced_rag.check_sufficiency("q", [])["tier"] == "empty"  # patch undone

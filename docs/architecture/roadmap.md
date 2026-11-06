@@ -68,7 +68,8 @@ These are real, verified by code reading (see the findings file), and **not** sc
 | F-01 | BM25 ignores API-ingested documents; deleted documents remain retrievable | Deleted content can still reach the LLM; new documents are invisible to keyword search | Do not use `/ingest` or `DELETE /ingest` in production | **Fixed** 15.0 PR 1 (#115, 2026-11-02) |
 | F-02 | Production index is baked into the image; API ingest/delete are not persisted | API changes vanish on deploy | Same as above; ingest only by rebuilding the image | **Fixed** 15.0 PR 2 (#123, 2026-11-02): index and documents in named volumes |
 | F-03 | Script/Docker ingest skips injection scan, delete-before-add, cache clear | Stale chunks; unscanned documents | Corpus stays the 5 reviewed PDFs | **Fixed** 15.0 PR 1 (#115, 2026-11-02) |
-| F-09 / F-10 | Naive BM25 tokenizer; chunking never evaluated | Unknown retrieval-quality loss | None needed; measure in 15.2 | 15.2 |
+| F-09 / F-10 | Naive BM25 tokenizer; chunking never evaluated | Unknown retrieval-quality loss | None needed; measure in 15.2 | **Measured** 15.2 PR 1 (2026-11-05, `c2`): F-09 `\w+` tokenizer not distinguishable after fusion and rerank, so `lower().split()` stays (closed by measurement). F-10: 1024/64 chunks are distinguishably better; chosen at `TOP_K` 3 for `c2`, not shipped to `c1`/prod yet (owner decision) |
+| F-11 | No stage ablations and no no-retrieval baseline | Stages may not earn their latency and quota | None needed | **Measured** 15.2 (2026-11-06, `c2` dev n = 67): no ablation distinguishable. Rewrite and the sufficiency LLM tier earn nothing measurable; the owner decided 2026-11-06 to keep all stages (architecture unchanged). Closed by measurement and decision. No-retrieval baseline dropped 2026-10-31 |
 | F-07 / F-08 | Corpus too small to discriminate variants; 12-question test split | LLMOps numbers on `c1` are provisional | Label every result `c1`; do not tune on the test split | **Addressed** 15.1 PR 2 (2026-11-04): corpus `c2` (2,221 chunks) and dataset `v2` (79 questions, 71 answerable); test split still 12 |
 | F-14 | Cache entity guard hard-coded to `sedan/suv/hatchback` | Wrong cache hits on other domains | Single-domain corpus until 15.1 | **Fixed** 15.1 PR 1 (2026-11-04): a hit needs the same content words in the same order |
 | F-15 | Loader handles 4 formats and the ingest API only `.pdf` | None: the corpus is PDF only (decided 2026-10-31) | None | Closed by decision |
@@ -93,7 +94,7 @@ Complete. Advanced retrieval and query-processing capabilities were introduced p
 
 ### Phase 3 — Agentic RAG foundations
 
-Complete as a learning milestone. It has not been compared with the non-agentic pipeline on the evaluation set (F-11); do not claim it improves anything until it is (Phase 15.2).
+Complete as a learning milestone. It has not been compared with the non-agentic pipeline on the evaluation set; that comparison was dropped from 15.2 on 2026-10-31, so do not claim it improves anything.
 
 ### Phases 4–6 — RAG improvements and local model/provider work
 
@@ -612,6 +613,46 @@ All rows below: dataset `a831d87d09`, prompt `938331ced9a6`, 61 answerable dev i
 
   The tokenizer helps BM25 by itself, but the fused and reranked lists are unchanged, so by the decision rule `lower().split()` stays (F-09). A larger rerank pool costs 2–3.6× the rerank time for nothing measurable. The rewrite earns nothing measurable in retrieval: the raw question is no worse on any stage.
 - **4. Combined.** Only chunk size 1024 won, so the combined run is 1024/64 at `TOP_K` 3 (corpus `663f7a683e`), sized to the base's context: 2,380 characters, rerank p50 30 ms. Reranked R@3 0.885 vs base R@5 0.820: +0.066 [+0.016, +0.131], 5/0, sign test p 0.06, so `compare.py` says not distinguishable (the CI excludes 0, the sign test does not reach 0.05); MRR 0.825, +0.104 [+0.024, +0.189] 15/5 p 0.04, better. Dense R@5 +0.131 and BM25 R@5 +0.123, both better. At equal context, the 1024 gain is one distinguishable metric (MRR) plus one borderline (recall).
+- **5. Ablations (F-11, done 2026-11-06).** Dataset `a831d87d09`, corpus `663f7a683e`, prompt `938331ced9a6`, chosen configuration (`RAG_CORPUS=c2 RAG_CHUNK_SIZE=1024 RAG_TOP_K=3`, generation fingerprint `77cea887f6`), all 67 dev items (61 answerable, 6 unanswerable). Pipeline Groq `gpt-oss-120b`, verifier Groq `qwen/qwen3.8-27b`, judge Gemini; 0 judge failures. Rewrites are cached in every arm, so the rewrite call's own cost and latency are not in these numbers. Behaviour = correct answer or correct abstention.
+
+  | Ablation | How measured | Behaviour | Correctness | Faithfulness | Relevancy | Cost of the stage | Verdict |
+  |---|---|---|---|---|---|---|---|
+  | No rewrite | full arm, 67 runs | −0.030 [−0.119, +0.060] 4/6 | +0.008 [−0.032, +0.049] 3/2 | −0.010 [−0.027, 0.000] 0/2 | +0.004 [−0.013, +0.020] 27/18 | 1 `gpt-oss` call per query (not measured: cached) | n.d. |
+  | No sufficiency judge | re-run the 16 questions it refused or that should abstain; the other 51 cannot change | +0.060 [+0.015, +0.119] 4/0 p 0.12 | 0 on shared ids; the 4 new answers score 1.0, 1.0, 0.5, 0.5 | 0; new answers 1.0 | 0 | 1 `gpt-oss` call per query, ~900 tokens (≈40% of the pipeline's `gpt-oss` tokens) | n.d. (CI excludes 0, sign test does not) |
+  | No citation verifier | derived: it never blocks, and the judge strips its caveat | 0 | 0 | 0 | 0 | 1 `qwen` call per answer, ~960 tokens (separate quota) | n.d.; it flagged 2 answers low-confidence, both weak (correctness 0.5, 0.0 vs 0.86 for the rest) |
+  | Rewrite only for ≤ 8-word questions | derived: `no_rewrite` record for the 7 short questions, `baseline` otherwise | 0 | 0 | 0 | −0.001 [−0.004, +0.001] 2/4 | saves 7 of 67 rewrite calls | n.d. |
+
+  Sign = ablation − baseline; wins/losses are for the ablation. Without the sufficiency judge the generator refuses on its own ("don't have enough information") for 6 of the 10 answerable questions the judge blocked and for 5 of the 6 unanswerable ones. The one unanswerable question answered (Q13) is answered with the judge too. So on dev the judge blocked 4 answerable questions and caught no unanswerable one that the generator would have missed. Without the rewrite, the judge refuses 13 answerable questions instead of 10. The condense step is not tested: there is no evidence of chat use (single user, no multi-turn traffic measured).
+- **6. Test split (run once, 2026-11-05 retrieval, 2026-11-06 generation).** Dataset `a831d87d09`, prompt `938331ced9a6`, 12 test items (10 answerable). Retrieval: base `r152_final_base.json` (corpus `80f20e0aa4`, 512/64, `TOP_K` 5): reranked R@5 0.750, MRR 0.733, context 2,294 characters. Chosen `r152_final_chosen.json` (corpus `663f7a683e`, 1024/64, `TOP_K` 3): R@3 0.817, MRR 0.850, context 2,475 characters. Paired: recall +0.067 [−0.100, +0.300] 1/1; MRR +0.117 [0.000, +0.317] 2/0 p 0.50. Generation (base fingerprint `4bb5ee4d52`, chosen `77cea887f6`), chosen − base: behaviour +0.083 [0.000, +0.250] 1/0 (0.833 → 0.917; the chosen configuration answers one more answerable question, correctness 0.4); correctness and faithfulness tied on the 8 shared answers; relevancy +0.008 [−0.023, +0.042] 4/4. All n.d., as expected at n = 12. Direction matches dev, with no reversal.
+
+#### Report (retrieval part, experiments 1–4; dataset `a831d87d09`, prompt `938331ced9a6`, dev n = 61)
+
+| Distinguishable | Not distinguishable |
+|---|---|
+| Chunk size 1024 (better on R@5, MRR, dense and BM25 R@5; overlap 64 vs 128 makes no difference) | HNSW vs exact (identical) |
+| Chunk size 256 at either overlap, at `TOP_K` 5 and 10 (worse) | Page merge |
+| Overlap 128 at 512 (recall worse) | `TOP_K` 8; rerank input 20 / 40 |
+| `TOP_K` 3 on 512 chunks (worse) | BM25 `\w+` and `\w+` + plural strip, for the fused and reranked lists (F-09) |
+| 1024/64 at `TOP_K` 3 vs base: MRR better (recall +0.066, CI excludes 0, sign test p 0.06) | No rewrite, retrieval only |
+
+**Chosen configuration (owner delegated the choice, 2026-11-05): chunk size 1024, overlap 64, `TOP_K` 3, everything else unchanged** (pool `TOP_K` × 4, RRF 60, `lower().split()`, default HNSW). Rationale: it is the only change with a distinguishable gain. At `TOP_K` 3 it hands generation about the same context as today (2,380 vs 2,262 characters), so the gain cannot come from extra context or extra prompt tokens. `TOP_K` 5 on 1024 chunks would raise recall a little more (0.902), but it needs 1.77× the context, about +430 prompt tokens per answer on free-tier Groq. Overlap 128 adds nothing. This choice holds for `c2` only. Shipping it to prod/CI (`c1`) needs a `c1` re-index, a new CI gate baseline and a re-seed of B in `Backup_Recovery.md`, and the owner has not decided that. Until then `RAG_CHUNK_SIZE` / `RAG_TOP_K` select it on `c2` and are refused on `c1`.
+
+#### Report (stages, experiments 5–6; dataset `a831d87d09`, corpus `663f7a683e`, prompt `938331ced9a6`, dev n = 67)
+
+No stage ablation is distinguishable on any judged metric. The rule was "keep a stage only if it earns its latency, quota and quality", so each stage is judged on its cost:
+
+| Stage | Earns | Costs | Recommendation (owner decides: removing a stage changes the API response) |
+|---|---|---|---|
+| Query rewrite (single turn) | nothing measurable: retrieval with the raw question is no worse (5a), generation n.d. | 1 `gpt-oss` call and one round-trip per query | Drop it for single-turn queries. Keep the follow-up condense step, which shares the module and was not tested. `rewritten_query` would then equal the query. |
+| Sufficiency judge, LLM tier | nothing measurable: the generator refuses on its own for every unanswerable question the judge caught | ~900 `gpt-oss` tokens per query (≈40% of the pipeline's), and it blocked 4 answerable questions | Drop the LLM tier and keep the $0 cross-encoder floor. `sufficiency.tier` would no longer report `llm_judge`. |
+| Citation verifier | a low-confidence flag that marked the 2 weakest answers (n = 2, pointer only) | 1 `qwen` call per answer on a separate quota | Keep. |
+| Rewrite only for short questions | nothing (7 short dev questions; no difference) | adds a rule | Do not build. |
+
+With both recommended removals, a query makes 1 `gpt-oss` call instead of 3, plus the verifier. That combination was not run as one arm. Re-run the dev generation once before shipping it.
+
+**Test split (once):** chosen vs base is n.d. on every retrieval and generation metric at n = 12, in the same direction as dev. No result reverses.
+
+**Phase status:** experiments 1–6 done. Three owner decisions are open: (1) ship 1024/64 at `TOP_K` 3 to `c1`/prod (re-index, CI gate, re-seed B); (2) whether prod moves to `c2`; (3) the two stage removals above. **Decided 2026-11-06: (3) no.** The owner keeps all four stages, so the pipeline architecture and API response stay unchanged. The measurements stay on record.
 
 ### Phase 15.3 — Token and cache optimization
 
@@ -640,7 +681,7 @@ Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
 | Prompt-injection defense | Partial — scanner on every ingest path since 15.0 PR 1 (API and script); soft injection (INJ04) still missed | F-03 fixed (#115) |
 | Auth (shared key), rate limiting, HTTPS | Done — single-user by decision (one shared key) | Phases 9, 12; decision 13.5 (`Security.md`) |
 | Automated deployment, health check, rollback | Done, verified live; rollback drilled again 2026-10-29 | Phase 12, 13.5 |
-| Regression evaluation in CI | Partial — LLM-judge gate on 4 items, path-filtered and advisory; `c1` cannot discriminate variants | F-07, F-08 → 15.1, 15.2 |
+| Regression evaluation in CI | Partial — LLM-judge gate on 4 items, path-filtered and advisory; `c1` cannot discriminate variants. Offline `c2` evaluation can discriminate retrieval variants (15.2); CI stays on `c1` until prod moves | F-07, F-08 → 15.1, 15.2; CI on `c2` only if prod moves (owner) |
 | Unit / API / integration tests in CI | Done — required `pytest` check, 301 passed, coverage 77.32% (`main` at `7889f26`) | 13.1 |
 | Reproducible builds (pinned dependencies) | Done — lock files; image built on every pipeline PR | 13.1 |
 | Dependency / image vulnerability scanning | Partial — pip-audit, Dependabot and CodeQL done; no container image scan; prod torch 2.6.0 not audited (8 open advisories) | F-22, torch upgrade → 15.4 |
@@ -657,7 +698,7 @@ Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
 | Storage architecture fit for production | Partial — Chroma is the single source of truth since 15.0 PR 1 (BM25 rebuilt from it); index and documents persisted in named volumes since PR 2; store choice deferred to the 15.1 measurements | F-27 fixed (#115); 15.1 |
 | Ingestion correct and persistent | Done — correct since 15.0 PR 1; persistent on prod in named volumes since PR 2; upload, list and delete from the UI | F-01, F-02, F-03 fixed (#115, #123) |
 | Supports the real corpus formats | Done by decision — the corpus is 100–150 PDFs; the loader also reads DOCX, MD and TXT | F-15, decided 2026-10-31 |
-| Evaluation that can discriminate variants | **Gap, deferred** | F-07, F-08 → 15.1 |
+| Evaluation that can discriminate variants | **Done for retrieval on `c2`** (15.2, 2026-11-05): paired CI + sign test separate chunking variants on 61 dev items (1024 better, 256 worse). Generation metrics on dev showed no distinguishable stage effect at n ≈ 56; the 10-item test split cannot discriminate (n.d. on both metrics). CI still gates on `c1` | F-07, F-08 → 15.1; 15.2 |
 | Corpus versioning and privacy decision | **Gap, deferred** | F-21 → 15.1 |
 | Load test and capacity statement | **Gap, deferred** | F-16 → 15.4 |
 | Backup / restore procedure | Done — both index volumes backed up and restored by hand, re-seed A/B and the rollback rules in `Backup_Recovery.md`; rehearsed locally 2026-11-02; revisit if storage changes | 15.0 PR 2 |

@@ -19,7 +19,7 @@ def _config(corpus: str | None, **extra: str) -> subprocess.CompletedProcess:
     env = {
         k: v
         for k, v in os.environ.items()
-        if k != "RAG_CORPUS" and not k.startswith("RAG_CHUNK_")
+        if k not in ("RAG_CORPUS", "RAG_TOP_K") and not k.startswith("RAG_CHUNK_")
     }
     if corpus is not None:
         env["RAG_CORPUS"] = corpus
@@ -63,3 +63,8 @@ def test_chunking_variant_gets_its_own_index_and_results():
 def test_chunking_variant_is_refused_on_c1():
     result = _config(None, RAG_CHUNK_SIZE="256")
     assert result.returncode != 0 and "need RAG_CORPUS=c2" in result.stderr
+
+
+def test_top_k_override_is_refused_on_c1():
+    result = _config(None, RAG_TOP_K="3")
+    assert result.returncode != 0 and "RAG_TOP_K needs RAG_CORPUS=c2" in result.stderr
