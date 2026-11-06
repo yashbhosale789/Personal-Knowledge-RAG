@@ -47,7 +47,9 @@ MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 MAX_UPLOAD_CHARS = 1_000_000  # extracted text, ~2,200 chunks
 
 # Retrieval
-TOP_K = 5
+TOP_K = int(os.getenv("RAG_TOP_K", "5"))  # RAG_TOP_K: a Phase 15.2 experiment, c2 only
+if TOP_K != 5 and not _C2:
+    raise ValueError("RAG_TOP_K needs RAG_CORPUS=c2")
 RRF_K = 60
 RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
