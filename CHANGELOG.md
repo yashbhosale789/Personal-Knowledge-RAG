@@ -2,14 +2,18 @@
 
 User-visible and operational changes, newest first. There are no versioned releases: every merge to `main` deploys. Each entry names its roadmap phase; the [roadmap](docs/architecture/roadmap.md) has the evidence, PRs and decisions behind it.
 
-## Unreleased: Phase 15.2, retrieval tuning (in progress)
+## Unreleased: Phase 15.2, retrieval tuning and one corpus
 
 ### Added
-- Paired retrieval experiments on corpus `c2`: HNSW vs exact search, chunk size and overlap, page merging, `TOP_K`, rerank pool, BM25 tokenizer.
-- `RAG_CHUNK_SIZE`, `RAG_CHUNK_OVERLAP`, `RAG_CHUNK_MERGE_PAGES` and `RAG_TOP_K` select variants (`c2` only).
+- Paired retrieval experiments: HNSW vs exact search, chunk size and overlap, page merging, `TOP_K`, rerank pool, BM25 tokenizer; stage ablations (no rewrite, no sufficiency judge, no citation verifier). Report in the roadmap.
+- `RAG_CHUNK_SIZE`, `RAG_CHUNK_OVERLAP`, `RAG_CHUNK_MERGE_PAGES` and `RAG_TOP_K` for offline experiments; a non-default chunking gets its own index.
 
 ### Changed
-- Chosen for `c2`: 1024-character chunks, overlap 64, `TOP_K` 3 (MRR better at equal context). Not yet shipped to production.
+- **One corpus:** production, CI and evaluation all use the 236 PDFs in `data/documents/` (the 5 earlier PDFs are among them). `RAG_CORPUS` and `data/corpus_c2/` are removed. Four PDFs whose names occur in two companies are prefixed with the company name.
+- **Chunking 1024 characters, overlap 64, `TOP_K` 3** (was 512/64, 5): better ranking at the same context size (MRR 0.72 → 0.83 on dev).
+- The golden dataset is v2 (79 questions); v1 moved to `eval/legacy/`. The eval gate's unanswerable question is now Q12 instead of Q13: on the full corpus Q13 is answered from a related warranty page (known issue F-29).
+- All four pipeline stages are kept: no ablation made a distinguishable difference.
+- **Deploy:** production needs a backup and re-seed A (`Backup_Recovery.md`), because the index volume wins over the image. The eval gate's timeout is 30 minutes (indexing 236 PDFs).
 
 ## 2026-11-04: Phase 15.1, full PDF corpus
 

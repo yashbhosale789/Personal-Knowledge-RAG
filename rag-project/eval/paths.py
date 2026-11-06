@@ -9,21 +9,19 @@ RUNS_DIR = EVAL_DIR / "runs"
 SECURITY_DIR = EVAL_DIR / "security"
 RUNS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Dataset v1 (corpus c1, CI) and v2 (corpus c2, 15.1): v2's labels cite c2-only files.
-GOLDEN_PATH = DATA_DIR / (
-    "golden_dataset_c2.json" if config.CORPUS == "c2" else "golden_dataset.json"
-)
+# Dataset v2 (15.1, 79 questions; a superset of v1, which is in eval/legacy/).
+GOLDEN_PATH = DATA_DIR / "golden_dataset.json"
 CALIBRATION_PATH = DATA_DIR / "judge_calibration.json"
+# PDF name -> company (the upstream folder; the corpus is flat since 15.2), for compare --company.
+SOURCE_COMPANY_PATH = DATA_DIR / "source_company.json"
 INJECTION_CASES_PATH = DATA_DIR / "injection_cases.json"
 
 GEN_PATH = RUNS_DIR / "generations.jsonl"
 JUDGE_PATH = RUNS_DIR / "judgments.jsonl"
 REWRITES_PATH = RUNS_DIR / "rewrites.json"
-# One file per corpus (RAG_CORPUS). retrieval_baseline.json is the frozen c1 record from
-# before 15.1 (corpus 9fc4650202); nothing writes it any more.
-BASELINE_PATH = (
-    RUNS_DIR / f"retrieval_baseline_{config.CORPUS}{config.INDEX_VARIANT}.json"
-)
+# The current corpus and chunking (a chunking experiment gets its own file). Frozen history,
+# never written: retrieval_baseline.json (c1 before 15.1), _c1.json and _c2.json (15.1).
+BASELINE_PATH = RUNS_DIR / f"retrieval_baseline_current{config.INDEX_VARIANT}.json"
 CANDIDATES_PATH = RUNS_DIR / "candidates.jsonl"
 REVIEWED_PATH = RUNS_DIR / "candidates_reviewed.jsonl"
 

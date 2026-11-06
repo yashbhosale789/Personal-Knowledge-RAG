@@ -1,6 +1,6 @@
 """Phase 15.2 ANN check: Chroma's HNSW top-k vs exact cosine top-k over the stored vectors.
 
-RAG_CORPUS=c2 python -m eval.tools.ann_check   (dev split, cached rewrites, no LLM calls)
+python -m eval.tools.ann_check   (dev split, cached rewrites, no LLM calls)
 """
 
 import json

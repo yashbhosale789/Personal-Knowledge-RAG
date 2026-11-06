@@ -28,7 +28,7 @@ Never back up secrets into an unapproved location.
 - **Redis:** cache and rate-limit counters only, no volume; losing it costs cache hits, not data.
 
 ## How the volumes behave
-- **First mount:** Docker fills an empty named volume from the image, so the first deploy with volumes starts from the image's baked index (`c1`, 40 chunks). After that **the volume wins**: a later image's baked index is ignored. A PDF merged to git reaches prod only by uploading it, or by a re-seed (below).
+- **First mount:** Docker fills an empty named volume from the image, so the first deploy with volumes starts from the image's baked index (236 PDFs, 1,295 chunks since 2026-11-06). After that **the volume wins**: a later image's baked index is ignored. A PDF merged to git reaches prod only by uploading it, or by a re-seed (below).
 - **Deploy:** `deploy.sh` recreates the app with the same volumes; uploads survive.
 - **Rollback to an image from before Phase 15.0 PR 2:** `deploy.sh` copies the `docker-compose.prod.yml` shipped in the *target* image, and that file mounts no index volumes. The app serves that image's own baked index, and uploads are invisible but untouched (Compose never deletes named volumes). The next forward deploy mounts the volumes again and the uploads are back. That image never opens the volumes, so no Chroma version reads another's files.
 - **Rollback between two images that both mount the volumes:** both read the same files. Safe while both run the same chromadb (1.5.9 at PR 2).
@@ -87,7 +87,7 @@ Smoke test: `/health` returns `pipeline_ready: true`, `GET /documents` lists the
 **Local** (dev or evaluation), from `rag-project/` with the venv active:
 1. Delete `storage/`: chunk IDs are deterministic, so re-ingesting is idempotent, but chunks of a removed PDF stay in Chroma unless the directory is wiped.
 2. `python scripts/ingest.py`, then check the printed document and chunk counts.
-3. `python -m eval.tools.validate_dataset` must exit 0 (evidence spans still match `storage/chunks.json`). A changed corpus gets a new corpus identifier in eval records, so do not compare its runs with `c1` runs.
+3. `python -m eval.tools.validate_dataset` must exit 0 (evidence spans still match `storage/chunks.json`). A changed corpus gets a new corpus identifier in eval records, so do not compare its runs with runs on another corpus id.
 
 ## Recovery objectives
 Define acceptable recovery point (data loss) and recovery time based on actual needs; do not invent targets.
