@@ -40,7 +40,7 @@ Always deploy through `deploy.sh` (it sets `IMAGE_TAG` and `COMPOSE_PROFILES`), 
 | Availability: response is not 5xx | 99% | 1% of requests |
 | Latency: completes within 10 s | 95% | 5% of requests |
 
-The 10 s target comes from measured latency (about 3–4 s per answered query). They stay provisional because single-user traffic is too sparse to tune against; a load test is Phase 15.4.
+The 10 s target comes from measured latency (about 3–4 s per answered query). They stay provisional because single-user traffic is too sparse to tune against; Phase 15.4 kept them so and derived capacity from the Groq free tier instead of a load test (`docs/templates/engineering/Observability.md`).
 
 **Alerts** (Grafana, `rag-project/grafana/provisioning/alerting/`, emailed to `ALERT_EMAIL`). All were fire-tested:
 

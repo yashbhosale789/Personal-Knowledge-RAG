@@ -323,6 +323,6 @@ These are deliberate and tracked in the [roadmap](docs/architecture/roadmap.md):
 
 - **Synthetic corpus.** The 236 PDFs are public test documents about fictional companies, not personal notes.
 - **Single user.** One shared key; every key holder sees the whole corpus and shares one cache.
-- **Provisional SLOs.** Single-user traffic is too sparse to tune them; no load test yet (Phase 15.4).
+- **Provisional SLOs.** Single-user traffic is too sparse to tune them; kept provisional in Phase 15.4 (no load test; capacity is set by the Groq free tier: about 3 answered queries a minute, about 80 a day).
 - **Free tiers.** Generation and verification both use Groq's free tier; the verifier degrades to a low-confidence, uncached answer if it fails.
 - **Follow-ups not evaluated.** The golden dataset has no multi-turn questions.
