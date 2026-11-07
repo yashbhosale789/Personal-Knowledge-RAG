@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from eval.harness import compare, gate, retrieval_eval, store
+from eval.harness import compare, gate, retrieval_eval, score_ranked, store
 from eval.paths import GOLDEN_PATH
 from eval.tools import validate_dataset as vd
 
@@ -80,6 +80,41 @@ def test_any_of_needs_only_one_span():
     item = _item(("a.pdf", "first fact"), ("a.pdf", "second fact"), any_of=True)
     out = retrieval_eval.score(item, ranked, (5,))
     assert out["recall@5"] == out["success@5"] == 1.0
+
+
+def _dump(stages_by_id):
+    results = {q: {"query": q, "stages": s} for q, s in stages_by_id.items()}
+    return {"variant": "v", "corpus": "c", "settings": {}, "results": results}
+
+
+def test_score_ranked_scores_each_stage_at_its_own_depth():
+    golden = [
+        {
+            **_item(("a.pdf", "lug wrench")),
+            "id": "Q1",
+            "category": "normal",
+            "origin": "manual",
+            "split": "dev",
+            "expected_outcome": "answer",
+        },
+        {"id": "Q2", "expected_outcome": "abstain", "relevant": []},
+    ]
+    hit_second = _ranked(("b.pdf", "x"), ("a.pdf", "the lug wrench"))
+    rows = score_ranked.score_dump(
+        _dump({"Q1": {"dense": hit_second * 10, "final": hit_second}}), golden, "d"
+    )
+    assert [r["id"] for r in rows] == ["Q1"]  # abstain items are not scored
+    assert set(rows[0]["metrics"]["dense"]) >= {"recall@3", "recall@20", "mrr"}
+    assert "recall@20" not in rows[0]["metrics"]["final"]  # list of 2: no deep k
+    assert rows[0]["metrics"]["final"]["recall@1"] == 0.0
+    assert rows[0]["metrics"]["final"]["mrr"] == 0.5
+    assert rows[0]["dataset"] == "d" and rows[0]["corpus"] == "c"
+
+
+def test_score_ranked_refuses_a_dump_missing_answerable_items():
+    golden = [{"id": "Q1", "expected_outcome": "answer"}]
+    with pytest.raises(SystemExit, match="lacks 1"):
+        score_ranked.score_dump(_dump({}), golden, "d")
 
 
 # --- paired statistics -----------------------------------------------------
