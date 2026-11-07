@@ -27,6 +27,12 @@
 
 ## 2. Current status — highest priority
 
+### Phase 16.0 (Naive and Advanced RAG) — measured 2026-11-07, numbers PROVISIONAL until the 16.4 kit
+
+- **Retrieval only ($0), 71 answerable items, dataset `8f89d42be9`:** Naive R@3 0.65 / MRR 0.59; Advanced (raw question, its LLM rewrite not run) R@3 0.74 / MRR 0.73; Production raw R@3 0.83 / MRR 0.81; Production baseline R@3 0.88 / MRR 0.83. Production > Naive distinguishable on every metric; Advanced vs Production raw: nothing distinguishable; Advanced vs Production baseline: only R@3 distinguishable. Detail: roadmap §16.0 Status.
+- **How:** variants keep their own design (512/64, top 5, no text clean-up) and read the 236 PDFs in place (`RAG_DATA_DIR`, `RAG_DATA_GLOB=*.pdf`; variant corpus `2222:9e32e2edff`). Each has `scripts/dump_ranked.py`; `rag-project/eval/harness/score_ranked.py` scores the dump with the harness (`r160_*.json` in `eval/runs`). Labels are source + evidence span (chunk-independent), not source + page.
+- **Folders:** worked on inside `RAG - Portfolio/` (in `.git/info/exclude`), moved out to `D:\Development\GenAI\RAG - Portfolio\` for publishing from their own repositories; never committed here.
+
 ### Phase 15.4 (Final operational validation) — CLOSED as "lite" 2026-11-07 (owner); Phase 15 CLOSED; current: Phase 16
 
 - **Lite = $0 items shipped, load-test items accepted** (Groq daily quota ran out 2026-11-07). PRs to merge: `ci/trivy-image-scan` (report-only Trivy step, SHA-pinned, never fails the build), `chore/torch-2.14.1` (its eval gate after a Groq reset), Caddy body cap (R1). Detail: roadmap §15.4 and `docs/architecture/production-readiness-review-2026-11-07.md`.

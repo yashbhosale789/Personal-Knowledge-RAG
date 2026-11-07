@@ -743,6 +743,17 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 
 - The existing folders, moved in, updated to the current corpus and dataset, measured on retrieval metrics, moved out to their own repositories.
 
+**Status: measured 2026-11-07, numbers PROVISIONAL** (re-measured through the kit in 16.4). Retrieval only, $0; dataset `8f89d42be9`, 71 answerable items (split all, as the Production baseline). Both variants index the 236 PDFs in place (`RAG_DATA_DIR`, `RAG_DATA_GLOB=*.pdf`) at their own 512/64 chunking: 795 pages → 2,222 chunks, variant corpus id `2222:9e32e2edff` (Production: `281db7190c`, 1,295 chunks at 1024/64). Labels are chunk-independent (source + evidence span, `norm()` match; the goal said source + page, the code uses spans). Each variant's `scripts/dump_ranked.py` writes ranked chunks; `eval/harness/score_ranked.py` scores them with `retrieval_eval.score()` into `eval/runs/r160_*.json` for `compare.py`.
+
+| Run | R@1 | R@3 | R@5 | S@3 | MRR |
+|---|---|---|---|---|---|
+| Naive (dense top 5) | 0.41 | 0.65 | 0.73 | 0.59 | 0.59 |
+| Advanced, raw question (reranked top 5) | 0.58 | 0.74 | 0.79 | 0.68 | 0.73 |
+| Production, raw question (`r160_prod_raw.json`) | 0.70 | 0.83 | 0.83 | 0.82 | 0.81 |
+| Production baseline, rewritten (`retrieval_baseline_current.json`) | 0.68 | 0.88 | 0.88 | 0.85 | 0.83 |
+
+Paired comparison (`compare.py --split all --family 6`, α 0.0083): Production baseline > Naive on R@1/3/5 and MRR, all distinguishable (R@3 −0.22, CI [−0.35, −0.11]). Advanced raw vs Production baseline: R@3 lower, distinguishable (−0.13, CI [−0.24, −0.04]); MRR, R@1, R@5 not. Advanced raw vs Production raw: nothing distinguishable (R@3 −0.09, CI [−0.21, +0.03]). Advanced vs Naive (exploratory): not distinguishable (MRR +0.14, p 0.013). Advanced's LLM rewrite was not run (71 OpenRouter calls; owner's call). Production's R@5 equals R@3 (it hands on 3 chunks).
+
 #### 16.1 — Agentic RAG
 
 - The existing folder, moved in and updated the same way as 16.0; compared with Production RAG on quality, latency and LLM calls per query.
