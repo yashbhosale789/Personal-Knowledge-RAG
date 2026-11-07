@@ -45,9 +45,26 @@ jobs:
         with:
           context: rag-project
           push: ${{ github.event_name != 'pull_request' }}
+          load: true  # into the runner's Docker, so PR builds are scanned too
           tags: ${{ env.IMAGE }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      # F-22: report only. Findings (exit-code 0) and scanner errors never fail the build or block deploy.
+      # Pinned by commit SHA: this action's release tags were rewritten in a 2026 supply-chain attack.
+      - name: Scan image (Trivy, report only)
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: "0"
+          timeout: 10m
+          output: trivy.txt
+      - name: Trivy report to job summary
+        if: always()
+        run: |
+          { echo '### Trivy image scan (HIGH, CRITICAL; report only)'; echo '```'
+            cat trivy.txt 2>/dev/null || echo "no report (scan failed or skipped)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
   deploy:
     needs: build
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
