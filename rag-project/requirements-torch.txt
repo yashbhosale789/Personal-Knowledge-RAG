@@ -1,0 +1,5 @@
+# Prod/CI torch: CPU wheel, installed before requirements.txt (which excludes torch, see its header):
+#   pip install -r requirements-torch.txt --index-url https://download.pytorch.org/whl/cpu
+# Used by the Dockerfile, tests.yml and eval-gate.yml; audited by audit.yml.
+# Keep requirements-local.txt on the same version (CUDA wheel).
+torch==2.14.1

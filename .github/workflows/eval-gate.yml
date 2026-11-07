@@ -14,6 +14,7 @@ on:
       - "rag-project/scripts/ingest.py"
       - "rag-project/data/**"
       - "rag-project/requirements.txt"
+      - "rag-project/requirements-torch.txt"
       - ".github/workflows/eval-gate.yml"
   schedule:
     - cron: "0 5 * * 1"
@@ -59,7 +60,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements-torch.txt --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements.txt
 
       - name: Run ingestion (build BM25 + vector index)
