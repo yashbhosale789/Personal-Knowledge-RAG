@@ -19,7 +19,9 @@ Prometheus and Grafana were previously reported for metrics and dashboards. A tr
 - Add request/run identifiers for correlation where appropriate.
 - Document sampling and failure behavior.
 
-## SLOs (provisional, Phase 13.5; finalised in Phase 15.4)
+## SLOs (provisional since Phase 13.5; kept provisional in Phase 15.4)
+
+**Why they stay provisional (15.4, 2026-11-07):** there is one user. A quiet hour has a handful of requests, so a single slow or failed one moves either ratio by several percent: the numbers measure noise, not the service. The k6 load test was not run (Groq free-tier quota), so no p95 under concurrency exists to tune against. Capacity is bounded by the provider, not the box: Groq `gpt-oss-120b` allows 8K tokens a minute (~3 answered queries a minute) and 200K a day (~80 answered queries). The targets stay as they are until real traffic or a load test gives a baseline. Retune them then, not before.
 Both cover `POST /query` only, over a rolling **28-day window**. They are computed from `http_requests_total` and `http_request_duration_seconds` by the recording rules in `rag-project/prometheus-rules.yml`; Prometheus keeps 30 days so the window fits.
 
 | SLO | Target | Error budget (28 d) | Recorded ratio |

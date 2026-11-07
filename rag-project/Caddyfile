@@ -8,6 +8,12 @@
 	request_body /documents {
 		max_size 11MiB
 	}
+	# FastAPI also reads JSON bodies before the key check (review R1, 15.4). The largest valid
+	# /query is ~25K chars (query + 5 history turns), under 150 KB even fully \u-escaped.
+	@json path /query /query/* /feedback
+	request_body @json {
+		max_size 256KB
+	}
 	handle {
 		reverse_proxy app:8000
 	}

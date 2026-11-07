@@ -94,7 +94,7 @@ narwhals==2.27.1          # via scikit-learn
 nh3==0.3.7                # via unstructured
 numba==0.68.0             # via unstructured
 numpy==2.4.6              # via blis, chromadb, langchain-chroma, langchain-community, numba, onnxruntime, rank-bm25, scikit-learn, scipy, sentence-transformers, spacy, thinc, transformers, unstructured, -r requirements.in
-oauthlib==4.0.0           # via requests-oauthlib
+oauthlib==4.0.1           # via requests-oauthlib
 olefile==0.47             # via python-oxmsg
 onnxruntime==1.31.0       # via chromadb
 openai==3.37.0            # via langchain-openai

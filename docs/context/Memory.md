@@ -1,5 +1,5 @@
 # Personal Knowledge OS — Claude Project Memory
-**Last consolidated:** 2026-10-29  
+**Last consolidated:** 2026-11-07  
 **Purpose:** Persistent project context for Claude and AI engineering assistants. This file supersedes older memory notes where they conflict. Dates in the source notes are "last updated" dates for the corresponding entries.
  
 ## 1. Project identity and goals
@@ -26,6 +26,15 @@
 - **Hard cost constraint:** $0 budget. Avoid recommendations that require paid plans or risk unexpected cloud charges.
 
 ## 2. Current status — highest priority
+
+### Phase 15.4 (Final operational validation) — CLOSED as "lite" 2026-11-07 (owner); Phase 15 CLOSED; current: Phase 16
+
+- **Lite = $0 items shipped, load-test items accepted** (Groq daily quota ran out 2026-11-07). PRs to merge: `ci/trivy-image-scan` (report-only Trivy step, SHA-pinned, never fails the build), `chore/torch-2.14.1` (its eval gate after a Groq reset), Caddy body cap (R1). Detail: roadmap §15.4 and `docs/architecture/production-readiness-review-2026-11-07.md`.
+- **torch 2.14.1:** the prod pin lives in `rag-project/requirements-torch.txt` (Dockerfile, `tests.yml`, `eval-gate.yml` install from it; `audit.yml` audits it). Local `requirements-local.txt` = `2.14.1+cu126` (cu124 stops at 2.6; the GTX 1650 driver 555 cannot run cu130). Retrieval identical on all 71 questions. The local venv no longer has torchvision/torchaudio (they broke imports under the new torch).
+- **Capacity (accepted, derived):** Groq `gpt-oss-120b` 8K TPM / 200K TPD → ~3 answered queries/min, ~80/day; a 429 on sufficiency/generate falls back to OpenRouter, then Gemini (a rewrite 429 is silent). One uvicorn process, ~6 pipelines at once (default thread pool). `loadtest/query.js` (k6, run locally) is kept; its phase 1 alone costs ~12K tokens.
+- **Review R1 fixed:** Caddy caps `/query`, `/query/*`, `/feedback` bodies at 256 KB (FastAPI reads the body before the key check). R2 (`caddy:2` floating) accepted.
+- **Open question:** do prod and local eval share one Groq key? If yes, an eval day empties prod's quota.
+- **Moved to Phase 16:** a fresh generation baseline (post-#136) and the F-29 paired run (~145K gpt-oss tokens each). Phase 16 order changed: variants first (16.0 Naive/Advanced, 16.1 Agentic, 16.2 Graph, 16.3 Multimodal), eval kit 16.4, write-up 16.5.
 
 ### Phase 15.2 (Retrieval tuning and stage ablations) — CLOSED 2026-11-06 (PR #134 `18e88f7` deployed; prod re-seeded A and owner-checked: 236 PDFs, right citations, app 476 MiB)
 

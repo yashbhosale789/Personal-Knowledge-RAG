@@ -2,7 +2,7 @@
 
 Last reconciled: 2026-11-04
 
-Current phase: **Phase 15 — RAG pipeline hardening and scale** (15.0 closed 2026-11-03, 15.1 closed 2026-11-04, 15.2 closed 2026-11-06; next 15.4). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
+Current phase: **Phase 16 — RAG portfolio and reusable eval kit** (starts with 16.0 Naive and Advanced RAG; eval kit last). Phase 15 closed 2026-11-07 (15.0 2026-11-03, 15.1 2026-11-04, 15.2 2026-11-06, 15.4 lite 2026-11-07; 15.3 dropped). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
 
 Active development copy: `rag-project/`
 
@@ -672,36 +672,47 @@ With both recommended removals, a query makes 1 `gpt-oss` call instead of 3, plu
 
 Exit: the *Production-readiness checklist* has no open gaps, or each remaining one is accepted and recorded with a reason.
 
+**Status: CLOSED (lite) 2026-11-07, owner decision.** The owner chose "15.4 lite" after Groq's daily quota ran out: ship everything that costs no LLM calls, accept the measured-under-load items with the reasons below, and move the expensive generation runs to Phase 16. #135–#137 were merged before the start. Three PRs remain to merge: Trivy, torch and the Caddy fix (R1).
+
+- **torch 2.6.0 → 2.14.1** (branch `chore/torch-2.14.1`). The prod pin moves to `rag-project/requirements-torch.txt`, which the Dockerfile, `tests.yml` and `eval-gate.yml` install from and `audit.yml` audits. torch was pinned in four places, not two. Local dev moves to cu126, because cu124 wheels stop at 2.6 and the GTX 1650 driver rules out cu130. pip-audit: 12 advisories on 2.6.0, none on 2.14.1. Retrieval, measured locally on the existing index, n = 71: identical on every question and stage. Reranked R@3 0.88, MRR 0.83; paired diff +0.000, 95% CI [0, 0], 71 tied. The PR's eval gate (~11K gpt-oss tokens, ~11 Gemini calls) runs after a Groq reset.
+- **Trivy** (branch `ci/trivy-image-scan`): a report-only step in `build-push.yml`. It scans PR builds too and never fails the build; the action is pinned by commit SHA. Findings go into the readiness review (P5) after the first run.
+- **Readiness review** filed: `production-readiness-review-2026-11-07.md`. R1 (Medium): no body size cap on `/query`, `/query/stream` or `/feedback` before auth. Fixed by a Caddy cap of 256 KB on those routes (the largest valid `/query` is under 150 KB); `deploy.sh` syncs the Caddyfile and restarts Caddy. R2 (`caddy:2` floating tag): accepted, pin when Caddy next needs a change.
+- **Capacity statement (F-16), derived, not load-tested (accepted).** Capacity is set by the Groq free tier, not the box. `gpt-oss-120b` allows 8K tokens a minute and 200K a day; an answered query uses ~2,300–2,600 tokens in 3 calls. That is about 3 answered queries a minute and about 80 a day. Beyond that, a 429 on sufficiency or generate re-runs the request on OpenRouter (50 requests a day), then Gemini. Measured on prod with one user: ~3–4 s per answered query, app 476 MiB of 1 GiB. From the code, not measured: one uvicorn process runs at most ~6 pipelines at once (the default thread pool on 2 vCPU). The k6 script (`loadtest/query.js`) is kept for a later run. Its phase 1 alone (10 concurrent users, off-corpus, ~12K tokens) measures the box side.
+- **Memory limits:** no re-check under load (accepted with the load test). The idle and single-user figures (476 MiB of 1 GiB) leave over half the limit free.
+- **SLOs:** kept provisional; the reason is in `Observability.md`.
+- **Tokens per query** (15.2 eval records, n = 79, before #136): sufficiency ~900, generate ~1,390 (both gpt-oss), citation verify ~970 (qwen); the rewrite (~300–400) is not in eval. Daily headroom is ~80 answered queries, enough for one user, but eval runs spend the same quota (the cap ran out on 2026-11-07). Open question for the owner: do prod and local eval share one Groq key? Skipping the sufficiency LLM call is not proposed, because a single user's traffic leaves headroom. Groq prompt caching covers `gpt-oss-120b` automatically, but only the fixed system prompts (~130–170 tokens) repeat, so it saves at most ~12%.
+- **Deferred to Phase 16 (owner, 2026-11-07):** the fresh post-#136 generation baseline and F-29. F-29 proposal: add to `SUFFICIENCY_JUDGE_SYSTEM` "If the QUESTION names a specific product, model, plan, company or person, the fact must be stated for that same one. A fact about a different or related one (another model, a pre-owned or certified variant) is NOT sufficient." The judge already blocks 10 of 70 answerable questions, so it needs a paired dev run: the change as an eval variant against a fresh baseline at the same fingerprint. Each dev run costs ~120 gpt-oss calls (~145K tokens), ~52 qwen and ~190 Gemini judge calls.
+
 ## Production-readiness checklist
 
-Status as of 2026-10-30 (Phase 14 closed). Gap items name the owning phase.
+Status as of 2026-11-07 (Phase 15.4 closed, lite). No open gaps: every row is done, or accepted with its reason.
 
 | Area | Status | Owner / evidence |
 | --- | --- | --- |
 | Hybrid retrieval, reranking, grounded answers with citations, abstention | Done | Phases 2, 8 |
-| Prompt-injection defense | Partial — scanner on every ingest path since 15.0 PR 1 (API and script); soft injection (INJ04) still missed | F-03 fixed (#115) |
+| Prompt-injection defense | Accepted — scanner on every ingest path since 15.0 PR 1 (API and script). Soft injection (INJ04) is still missed: only the key holder can upload (single user, F-19); revisit with Phase 17 multi-tenancy | F-03 fixed (#115); 15.4 |
 | Auth (shared key), rate limiting, HTTPS | Done — single-user by decision (one shared key) | Phases 9, 12; decision 13.5 (`Security.md`) |
 | Automated deployment, health check, rollback | Done, verified live; rollback drilled again 2026-10-29 | Phase 12, 13.5 |
-| Regression evaluation in CI | Partial — LLM-judge gate on 4 items, path-filtered and advisory, now on the 236-PDF corpus (2026-11-06). The gate has floors, not a paired comparison | F-07, F-08 → 15.1, 15.2 |
+| Regression evaluation in CI | Accepted — LLM-judge gate on 4 items, path-filtered and advisory, on the 236-PDF corpus. Floors, not a paired comparison: a larger gate would spend free-tier quota on every pipeline PR. Paired comparisons run offline (`compare.py`) | F-07, F-08; 15.2; 15.4 |
 | Unit / API / integration tests in CI | Done — required `pytest` check, 301 passed, coverage 77.32% (`main` at `7889f26`) | 13.1 |
 | Reproducible builds (pinned dependencies) | Done — lock files; image built on every pipeline PR | 13.1 |
-| Dependency / image vulnerability scanning | Partial — pip-audit, Dependabot and CodeQL done; no container image scan; prod torch 2.6.0 not audited (8 open advisories) | F-22, torch upgrade → 15.4 |
+| Dependency / image vulnerability scanning | Done when the 15.4 PRs merge — pip-audit (now including the prod torch pin), Dependabot, CodeQL, and a report-only Trivy image scan on every image build. torch 2.14.1 has no known advisories | F-22; 15.4 |
 | Prompt / model versioning | Done — `config.PROMPT_VERSION` in responses, logs, metrics, cache namespace and eval records | 13.2, PR #67 |
 | Per-stage cost and latency visibility | Done — LLM stages (tokens, latency, reported vs estimated) and retrieval stages | 13.3, 13.4 |
 | Request correlation and tracing | Done — one request ID across response, logs and Langfuse trace | 13.4 |
-| Alerting and SLOs | Done, provisional — availability and latency SLOs, burn-rate alerts by email, fire-tested on prod | 13.5; final numbers → 15.4 |
+| Alerting and SLOs | Accepted, provisional — availability and latency SLOs, burn-rate alerts by email, fire-tested on prod. They stay provisional: one user's traffic is too sparse to tune against (`Observability.md`) | 13.5; 15.4 |
 | External uptime monitoring | Done — `Uptime` workflow every 10 min, fire-tested | 13.5 |
-| Resource limits on containers | Done — `mem_limit` on all services, Redis `maxmemory`, verified live | 13.5; re-check → 15.4 |
-| Secrets without long-lived keys | Accepted — OIDC blocked by the AWS-managed SCP; least-privilege deploy key, 90-day rotation (next 2027-01-27) | F-18, 13.5; re-check → 15.4 |
+| Resource limits on containers | Done — `mem_limit` on all services, Redis `maxmemory`, verified live; app 476 MiB of 1 GiB on the 236-PDF corpus (2026-11-06). Not re-checked under load (accepted with the load test) | 13.5; 15.2; 15.4 |
+| Secrets without long-lived keys | Accepted — OIDC blocked by the AWS-managed SCP; least-privilege deploy key, 90-day rotation (next 2027-01-27). Re-checked 2026-11-07: unchanged | F-18, 13.5; 15.4 |
 | Logging / retention policy and log rotation | Done — policy in `Data_Privacy.md`, rotation active; feedback text 90 days | 13.5, 14.0 |
 | User feedback loop | Done — `POST /feedback` (server-side grounding, SQLite on a named volume) and the UI thumbs + comment; round-trip and deploy survival verified on prod | 14.0, 14.1, PRs #95, #97 |
 | Usable front end | Done — React UI on the same origin, streaming answers with mapped citations, abstain/low-confidence display, feedback; verified on desktop and phone | 14.1, PRs #97, #98 |
-| Storage architecture fit for production | Partial — Chroma is the single source of truth since 15.0 PR 1 (BM25 rebuilt from it); index and documents persisted in named volumes since PR 2; store choice deferred to the 15.1 measurements | F-27 fixed (#115); 15.1 |
+| Storage architecture fit for production | Done by decision — Chroma is the single source of truth (BM25 rebuilt from it), persisted in named volumes; 15.1 measured the 236-PDF corpus and kept Chroma (no trigger fired; next step if one does: SQLite FTS5 + `sqlite-vec`) | F-27 fixed (#115); 15.1 |
 | Ingestion correct and persistent | Done — correct since 15.0 PR 1; persistent on prod in named volumes since PR 2; upload, list and delete from the UI | F-01, F-02, F-03 fixed (#115, #123) |
 | Supports the real corpus formats | Done by decision — the corpus is 100–150 PDFs; the loader also reads DOCX, MD and TXT | F-15, decided 2026-10-31 |
-| Evaluation that can discriminate variants | **Done for retrieval** (15.2, 2026-11-05): paired CI + sign test separate chunking variants on 61 dev items (1024 better, 256 worse). Generation metrics on dev showed no distinguishable stage effect at n = 67; the 12-item test split cannot discriminate. Since 2026-11-06 CI, prod and evaluation share one corpus | F-07, F-08 → 15.1; 15.2 |
-| Corpus versioning and privacy decision | **Gap, deferred** | F-21 → 15.1 |
-| Load test and capacity statement | **Gap, deferred** | F-16 → 15.4 |
+| Evaluation that can discriminate variants | **Done for retrieval** (15.2, 2026-11-05; accepted for generation, fresh baseline in Phase 16): paired CI + sign test separate chunking variants on 61 dev items (1024 better, 256 worse). Generation metrics on dev showed no distinguishable stage effect at n = 67; the 12-item test split cannot discriminate. Since 2026-11-06 CI, prod and evaluation share one corpus | F-07, F-08 → 15.1; 15.2 |
+| Corpus versioning and privacy decision | Done — corpus id on every eval record (`281db7190c`); the corpus is public, MIT-licensed synthetic test data, committed with its licence and checksums (decided 2026-11-04) | F-21; 15.1, 15.2 |
+| Load test and capacity statement | Accepted (15.4 lite) — capacity is derived from the Groq free tier: about 3 answered queries a minute, about 80 a day; ~3–4 s per answer with one user. The k6 load test was not run (quota); `loadtest/query.js` is kept for a later run | F-16; 15.4 |
 | Backup / restore procedure | Done — both index volumes backed up and restored by hand, re-seed A/B and the rollback rules in `Backup_Recovery.md`; rehearsed locally 2026-11-02; revisit if storage changes | 15.0 PR 2 |
 
 ## Later roadmap — order: 16 → 17, after Phase 15
@@ -724,28 +735,33 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 - Technologies (LangChain, LangGraph, LlamaIndex, Langfuse, …) are chosen from each project's requirements, not in advance.
 - **Free tier:** retrieval metrics for every variant ($0); LLM-judged runs on a small subset per project, with the call count stated before each run.
 
-#### 16.0 — Eval kit
+**Order changed 2026-11-07 (owner): the RAG variants first, the eval kit last.** The variants report retrieval metrics ($0) through the existing harness or a small per-project script while they are built. The kit is extracted afterwards, and every variant is re-measured through it before the 16.5 table, so no number in that table comes from two different code paths. Trade-off accepted: early per-variant numbers are provisional until 16.4.
+
+**Carried from 15.4:** a fresh Production RAG generation baseline (#136 changed the fingerprint) and the F-29 paired run (sufficiency judge requires the exact entity; proposal and costs in §15.4). Two dev runs of ~145K gpt-oss tokens each, on separate days when quota allows; run them before 16.4 reproduces Production RAG through the kit.
+
+#### 16.0 — Naive and Advanced RAG
+
+- The existing folders, moved in, updated to the current corpus and dataset, measured on retrieval metrics, moved out to their own repositories.
+
+#### 16.1 — Agentic RAG
+
+- The existing folder, moved in and updated the same way as 16.0; compared with Production RAG on quality, latency and LLM calls per query.
+
+#### 16.2 — Graph RAG
+
+- Multi-hop questions added to the dataset (hand-checked, as in 15.1).
+
+#### 16.3 — Multimodal RAG
+
+- Needs a corpus with material image or table content; check whether the current corpus has it before choosing one.
+
+#### 16.4 — Eval kit (last, 2026-11-07)
 
 - Extract `rag-project/eval/` into a standalone package that every project uses. Today it imports this app directly (`retrieve_context`, `src.llm.client`, `config`, `src.vectorstore.store`, the citation pattern); replace those with an adapter interface: `retrieve(query) → ranked chunks with source and page`, `answer(query) → answer and contexts`.
 - Keep: dataset schema and validator, retrieval metrics, paired comparison with confidence intervals (`compare.py`), gate, judge (LLM client pluggable), dataset and corpus identifiers on every record. Add question categories (multi-hop, image, table).
 - Check first: dataset labels are chunk-independent (source and page, not chunk ID); otherwise variants that chunk differently cannot be compared.
 - Exit: Production RAG run through the kit reproduces its `c2` retrieval baseline exactly.
-
-#### 16.1 — Naive and Advanced RAG
-
-- The existing folders, moved in, updated to `c2` and dataset `v2`, measured with the kit, moved out to their own repositories.
-
-#### 16.2 — Agentic RAG
-
-- The existing folder, moved in and updated the same way as 16.1; compared with Production RAG on quality, latency and LLM calls per query.
-
-#### 16.3 — Graph RAG
-
-- Multi-hop questions added to the dataset (hand-checked, as in 15.1).
-
-#### 16.4 — Multimodal RAG
-
-- Needs a corpus with material image or table content; check whether `c2` has it before choosing one.
+- Then re-measure every variant (16.0–16.3) through the kit.
 
 #### 16.5 — Write-up
 

@@ -34,8 +34,8 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 | 12 | Deployment | Complete |
 | 13 | LLMOps foundations | Complete |
 | 14 | Human feedback and React frontend | Complete |
-| 15 | RAG pipeline hardening and scale | Current |
-| 16 | RAG portfolio and reusable eval kit | Planned |
+| 15 | RAG pipeline hardening and scale | Complete (2026-11-07) |
+| 16 | RAG portfolio and reusable eval kit | Current |
 | 17 | Multi-tenancy and RBAC | Planned |
 
 ## Foundation (Phases 1–6)
@@ -191,7 +191,7 @@ A production-ready, enterprise-grade Personal Knowledge Base RAG system: accurat
 | 15.1 | Full PDF corpus |
 | 15.2 | Retrieval tuning and stage ablations |
 | 15.3 | Token and cache optimization (dropped 2026-10-31) |
-| 15.4 | Final operational validation |
+| 15.4 | Final operational validation (closed lite 2026-11-07) |
 
 Scope trimmed 2026-10-31 for a single-user, $0 system: no storage migration now, no research-style comparisons. Detail: `docs/architecture/roadmap.md` Phase 15.
 
@@ -220,20 +220,21 @@ Scope trimmed 2026-10-31 for a single-user, $0 system: no storage migration now,
 
 #### 15.4 Final operational validation
 
-- Short load test and capacity statement
-- Provisional SLOs kept; memory limits re-checked
-- Production-readiness review, torch upgrade, container image scan
+- Closed as "lite" (owner, 2026-11-07, Groq quota exhausted): torch 2.14.1 in one audited pin file (retrieval identical), report-only Trivy image scan, readiness review filed with its one Medium finding fixed (Caddy body cap)
+- Capacity derived from the Groq free tier, not load-tested (accepted): ~3 answered queries/min, ~80/day; k6 script kept
+- Provisional SLOs kept; fresh generation baseline and F-29 moved to Phase 16
 
 ## Showcase (Phase 16)
 
 ### Phase 16 — RAG portfolio and reusable eval kit
 
-- 16.0 Reusable eval kit, extracted from `eval/`; Production RAG reproduces its baseline through it
-- 16.1 Naive and Advanced RAG, from the owner's existing folders, updated to the same corpus
-- 16.2 Agentic RAG, from its existing folder
+- Order (owner, 2026-11-07): the variants first, the eval kit last; early variant numbers are provisional until the kit re-measures them
+- 16.0 Naive and Advanced RAG, from the owner's existing folders, updated to the same corpus
+- 16.1 Agentic RAG, from its existing folder
 - Those folders are moved into this project's root only while being updated, never committed here, then moved out to their own repository
-- 16.3 Graph RAG, with multi-hop questions
-- 16.4 Multimodal RAG, with image and table questions
+- 16.2 Graph RAG, with multi-hop questions
+- 16.3 Multimodal RAG, with image and table questions
+- 16.4 Reusable eval kit, extracted from `eval/`; Production RAG reproduces its baseline through it, then every variant is re-measured
 - 16.5 One cross-variant comparison table and a README per project
 - Production RAG is this live repository, not a frozen snapshot
 
