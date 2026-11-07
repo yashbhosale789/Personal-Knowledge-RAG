@@ -727,10 +727,7 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 
 - **Production RAG is this live repository,** not a frozen snapshot. Phase 17 extends it, and its portfolio entry is updated then.
 - **Naive, Advanced and Agentic RAG start from the owner's existing project folders** (kept outside this repository; not in its git history). They are updated in place, not rebuilt. Agentic RAG may still need real build work: this repository has only its foundations (`src/agent/`), and agentic vs deterministic was dropped from 15.2.
-- **Those folders are never committed here.** Workflow: at the start of the sub-phase, move the folder into this project's root; update it (corpus `c2`, dataset `v2`, the eval kit); move it out again; it is published from its own separate repository. While a folder is in the root:
-  - add it to `.git/info/exclude` (local, not committed), so `git add` cannot pick it up;
-  - keep it out of the committed knowledge graph: exclude it from graphify, or run `graphify update .` only after it has been moved out;
-  - it is outside `rag-project/`, the Docker build context, so the image and CI are unaffected.
+- **The RAG portfolio is not part of this project (owner, 2026-11-07; replaces the move-in workflow).** Each RAG type is its own project in `D:\Development\GenAI\RAG - Portfolio\`, worked on there and published from its own repository. Nothing of it enters this repository: no folders, adapters, scripts, tests or results. A variant may only read this repository's dataset and corpus by path.
 - **Graph and Multimodal RAG are showcase builds.** The former evidence entry condition is dropped; each write-up says the project is a showcase, and each gets questions it should win (multi-hop for Graph; image and table questions for Multimodal).
 - Technologies (LangChain, LangGraph, LlamaIndex, Langfuse, …) are chosen from each project's requirements, not in advance.
 - **Free tier:** retrieval metrics for every variant ($0); LLM-judged runs on a small subset per project, with the call count stated before each run.
