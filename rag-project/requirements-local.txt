@@ -1,5 +1,5 @@
 --extra-index-url https://download.pytorch.org/whl/cu126
-torch==2.14.1+cu126  # same version as requirements-torch.txt (prod CPU)
+torch==2.15.0  # same version as requirements-torch.txt (prod CPU)
 -r requirements.in
 langgraph
 ragas
