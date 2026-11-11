@@ -1,8 +1,8 @@
 # Personal Knowledge OS — Detailed Roadmap (working plan)
 
-Last reconciled: 2026-11-04
+Last reconciled: 2026-11-11
 
-Current phase: **Phase 16 — RAG portfolio and reusable eval kit** (starts with 16.0 Naive and Advanced RAG; eval kit last). Phase 15 closed 2026-11-07 (15.0 2026-11-03, 15.1 2026-11-04, 15.2 2026-11-06, 15.4 lite 2026-11-07; 15.3 dropped). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
+Current phase: **Phase 16 — RAG portfolio and reusable eval kit** (variants 16.0–16.3 built and published 2026-11-11; next: the Production generation baseline and F-29, then the 16.4 eval kit). Phase 15 closed 2026-11-07 (15.0 2026-11-03, 15.1 2026-11-04, 15.2 2026-11-06, 15.4 lite 2026-11-07; 15.3 dropped). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
 
 Active development copy: `rag-project/`
 
@@ -728,7 +728,7 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 - **Production RAG is this live repository,** not a frozen snapshot. Phase 17 extends it, and its portfolio entry is updated then.
 - **Naive, Advanced and Agentic RAG start from the owner's existing project folders** (kept outside this repository; not in its git history). They are updated in place, not rebuilt. Agentic RAG may still need real build work: this repository has only its foundations (`src/agent/`), and agentic vs deterministic was dropped from 15.2.
 - **The RAG portfolio is not part of this project (owner, 2026-11-07; replaces the move-in workflow).** Each RAG type is its own project in `D:\Development\GenAI\RAG - Portfolio\`, worked on there and published from its own repository. Nothing of it enters this repository: no folders, adapters, scripts, tests or results. A variant may only read this repository's dataset and corpus by path.
-- **Graph and Multimodal RAG are showcase builds.** The former evidence entry condition is dropped; each write-up says the project is a showcase, and each gets questions it should win (multi-hop for Graph; image and table questions for Multimodal).
+- **Graph and Multimodal RAG are showcase builds.** The former evidence entry condition is dropped; each write-up says the project is a showcase, and each gets questions it should win (multi-hop for Graph; image and table questions for Multimodal). **Built as one combined project (owner, 2026-11-07):** a learning build following the owner's task document; the graph is one retrieval route next to vector search, so its effect is shown by a with/without-graph ablation.
 - Technologies (LangChain, LangGraph, LlamaIndex, Langfuse, …) are chosen from each project's requirements, not in advance.
 - **Free tier:** retrieval metrics for every variant ($0); LLM-judged runs on a small subset per project, with the call count stated before each run.
 
@@ -736,21 +736,23 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 
 **Carried from 15.4:** a fresh Production RAG generation baseline (#136 changed the fingerprint) and the F-29 paired run (sufficiency judge requires the exact entity; proposal and costs in §15.4). Two dev runs of ~145K gpt-oss tokens each, on separate days when quota allows; run them before 16.4 reproduces Production RAG through the kit.
 
+**Status 2026-11-11 (owner): 16.0–16.3 built and published,** each in its own GitHub repository: `naive-rag`, `advanced-rag`, `agentic-rag`, `multimodal-rag` (Graph RAG merged into it). Their results live in their own READMEs, not here. Measurement on the shared corpus and dataset: Naive and Advanced done (provisional); Agentic and Graph + Multimodal not yet. 16.4 re-measures every variant anyway.
+
 #### 16.0 — Naive and Advanced RAG
 
-- The existing folders, moved in, updated to the current corpus and dataset, measured on retrieval metrics, moved out to their own repositories.
+- **Done 2026-11-07, published 2026-11-08/09.** Updated to the current corpus (read in place) and dataset, measured on retrieval metrics with a per-project script; own repositories.
 
 #### 16.1 — Agentic RAG
 
-- The existing folder, moved in and updated the same way as 16.0; compared with Production RAG on quality, latency and LLM calls per query.
+- **Built and published 2026-11-09** (the agent is now a LangGraph state graph with a relevance grader). Its retrieval and agent runs on the shared dataset are not run yet (they need Groq quota); the comparison with Production RAG on quality, latency and LLM calls per query is still open.
 
 #### 16.2 — Graph RAG
 
-- Multi-hop questions added to the dataset (hand-checked, as in 15.1).
+- **Merged into 16.3 (owner, 2026-11-07)** and built inside the `multimodal-rag` project as a knowledge-graph route. Its multi-hop questions live in that project's own answer key, not in this repository's dataset; whether 16.4 adds multi-hop questions to the shared dataset is decided there.
 
-#### 16.3 — Multimodal RAG
+#### 16.3 — Multimodal RAG (with Graph RAG)
 
-- Needs a corpus with material image or table content; check whether the current corpus has it before choosing one.
+- **Built and published 2026-11-10** as one project: vector + graph retrieval, web search and model-knowledge fallback, tables and charts, FastAPI + Streamlit, tracing and governance. It is evaluated on its own small synthetic corpus with charts and tables (an answer key, with and without the graph); a run on the shared 236-PDF corpus and dataset waits for the 16.4 kit.
 
 #### 16.4 — Eval kit (last, 2026-11-07)
 

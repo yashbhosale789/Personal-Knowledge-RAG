@@ -1,5 +1,5 @@
 # Personal Knowledge OS — Claude Project Memory
-**Last consolidated:** 2026-11-07  
+**Last consolidated:** 2026-11-11  
 **Purpose:** Persistent project context for Claude and AI engineering assistants. This file supersedes older memory notes where they conflict. Dates in the source notes are "last updated" dates for the corresponding entries.
  
 ## 1. Project identity and goals
@@ -26,6 +26,14 @@
 - **Hard cost constraint:** $0 budget. Avoid recommendations that require paid plans or risk unexpected cloud charges.
 
 ## 2. Current status — highest priority
+
+### Phase 16 (RAG portfolio and reusable eval kit) — variants 16.0–16.3 BUILT and PUBLISHED 2026-11-11; next: generation baseline + F-29, then 16.4
+
+- **The portfolio is not part of this repository** (owner, 2026-11-07): each variant is its own project in `D:\Development\GenAI\RAG - Portfolio\` and its own GitHub repository (`naive-rag`, `advanced-rag`, `agentic-rag`, `multimodal-rag`). Nothing of them is committed here (PRs #143 adapter and #144 results docs were closed for that reason); they only read this repository's corpus, dataset and result files by path. Their results stay in their own READMEs.
+- **Graph + Multimodal = one project** (owner, 2026-11-07): Graph RAG was merged into `multimodal-rag` (its PR #1) as a knowledge-graph route; built as a learning project from the owner's task document (LangGraph, FastAPI + Streamlit, Langfuse, governance).
+- **Measured on the shared corpus and dataset:** Naive and Advanced (provisional, retrieval only). **Not yet:** Agentic (rebuilt as a LangGraph agent with a grader; its runs need Groq quota) and Multimodal (evaluated only on its own synthetic answer key). 16.4 re-measures every variant through one kit, so the 16.5 table uses one code path.
+- **Next, in order:** the fresh Production generation baseline (post-#136) and the F-29 paired run (~145K gpt-oss tokens each, separate days, call counts stated first), then the 16.4 eval kit (adapter `retrieve(query)` / `answer(query)`; Production must reproduce its retrieval baseline exactly), then 16.5 write-up.
+- **Open:** do prod and local eval share one Groq key (the Agentic variant's key equals the local eval key)? Licence for the variants' own code.
 
 ### Phase 15.4 (Final operational validation) — CLOSED as "lite" 2026-11-07 (owner); Phase 15 CLOSED; current: Phase 16
 
