@@ -732,14 +732,14 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 - Technologies (LangChain, LangGraph, LlamaIndex, Langfuse, …) are chosen from each project's requirements, not in advance.
 - **Free tier:** retrieval metrics for every variant ($0); LLM-judged runs on a small subset per project, with the call count stated before each run.
 
-**Order changed 2026-11-07 (owner): the RAG variants first, the eval kit last.** The variants report retrieval metrics ($0) through the existing harness or a small per-project script while they are built. The kit is extracted afterwards, and every variant is re-measured through it before the 16.5 table, so no number in that table comes from two different code paths. Trade-off accepted: early per-variant numbers are provisional until 16.4.
+**Order changed 2026-11-07 (owner): the RAG variants first, the eval kit last.** The variants report retrieval metrics ($0) through the existing harness or a small per-project script while they are built. The kit is extracted afterwards, and every variant on the shared corpus (Naive, Advanced, Production, Agentic) is re-measured through it before the 16.5 table, so no number in that table comes from two different code paths. Multimodal RAG (with Graph) is the exception (owner, 2026-11-12): it is finished and stays untouched, with no re-ingestion and no re-measure on the 236-PDF corpus. Trade-off accepted: early per-variant numbers are provisional until 16.4.
 
 **Carried from 15.4:** a fresh Production RAG generation baseline (#136 changed the fingerprint) and the F-29 paired run (sufficiency judge requires the exact entity; proposal and costs in §15.4). Two dev runs of ~145K gpt-oss tokens each, on separate days when quota allows; run them before 16.4 reproduces Production RAG through the kit.
 
 - **Fresh baseline: DONE 2026-11-11/12.** Fingerprint `bb1b27ae2b` (dataset `8f89d42be9`, corpus `281db7190c`, prompt `938331ced9a6`), dev n = 67. Prod and local eval **share one Groq key** (SHA-256 tags matched, checked 2026-11-11), so an eval day spends prod's gpt-oss quota. Spend: gpt-oss 116 calls / 128K tokens, qwen 50 / 49K, Gemini judge 149 calls, $0. Results: abstention correct 0.81 (false-abstain 0.20, false-answer 0.17), 50 answered; faithfulness 0.998, correctness 0.878 (2 contradictions), relevancy 0.879; tokens/query mean 2,633 (sufficiency 887, generate 1,018, verify 727); latency p50 2.3 s. Paired against the pre-#136 baseline `77cea887f6` (Bonferroni family 4, α 0.0125): behavior −0.030 CI [−0.090, 0], correctness +0.030 [−0.029, +0.109], faithfulness +0.008 [−0.009, +0.041], relevancy +0.013 [−0.013, +0.060]; **no difference distinguishable on any metric.** Two answerable questions flipped to refused by the sufficiency judge (Q52, Q78). Q13 (should abstain) is still answered from a *certified* sedan's warranty, the F-29 case.
 - **F-29 paired run: DONE 2026-11-12, not adopted.** An eval variant `f29` in `eval/harness/generate.py` patches `context_sufficiency.SUFFICIENCY_JUDGE_SYSTEM` with the §15.4 rule (eval code is outside the fingerprint, so it pairs with the baseline at `bb1b27ae2b`). Spend: gpt-oss 117 calls / 133K tokens, qwen 51 / 50K, Gemini 152, $0, no 429. Paired `f29` − baseline, dev n = 67 (Bonferroni family 3, α 0.0167): behavior +0.015 CI [−0.045, +0.075] (2 vs 1, p = 1.0), correctness +0.019 [0, +0.057] (2 vs 0, p = 0.5), faithfulness −0.020 [−0.054, 0] (0 vs 4, p = 0.125); relevancy −0.001 [−0.011, +0.010]. **No difference distinguishable on any metric, and Q13 is not fixed:** the stricter judge reasoned that the certified-car warranty "covers the sedan", and the `f29` answer dropped the "certified" qualifier. Of the 3 behavior flips, Q52 and Q78 (back to answered) were baseline noise and Q23 newly refused. The other score moves come from items whose sufficiency verdict did not change, i.e. run-to-run generation noise at the same fingerprint (temperature 0.2). Decision proposed: keep `SUFFICIENCY_JUDGE_SYSTEM` unchanged; Q13 stays a known false answer (a prompt rule does not override the judge's "covers" reasoning). The `f29` variant stays in the harness for reruns.
 
-**Status 2026-11-11 (owner): 16.0–16.3 built and published,** each in its own GitHub repository: `naive-rag`, `advanced-rag`, `agentic-rag`, `multimodal-rag` (Graph RAG merged into it). Their results live in their own READMEs, not here. Measurement on the shared corpus and dataset: Naive and Advanced done (provisional); Agentic and Graph + Multimodal not yet. 16.4 re-measures every variant anyway.
+**Status 2026-11-11 (owner): 16.0–16.3 built and published,** each in its own GitHub repository: `naive-rag`, `advanced-rag`, `agentic-rag`, `multimodal-rag` (Graph RAG merged into it). Their results live in their own READMEs, not here. Measurement on the shared corpus and dataset: Naive and Advanced done (provisional); Agentic not yet. 16.4 re-measures Naive, Advanced, Production and Agentic; Graph + Multimodal keeps its own answer key only (see 16.3).
 
 #### 16.0 — Naive and Advanced RAG
 
@@ -755,7 +755,7 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 
 #### 16.3 — Multimodal RAG (with Graph RAG)
 
-- **Built and published 2026-11-10** as one project: vector + graph retrieval, web search and model-knowledge fallback, tables and charts, FastAPI + Streamlit, tracing and governance. It is evaluated on its own small synthetic corpus with charts and tables (an answer key, with and without the graph); a run on the shared 236-PDF corpus and dataset waits for the 16.4 kit.
+- **Built and published 2026-11-10** as one project: vector + graph retrieval, web search and model-knowledge fallback, tables and charts, FastAPI + Streamlit, tracing and governance. It is evaluated on its own small synthetic corpus with charts and tables (an answer key, with and without the graph). **Done and frozen (owner, 2026-11-12):** no re-ingestion and no run on the shared 236-PDF corpus and dataset; its only numbers are its own answer key.
 
 #### 16.4 — Eval kit (last, 2026-11-07)
 
@@ -763,11 +763,12 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 - Keep: dataset schema and validator, retrieval metrics, paired comparison with confidence intervals (`compare.py`), gate, judge (LLM client pluggable), dataset and corpus identifiers on every record. Add question categories (multi-hop, image, table).
 - Check first: dataset labels are chunk-independent (source and page, not chunk ID); otherwise variants that chunk differently cannot be compared.
 - Exit: Production RAG run through the kit reproduces its `c2` retrieval baseline exactly.
-- Then re-measure every variant (16.0–16.3) through the kit.
+- Then re-measure Naive, Advanced and Agentic RAG through the kit: retrieval first ($0), then generation on a small subset, one quota day at a time. Multimodal RAG is not re-measured (16.3).
 
 #### 16.5 — Write-up
 
 - One cross-variant table (same corpus, dataset and metrics), stating which differences are distinguishable and which are not; a README and architecture diagram per project.
+- Multimodal RAG (with Graph) appears in the table with its own answer key only (15 questions over 6 synthetic documents, with and without the graph), plus a note: its corpus and questions differ from the other variants', so its numbers cannot be compared with theirs.
 - Each finished project is preserved as a standalone artifact; do not casually modify it afterwards. The live Production RAG repository is the exception.
 
 ### Phase 17 — Multi-tenancy and RBAC
