@@ -13,7 +13,7 @@ from eval.harness.retrieval_eval import get_rewrite, load_rewrites
 from eval.paths import GEN_PATH as RESULTS_PATH
 from eval.paths import GOLDEN_PATH as DEFAULT_DATASET
 from src.llm.client import model_name
-from src.pipeline import advanced_rag
+from src.pipeline import advanced_rag, context_sufficiency
 from src.pipeline.advanced_rag import (
     retrieve_context,
     run_advanced_rag_pipeline,
@@ -40,20 +40,36 @@ def _always_sufficient(query, chunks, provider=None) -> dict:
     }
 
 
+# F-29 (Phase 16): the sufficiency judge must find the fact for the exact entity asked about.
+F29_RULE = (
+    "\n- If the QUESTION names a specific product, model, plan, company or person, the fact must be "
+    "stated for that same one. A fact about a different or related one (another model, a pre-owned "
+    "or certified variant) is NOT sufficient."
+)
+
 # Phase 15.2 stage ablations (F-11). "no_rewrite" queries with the question itself (see
 # main); the citation verifier and rewrite-only-short ablations are read off these runs.
-ABLATIONS = {"no_sufficiency": ("check_sufficiency", _always_sufficient)}
+# Variants patch eval-time only, so the fingerprint stays that of the baseline they pair with
+# (records still carry the baseline prompt_version; the variant name tells them apart).
+ABLATIONS = {
+    "no_sufficiency": (advanced_rag, "check_sufficiency", _always_sufficient),
+    "f29": (
+        context_sufficiency,
+        "SUFFICIENCY_JUDGE_SYSTEM",
+        config.SUFFICIENCY_JUDGE_SYSTEM + F29_RULE,
+    ),
+}
 
 
 def run_pipeline(question: str, rewrite: str, variant: str = "baseline") -> dict:
-    stage, stub = ABLATIONS.get(variant, (None, None))
+    target, attr, value = ABLATIONS.get(variant, (None, None, None))
     for attempt in range(3):
         try:
-            if stage is None:
+            if target is None:
                 return run_advanced_rag_pipeline(
                     question, return_contexts=True, rewritten=rewrite
                 )
-            with mock.patch.object(advanced_rag, stage, stub):
+            with mock.patch.object(target, attr, value):
                 return run_advanced_rag_pipeline(
                     question, return_contexts=True, rewritten=rewrite
                 )
