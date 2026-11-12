@@ -759,6 +759,8 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 
 #### 16.4 — Eval kit (last, 2026-11-07)
 
+**DONE 2026-11-12 (owner).** The kit is its own project and public repository, `yashbhosale789/rag-eval-kit` (v0.1.0, MIT, no core dependencies, CI green; design and plan in `docs/architecture/eval-kit-design.md` and `eval-kit-plan.md`). The adapter returns `{text, source}` with `page` optional: labels match on source + evidence phrase, never page or chunk id (checked). **Exit met:** Production RAG through the kit (`rag-project/scripts/eval_kit_adapter.py`, cached rewrites, $0) reproduces `retrieval_baseline_current.json` on 71/71 items (R@3 0.876, MRR 0.829; corpus `281db7190c`; the file says dataset `a831d87d09`, the current `8f89d42be9` differs only in the `ci` flag of Q12/Q13). Naive, Advanced and Agentic were re-measured through the kit on retrieval ($0); their results live in `RAG - Portfolio\benchmarks\`, not here. `rag-project/eval/` is unchanged. The generation subsets moved to 16.5.
+
 - Extract `rag-project/eval/` into a standalone package that every project uses. Today it imports this app directly (`retrieve_context`, `src.llm.client`, `config`, `src.vectorstore.store`, the citation pattern); replace those with an adapter interface: `retrieve(query) → ranked chunks with source and page`, `answer(query) → answer and contexts`.
 - Keep: dataset schema and validator, retrieval metrics, paired comparison with confidence intervals (`compare.py`), gate, judge (LLM client pluggable), dataset and corpus identifiers on every record. Add question categories (multi-hop, image, table).
 - Check first: dataset labels are chunk-independent (source and page, not chunk ID); otherwise variants that chunk differently cannot be compared.
@@ -767,6 +769,7 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 
 #### 16.5 — Write-up
 
+- **First (carried from 16.4):** generation on a small dev subset per variant through the kit, one Groq quota day at a time (the key is shared with prod), call and token count stated and approved before each run. This is also the kit judge's first real-endpoint use.
 - One cross-variant table (same corpus, dataset and metrics), stating which differences are distinguishable and which are not; a README and architecture diagram per project.
 - Multimodal RAG (with Graph) appears in the table with its own answer key only (15 questions over 6 synthetic documents, with and without the graph), plus a note: its corpus and questions differ from the other variants', so its numbers cannot be compared with theirs.
 - Each finished project is preserved as a standalone artifact; do not casually modify it afterwards. The live Production RAG repository is the exception.
