@@ -27,13 +27,15 @@
 
 ## 2. Current status — highest priority
 
-### Phase 16 (RAG portfolio and reusable eval kit) — variants 16.0–16.3 BUILT and PUBLISHED 2026-11-11; next: generation baseline + F-29, then 16.4
+### Phase 16 (RAG portfolio and reusable eval kit) — variants 16.0–16.3 BUILT and PUBLISHED 2026-11-11; generation baseline DONE 2026-11-12; next: F-29, then 16.4
 
 - **The portfolio is not part of this repository** (owner, 2026-11-07): each variant is its own project in `D:\Development\GenAI\RAG - Portfolio\` and its own GitHub repository (`naive-rag`, `advanced-rag`, `agentic-rag`, `multimodal-rag`). Nothing of them is committed here (PRs #143 adapter and #144 results docs were closed for that reason); they only read this repository's corpus, dataset and result files by path. Their results stay in their own READMEs.
 - **Graph + Multimodal = one project** (owner, 2026-11-07): Graph RAG was merged into `multimodal-rag` (its PR #1) as a knowledge-graph route; built as a learning project from the owner's task document (LangGraph, FastAPI + Streamlit, Langfuse, governance).
 - **Measured on the shared corpus and dataset:** Naive and Advanced (provisional, retrieval only). **Not yet:** Agentic (rebuilt as a LangGraph agent with a grader; its runs need Groq quota) and Multimodal (evaluated only on its own synthetic answer key). 16.4 re-measures every variant through one kit, so the 16.5 table uses one code path.
-- **Next, in order:** the fresh Production generation baseline (post-#136) and the F-29 paired run (~145K gpt-oss tokens each, separate days, call counts stated first), then the 16.4 eval kit (adapter `retrieve(query)` / `answer(query)`; Production must reproduce its retrieval baseline exactly), then 16.5 write-up.
-- **Open:** do prod and local eval share one Groq key (the Agentic variant's key equals the local eval key)? Licence for the variants' own code.
+- **Fresh Production generation baseline DONE 2026-11-11/12** (fp `bb1b27ae2b`, dev n = 67, $0): abstention correct 0.81, faithfulness 0.998, correctness 0.878, relevancy 0.879, 2,633 tokens/query; vs pre-#136 `77cea887f6` no metric distinguishable (paired CI + sign test, family 4). Q52, Q78 newly refused; Q13 still answered (F-29 case). Detail: roadmap §16 "Carried from 15.4".
+- **Next, in order:** the F-29 paired run (eval variant `f29` at `bb1b27ae2b`, ≤128K gpt-oss tokens, own day; optional 66-call pre-check first), then the 16.4 eval kit (adapter `retrieve(query)` / `answer(query)`; Production must reproduce its retrieval baseline exactly), then 16.5 write-up.
+- **Groq key: prod and local eval SHARE one key** (hash tags matched 2026-11-11; the Agentic variant uses it too). An eval run spends prod's 200K/day gpt-oss quota; plan runs for days without live use.
+- **Open:** licence for the variants' own code.
 
 ### Phase 15.4 (Final operational validation) — CLOSED as "lite" 2026-11-07 (owner); Phase 15 CLOSED; current: Phase 16
 
@@ -41,7 +43,7 @@
 - **torch 2.14.1:** the prod pin lives in `rag-project/requirements-torch.txt` (Dockerfile, `tests.yml`, `eval-gate.yml` install from it; `audit.yml` audits it). Local `requirements-local.txt` = `2.14.1+cu126` (cu124 stops at 2.6; the GTX 1650 driver 555 cannot run cu130). Retrieval identical on all 71 questions. The local venv no longer has torchvision/torchaudio (they broke imports under the new torch).
 - **Capacity (accepted, derived):** Groq `gpt-oss-120b` 8K TPM / 200K TPD → ~3 answered queries/min, ~80/day; a 429 on sufficiency/generate falls back to OpenRouter, then Gemini (a rewrite 429 is silent). One uvicorn process, ~6 pipelines at once (default thread pool). `loadtest/query.js` (k6, run locally) is kept; its phase 1 alone costs ~12K tokens.
 - **Review R1 fixed:** Caddy caps `/query`, `/query/*`, `/feedback` bodies at 256 KB (FastAPI reads the body before the key check). R2 (`caddy:2` floating) accepted.
-- **Open question:** do prod and local eval share one Groq key? If yes, an eval day empties prod's quota.
+- **Answered 2026-11-11:** prod and local eval share one Groq key, so an eval day empties prod's quota.
 - **Moved to Phase 16:** a fresh generation baseline (post-#136) and the F-29 paired run (~145K gpt-oss tokens each). Phase 16 order changed: variants first (16.0 Naive/Advanced, 16.1 Agentic, 16.2 Graph, 16.3 Multimodal), eval kit 16.4, write-up 16.5.
 
 ### Phase 15.2 (Retrieval tuning and stage ablations) — CLOSED 2026-11-06 (PR #134 `18e88f7` deployed; prod re-seeded A and owner-checked: 236 PDFs, right citations, app 476 MiB)
