@@ -27,13 +27,14 @@
 
 ## 2. Current status — highest priority
 
-### Phase 16 (RAG portfolio and reusable eval kit) — variants 16.0–16.3 BUILT and PUBLISHED 2026-11-11; generation baseline DONE 2026-11-12; next: F-29, then 16.4
+### Phase 16 (RAG portfolio and reusable eval kit) — variants 16.0–16.3 BUILT and PUBLISHED 2026-11-11; generation baseline and F-29 DONE 2026-11-12 (F-29 not adopted); next: 16.4
 
 - **The portfolio is not part of this repository** (owner, 2026-11-07): each variant is its own project in `D:\Development\GenAI\RAG - Portfolio\` and its own GitHub repository (`naive-rag`, `advanced-rag`, `agentic-rag`, `multimodal-rag`). Nothing of them is committed here (PRs #143 adapter and #144 results docs were closed for that reason); they only read this repository's corpus, dataset and result files by path. Their results stay in their own READMEs.
 - **Graph + Multimodal = one project** (owner, 2026-11-07): Graph RAG was merged into `multimodal-rag` (its PR #1) as a knowledge-graph route; built as a learning project from the owner's task document (LangGraph, FastAPI + Streamlit, Langfuse, governance).
 - **Measured on the shared corpus and dataset:** Naive and Advanced (provisional, retrieval only). **Not yet:** Agentic (rebuilt as a LangGraph agent with a grader; its runs need Groq quota) and Multimodal (evaluated only on its own synthetic answer key). 16.4 re-measures every variant through one kit, so the 16.5 table uses one code path.
 - **Fresh Production generation baseline DONE 2026-11-11/12** (fp `bb1b27ae2b`, dev n = 67, $0): abstention correct 0.81, faithfulness 0.998, correctness 0.878, relevancy 0.879, 2,633 tokens/query; vs pre-#136 `77cea887f6` no metric distinguishable (paired CI + sign test, family 4). Q52, Q78 newly refused; Q13 still answered (F-29 case). Detail: roadmap §16 "Carried from 15.4".
-- **Next, in order:** the F-29 paired run (eval variant `f29` at `bb1b27ae2b`, ≤128K gpt-oss tokens, own day; optional 66-call pre-check first), then the 16.4 eval kit (adapter `retrieve(query)` / `answer(query)`; Production must reproduce its retrieval baseline exactly), then 16.5 write-up.
+- **F-29 paired run DONE 2026-11-12, not adopted:** eval variant `f29` (patches `context_sufficiency.SUFFICIENCY_JUDGE_SYSTEM`, same fp `bb1b27ae2b`) vs baseline, dev n = 67: no metric distinguishable (behavior +0.015, correctness +0.019, faithfulness −0.020; CIs span 0, family 3), and Q13 still answered (judge: certified warranty "covers the sedan"). Prompt stays unchanged; Q13 is a known false answer. Re-running at the same fp moves a few items (temperature 0.2): treat 1–4 item swings as noise.
+- **Next, in order:** the 16.4 eval kit (adapter `retrieve(query)` / `answer(query)`; Production must reproduce its retrieval baseline exactly), then 16.5 write-up.
 - **Groq key: prod and local eval SHARE one key** (hash tags matched 2026-11-11; the Agentic variant uses it too). An eval run spends prod's 200K/day gpt-oss quota; plan runs for days without live use.
 - **Open:** licence for the variants' own code.
 
