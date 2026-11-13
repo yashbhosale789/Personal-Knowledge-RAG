@@ -2,7 +2,7 @@
 
 Last reconciled: 2026-11-11
 
-Current phase: **Phase 16 — RAG portfolio and reusable eval kit** (16.0–16.5 done: variants built and published 2026-11-11, eval kit 2026-11-12, write-up 2026-11-13, narrowed; next: Phase 17, scope to confirm). Phase 15 closed 2026-11-07 (15.0 2026-11-03, 15.1 2026-11-04, 15.2 2026-11-06, 15.4 lite 2026-11-07; 15.3 dropped). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
+Current phase: **Phase 16 — RAG portfolio and reusable eval kit** (16.0–16.5 done: variants built and published 2026-11-11, eval kit 2026-11-12, write-up 2026-11-13, narrowed). Phase 17 skipped (owner, 2026-11-13); no further phase planned. Phase 15 closed 2026-11-07 (15.0 2026-11-03, 15.1 2026-11-04, 15.2 2026-11-06, 15.4 lite 2026-11-07; 15.3 dropped). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
 
 Active development copy: `rag-project/`
 
@@ -784,6 +784,8 @@ Original plan:
 - Each finished project is preserved as a standalone artifact; do not casually modify it afterwards. The live Production RAG repository is the exception.
 
 ### Phase 17 — Multi-tenancy and RBAC
+
+**Status: SKIPPED (owner, 2026-11-13).** Not needed for the system (single user) and judged not worth 2-4 PRs plus a prod re-seed for portfolio value; F-19 (single user, one shared key) stays in force. The design below is kept for reference.
 
 Added 2026-11-04 (first numbered 18). Starts after Phase 16 and extends the live Production RAG repository; update its portfolio entry when done. It supersedes F-19 (single user, one shared key, every key holder sees the whole corpus): record the new decision in `Security.md` when the phase starts.
 
