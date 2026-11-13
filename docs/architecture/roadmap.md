@@ -2,7 +2,7 @@
 
 Last reconciled: 2026-11-11
 
-Current phase: **Phase 16 — RAG portfolio and reusable eval kit** (variants 16.0–16.3 built and published 2026-11-11; next: the Production generation baseline and F-29, then the 16.4 eval kit). Phase 15 closed 2026-11-07 (15.0 2026-11-03, 15.1 2026-11-04, 15.2 2026-11-06, 15.4 lite 2026-11-07; 15.3 dropped). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
+Current phase: **Phase 16 — RAG portfolio and reusable eval kit** (16.0–16.5 done: variants built and published 2026-11-11, eval kit 2026-11-12, write-up 2026-11-13, narrowed; next: Phase 17, scope to confirm). Phase 15 closed 2026-11-07 (15.0 2026-11-03, 15.1 2026-11-04, 15.2 2026-11-06, 15.4 lite 2026-11-07; 15.3 dropped). Phases 13 and 14 closed 2026-10-29 and 2026-10-30.
 
 Active development copy: `rag-project/`
 
@@ -768,6 +768,15 @@ Merged 2026-11-04 from the former Phase 16 (Graph RAG + Multimodal RAG) and Phas
 - Then re-measure Naive, Advanced and Agentic RAG through the kit: retrieval first ($0), then generation on a small subset, one quota day at a time. Multimodal RAG is not re-measured (16.3).
 
 #### 16.5 — Write-up
+
+**DONE 2026-11-13 with a narrowed scope (owner):** the portfolio variants (Naive, Advanced, Agentic, Multimodal) are frozen side projects and get no generation runs; Naive's and Advanced's configured OpenRouter models no longer exist. What shipped:
+
+- **Kit v0.2.0:** the three deferred minor errors fixed test-first (missing adapter `version`, an `answer()` reply without `"answer"`, judge asking for endpoint settings at 0 calls); 42 tests. First real-endpoint judge run: `judge --calibrate` on `gemini-3.5-flash-lite` (Production's baseline judge), 60 calls, 0 unparsable, AUC 1.0 on faithfulness, correctness and relevancy (the harness's own calibration of that model: also 1.0); nothing else to fix. README notes the result.
+- **Production through the kit's `generate` + `judge`:** `answer()` added to `rag-project/scripts/eval_kit_adapter.py` (calls the harness's `run_pipeline` with the cached rewrite). Fixed 20-question dev subset (stratified by category; 18 answerable, 2 to refuse; dataset `6c8cb7b1af`, a verbatim subset of `8f89d42be9`), fp `bb1b27ae2b`: abstention correct 0.80, correctness 0.939 (0 contradictions), faithfulness 1.000, relevancy 0.898, p50 2.4 s. Paired with the harness baseline on the same 20 questions (family 4): no metric distinguishable, so the kit reproduces the harness within noise (Q68 flipped to refused). Spend: 20 pipeline runs on Groq (gpt-oss + qwen), 107 Gemini calls, $0.
+- **Cross-variant table:** retrieval only for Naive, Advanced, Agentic and Production (kit runs on all 71 questions, `rag-eval-kit compare`, Bonferroni family 6), plus Production's generation row and Multimodal's own answer key with its not-comparable note. It lives in `RAG - Portfolio\benchmarks\README.md`, not in this repository.
+- Not done (out of scope): architecture diagrams for the Naive and Advanced READMEs.
+
+Original plan:
 
 - **First (carried from 16.4):** generation on a small dev subset per variant through the kit, one Groq quota day at a time (the key is shared with prod), call and token count stated and approved before each run. This is also the kit judge's first real-endpoint use.
 - One cross-variant table (same corpus, dataset and metrics), stating which differences are distinguishable and which are not; a README and architecture diagram per project.
