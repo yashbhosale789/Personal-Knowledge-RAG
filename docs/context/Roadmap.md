@@ -242,6 +242,7 @@ Scope trimmed 2026-10-31 for a single-user, $0 system: no storage migration now,
 
 ### Phase 17 — Multi-tenancy and RBAC
 
+- **Skipped (owner, 2026-11-13);** F-19 single-user stays in force
 - Portfolio demo on prod: `c2` split into 5 company tenants, demo keys per role
 - API key mapped to a tenant, user and role; principals and document access in SQLite
 - Tenant and document permissions enforced before ranking, in the semantic cache key, on `/documents`, traces and feedback
