@@ -231,11 +231,11 @@ Scope trimmed 2026-10-31 for a single-user, $0 system: no storage migration now,
 - Order (owner, 2026-11-07): the variants first, the eval kit last; early variant numbers are provisional until the kit re-measures them
 - The portfolio is not part of this project (owner, 2026-11-07): each variant is its own project and GitHub repository; it only reads this repository's corpus, dataset and result files by path
 - 16.0 Naive and Advanced RAG: done (provisional retrieval numbers in their own READMEs), published
-- 16.1 Agentic RAG: built and published (LangGraph agent); shared-dataset runs not yet done
+- 16.1 Agentic RAG: built and published (LangGraph agent); retrieval measured through the kit (agent runs dropped from scope, 2026-11-13)
 - 16.2 Graph RAG: merged into 16.3 (owner, 2026-11-07) as a knowledge-graph route
 - 16.3 Multimodal RAG (with Graph RAG): built and published; evaluated on its own answer key (with/without graph), not yet on the shared dataset
-- 16.4 Reusable eval kit, extracted from `eval/`; Production RAG reproduces its baseline through it, then every variant is re-measured
-- 16.5 One cross-variant comparison table and a README per project
+- 16.4 Reusable eval kit `rag-eval-kit`: done 2026-11-12; Production reproduces its retrieval baseline through it; Naive, Advanced, Agentic re-measured on retrieval
+- 16.5 Done 2026-11-13, narrowed (owner): kit v0.2.0 (first real judge run), Production generation through the kit, retrieval-only cross-variant table in `RAG - Portfolio\benchmarks\README.md`; no generation runs for the variants
 - Production RAG is this live repository, not a frozen snapshot
 
 ## Multi-user (Phase 17)

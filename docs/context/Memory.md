@@ -27,7 +27,7 @@
 
 ## 2. Current status — highest priority
 
-### Phase 16 (RAG portfolio and reusable eval kit) — variants 16.0–16.3 BUILT and PUBLISHED 2026-11-11; generation baseline and F-29 DONE 2026-11-12 (F-29 not adopted); 16.4 eval kit DONE 2026-11-12; next: 16.5
+### Phase 16 (RAG portfolio and reusable eval kit) — variants 16.0–16.3 BUILT and PUBLISHED 2026-11-11; generation baseline and F-29 DONE 2026-11-12 (F-29 not adopted); 16.4 eval kit DONE 2026-11-12; 16.5 DONE 2026-11-13 (narrowed); next: Phase 17
 
 - **The portfolio is not part of this repository** (owner, 2026-11-07): each variant is its own project in `D:\Development\GenAI\RAG - Portfolio\` and its own GitHub repository (`naive-rag`, `advanced-rag`, `agentic-rag`, `multimodal-rag`). Nothing of them is committed here (PRs #143 adapter and #144 results docs were closed for that reason); they only read this repository's corpus, dataset and result files by path. Their results stay in their own READMEs.
 - **Graph + Multimodal = one project** (owner, 2026-11-07): Graph RAG was merged into `multimodal-rag` (its PR #1) as a knowledge-graph route; built as a learning project from the owner's task document (LangGraph, FastAPI + Streamlit, Langfuse, governance).
@@ -35,7 +35,7 @@
 - **Fresh Production generation baseline DONE 2026-11-11/12** (fp `bb1b27ae2b`, dev n = 67, $0): abstention correct 0.81, faithfulness 0.998, correctness 0.878, relevancy 0.879, 2,633 tokens/query; vs pre-#136 `77cea887f6` no metric distinguishable (paired CI + sign test, family 4). Q52, Q78 newly refused; Q13 still answered (F-29 case). Detail: roadmap §16 "Carried from 15.4".
 - **F-29 paired run DONE 2026-11-12, not adopted:** eval variant `f29` (patches `context_sufficiency.SUFFICIENCY_JUDGE_SYSTEM`, same fp `bb1b27ae2b`) vs baseline, dev n = 67: no metric distinguishable (behavior +0.015, correctness +0.019, faithfulness −0.020; CIs span 0, family 3), and Q13 still answered (judge: certified warranty "covers the sedan"). Prompt stays unchanged; Q13 is a known false answer. Re-running at the same fp moves a few items (temperature 0.2): treat 1–4 item swings as noise.
 - **16.4 eval kit DONE 2026-11-12:** public repo `yashbhosale789/rag-eval-kit` (v0.1.0); Production through the kit reproduces its retrieval baseline on 71/71 items ($0, `rag-project/scripts/eval_kit_adapter.py`); Naive, Advanced, Agentic re-measured on retrieval (results in `RAG - Portfolio\benchmarks\`, not here; Agentic measured on a separate index there, its own folder untouched). Detail: roadmap §16.4.
-- **Next: 16.5,** starting with generation subsets per variant (one Groq quota day each, cost approved first; the kit judge's first real run), then the write-up.
+- **16.5 DONE 2026-11-13, narrowed (owner):** no generation runs for the portfolio variants (frozen side projects). Kit v0.2.0 (3 minor fixes, 42 tests; Gemini flash-lite calibration AUC 1.0 on all metrics). Production through the kit on a 20-question dev subset at fp `bb1b27ae2b`: no metric distinguishable from the harness baseline on the same questions. Cross-variant table (retrieval for four, Production generation, Multimodal note) lives in `RAG - Portfolio\benchmarks\README.md`. Detail: roadmap §16.5. **Phase 16 is complete; next is Phase 17** (confirm scope first).
 - **Groq key: prod and local eval SHARE one key** (hash tags matched 2026-11-11; the Agentic variant uses it too). An eval run spends prod's 200K/day gpt-oss quota; plan runs for days without live use.
 - **Open:** licence for the variants' own code.
 
