@@ -61,6 +61,8 @@ On the 236-PDF corpus that production serves (1024-character chunks, `TOP_K` 3):
 
 Retrieval tuning (Phase 15.2) chose this configuration for distinguishably better ranking at the same context size (MRR 0.72 → 0.83 on dev). Method, confidence intervals and every experiment: **[EVALUATION.md](EVALUATION.md)**.
 
+Compared with Naive, Advanced and Agentic RAG on the same corpus and questions, through the shared [rag-eval-kit](https://github.com/yashbhosale789/rag-eval-kit): **[rag-benchmarks](https://github.com/yashbhosale789/rag-benchmarks)**.
+
 ## Tech stack
 
 | Layer | Built with |
@@ -184,7 +186,7 @@ UI, tests, corpora and tooling: **[DEVELOPMENT.md](DEVELOPMENT.md)**.
 
 ## Status
 
-Phases 1–14 are done (pipeline, deployment, LLMOps, feedback and React UI), as are 15.0 (one consistent ingest path and PDF upload) and 15.1 (the full corpus, evaluated offline). Phase 15.2 (retrieval tuning and stage ablations) is in progress. It is a single-user system; [known limitations](ARCHITECTURE.md#known-limitations) are listed openly.
+Phases 1–16 are done (pipeline, deployment, LLMOps, feedback and React UI, one ingest path and PDF upload, the full corpus, retrieval tuning, operational checks, and the reusable eval kit with a cross-variant comparison). Multi-tenancy was considered and not built. It is a single-user system; [known limitations](ARCHITECTURE.md#known-limitations) are listed openly.
 
 The live demo asks for the API key. This is a single-user system with one shared key, so the public link shows the UI but not answers.
 
