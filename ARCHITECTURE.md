@@ -10,6 +10,10 @@ How Personal Knowledge OS is built: the whole system, the query and ingestion pi
 
 Everything runs on one EC2 instance in Docker Compose. Chroma, BM25 and both local models run inside the app process; only the LLMs, Langfuse and alert email are external.
 
+![Personal Knowledge OS system overview](docs/architecture/personal-knowledge-os-system-overview.png)
+
+Interactive version, with each box linked to its source lines: [system-overview.html](docs/architecture/system-overview.html) (download and open in a browser). Built with archify from [system-overview.archify.json](docs/architecture/system-overview.archify.json).
+
 ```mermaid
 flowchart LR
     subgraph Client ["Browser (React UI)"]
