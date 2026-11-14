@@ -104,3 +104,6 @@ coverage.xml
 
 # Brainstorming mockups (superpowers visual companion)
 .superpowers/
+
+# Archify diagram builds
+.archify/
